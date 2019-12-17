@@ -76,16 +76,17 @@ class FocalLoss(nn.Module):
             raise ValueError(
                 "input and target must be in the same device. Got: {}" .format(
                     input.device, target.device))
+        device_id = input.get_device()
         # compute softmax over the classes axis
         input_soft = F.softmax(input, dim=1) + self.eps
 
         # create the labels one hot tensor
         target_one_hot = one_hot(target, num_classes=input.shape[1],
-                                 device=input.device, dtype=input.dtype)
+                                 device=input.device, dtype=input.dtype).cuda(device_id)
 
         # compute the actual focal loss
-        weight = torch.pow(torch.tensor(1.) - input_soft,
-                           self.gamma.to(input.dtype))
+        weight = torch.pow(torch.tensor(1.).cuda(device_id) - input_soft,
+                           self.gamma.to(input.dtype).cuda(device_id))
         focal = -self.alpha * weight * torch.log(input_soft)
         loss_tmp = torch.sum(target_one_hot * focal, dim=1)
 
