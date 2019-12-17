@@ -168,6 +168,9 @@ __C.TRAIN.FREEZE_CONV_BODY = False
 __C.TRAIN.FREEZE_PRD_CONV_BODY = False
 __C.TRAIN.FREEZE_PRD_BOX_HEAD = False
 
+# Hubness loss
+__C.TRAIN.HUBNESS = False
+__C.TRAIN.HUBNESS_SCALE = 1.0
 # ---------------------------------------------------------------------------- #
 # Data loader options
 # ---------------------------------------------------------------------------- #
