@@ -185,6 +185,23 @@ def add_cls_loss(cls_scores, labels):
     else:
         raise NotImplementedError
 
+def add_hubness_loss(cls_scores):
+    # xp_yall_prob   (batch_size, num_classes)
+    # xp_yall_prob.T (num_classes, batch_size
+    # xp_yall_prob.expand(0, 1, -1, 1)
+    # xp_yall_probT_average_reshape = xp_yall_probT_reshaped.mean(axis=2)
+    # hubness_dist = xp_yall_probT_average_reshape - hubness_blob
+    # hubness_dist_sqr = hubness_dist.pow(2)
+    # hubness_dist_sqr_scaled = hubness_dist_sqr * cfg.TRAIN.HUBNESS_SCALE
+    hubness_blob = 1./cls_scores.size(1)
+    cls_scores_T = cls_scores.transpose()
+    cls_scores_T = cls_scores_T.unsqueeze(1).unsqueeze(3).expand(-1, 1, -1, 1)
+    cls_scores_T = cls_scores_T.mean(dim=2, keepdim=True)
+    hubness_dist = cls_scores_T - hubness_blob
+    hubness_dist = hubness_dist.pow(2) * cfg.TRAIN.HUBNESS_SCALE
+    hubness_loss = hubness_dist.mean()
+    return hubness_loss
+
 
 def reldn_losses(prd_cls_scores, prd_labels_int32, fg_only=False):
     device_id = prd_cls_scores.get_device()
