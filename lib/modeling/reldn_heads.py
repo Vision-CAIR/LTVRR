@@ -14,6 +14,7 @@ import nn as mynn
 from core.config import cfg
 import utils.net as net_utils
 from modeling.sparse_targets_rel import FrequencyBias
+from utils import focal_loss
 
 logger = logging.getLogger(__name__)
 
@@ -172,11 +173,23 @@ class reldn_head(nn.Module):
         
         return prd_cls_scores, sbj_cls_scores, obj_cls_scores
 
+def add_cls_loss(cls_scores, labels):
+    if cfg.MODEL.LOSS == 'cross_entropy':
+        return F.cross_entropy(cls_scores, labels)
+    elif cfg.MODEL.LOSS == 'focal':
+        cls_scores_exp = cls_scores.unsqueeze(2)
+        cls_scores_exp = cls_scores_exp.unsqueeze(3)
+        labels_exp = labels.unsqueeze(1)
+        labels_exp = labels_exp.unsqueeze(2)
+        return focal_loss.focal_loss(cls_scores_exp, labels_exp, alpha=cfg.MODEL.ALPHA, gamma=cfg.MODEL.GAMMA, reduction='mean')
+    else:
+        raise NotImplementedError
+
 
 def reldn_losses(prd_cls_scores, prd_labels_int32, fg_only=False):
     device_id = prd_cls_scores.get_device()
     prd_labels = Variable(torch.from_numpy(prd_labels_int32.astype('int64'))).cuda(device_id)
-    loss_cls_prd = F.cross_entropy(prd_cls_scores, prd_labels)
+    loss_cls_prd = add_cls_loss(prd_cls_scores, prd_labels)
     # class accuracy
     prd_cls_preds = prd_cls_scores.max(dim=1)[1].type_as(prd_labels)
     accuracy_cls_prd = prd_cls_preds.eq(prd_labels).float().mean(dim=0)
@@ -188,12 +201,12 @@ def reldn_so_losses(sbj_cls_scores, obj_cls_scores, sbj_labels_int32, obj_labels
     device_id = sbj_cls_scores.get_device()
 
     sbj_labels = Variable(torch.from_numpy(sbj_labels_int32.astype('int64'))).cuda(device_id)
-    loss_cls_sbj = F.cross_entropy(sbj_cls_scores, sbj_labels)
+    loss_cls_sbj = add_cls_loss(sbj_cls_scores, sbj_labels)
     sbj_cls_preds = sbj_cls_scores.max(dim=1)[1].type_as(sbj_labels)
     accuracy_cls_sbj = sbj_cls_preds.eq(sbj_labels).float().mean(dim=0)
     
     obj_labels = Variable(torch.from_numpy(obj_labels_int32.astype('int64'))).cuda(device_id)
-    loss_cls_obj = F.cross_entropy(obj_cls_scores, obj_labels)
+    loss_cls_obj = add_cls_loss(obj_cls_scores, obj_labels)
     obj_cls_preds = obj_cls_scores.max(dim=1)[1].type_as(obj_labels)
     accuracy_cls_obj = obj_cls_preds.eq(obj_labels).float().mean(dim=0)
     
