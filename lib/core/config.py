@@ -487,6 +487,10 @@ __C.MODEL.SHARE_RES5 = False
 __C.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS = False
 __C.MODEL.LOAD_COCO_PRETRAINED_WEIGHTS = False
 
+# Which loss to use. Options: cross_entropy, focal
+__C.MODEL.LOSS = 'cross_entropy'
+__C.MODEL.ALPHA = 0.25
+__C.MODEL.GAMMA = 2.0
 # ---------------------------------------------------------------------------- #
 # Unsupervise Pose
 # ---------------------------------------------------------------------------- #
