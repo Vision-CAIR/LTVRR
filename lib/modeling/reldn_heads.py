@@ -194,7 +194,7 @@ def add_hubness_loss(cls_scores):
     # hubness_dist_sqr = hubness_dist.pow(2)
     # hubness_dist_sqr_scaled = hubness_dist_sqr * cfg.TRAIN.HUBNESS_SCALE
     hubness_blob = 1./cls_scores.size(1)
-    cls_scores_T = cls_scores.transpose()
+    cls_scores_T = cls_scores.transpose(0, 1)
     cls_scores_T = cls_scores_T.unsqueeze(1).unsqueeze(3).expand(-1, 1, -1, 1)
     cls_scores_T = cls_scores_T.mean(dim=2, keepdim=True)
     hubness_dist = cls_scores_T - hubness_blob
