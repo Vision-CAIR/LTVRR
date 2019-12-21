@@ -14,7 +14,8 @@ import json
 import _init_paths
 import utils.boxes as box_utils
 from core.config import cfg
-
+# import sparray
+import sparse
 
 def get_rel_counts(ds_name, must_overlap=True):
     """
@@ -33,17 +34,17 @@ def get_rel_counts(ds_name, must_overlap=True):
     else:
         raise NotImplementedError
 
-    fg_matrix = np.zeros((
+    sparse_fg_matrix = sparse.DOK((
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_PRD_CLASSES + 1,  # include background
-    ), dtype=np.int64)
+    ), dtype=np.int6)
 
-    bg_matrix = np.zeros((
+    sparse_bg_matrix = sparse.DOK((
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
-    ), dtype=np.int64)
-    
+    ), dtype=np.int6)
+
     for _, im_rels in train_data.items():
         # get all object boxes
         gt_box_to_label = {}
@@ -57,9 +58,9 @@ def get_rel_counts(ds_name, must_overlap=True):
                 gt_box_to_label[tuple(sbj_box)] = sbj_lbl
             if tuple(obj_box) not in gt_box_to_label:
                 gt_box_to_label[tuple(obj_box)] = obj_lbl
-            
-            fg_matrix[sbj_lbl, obj_lbl, prd_lbl + 1] += 1
-        
+
+            sparse_fg_matrix[sbj_lbl, obj_lbl, prd_lbl + 1] += 1
+
         if cfg.MODEL.USE_OVLP_FILTER:
             if len(gt_box_to_label):
                 gt_boxes = np.array(list(gt_box_to_label.keys()), dtype=np.int32)
@@ -67,16 +68,17 @@ def get_rel_counts(ds_name, must_overlap=True):
                 o1o2_total = gt_classes[np.array(
                     box_filter(gt_boxes, must_overlap=must_overlap), dtype=int)]
                 for (o1, o2) in o1o2_total:
-                    bg_matrix[o1, o2] += 1
+                    sparse_bg_matrix[o1, o2] += 1
+
         else:
             # consider all pairs of boxes, overlapped or non-overlapped
             for b1, l1 in gt_box_to_label.items():
                 for b2, l2 in gt_box_to_label.items():
                     if b1 == b2:
                         continue
-                    bg_matrix[l1, l2] += 1
+                    sparse_bg_matrix[l1, l2] += 1
 
-    return fg_matrix, bg_matrix
+    return sparse_fg_matrix.to_coo(), sparse_bg_matrix.to_coo()
 
 
 def box_filter(boxes, must_overlap=False):
