@@ -87,6 +87,11 @@ def get_obj_prd_vecs(dataset_name):
             obj_cats = json.load(f)
         with open(cfg.DATA_DIR + '/vg/predicates.json') as f:
             prd_cats = json.load(f)
+    elif dataset_name.find('gvqa') >= 0:
+        with open(cfg.DATA_DIR + '/gvqa/objects.json') as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/gvqa/predicates.json') as f:
+            prd_cats = json.load(f)
     else:
         raise NotImplementedError
     # represent background with the word 'unknown'
