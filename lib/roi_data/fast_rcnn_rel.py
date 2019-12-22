@@ -67,7 +67,9 @@ def _sample_pairs(roidb, im_scale, batch_idx):
     
     fg_pairs_per_this_image = np.minimum(fg_pairs_per_image, gt_pair_inds.size + fg_pair_inds.size)
     # Sample foreground regions without replacement
-    if fg_pair_inds.size > 0:
+    # if rel_pos_inds.size > 0 and rel_pos_inds.size > fg_rois_per_image - rel_gt_inds.size:
+
+    if fg_pair_inds.size > 0 and fg_pair_inds.size > (fg_pairs_per_this_image - fg_pair_inds.size):
         fg_pair_inds = npr.choice(
             fg_pair_inds, size=(fg_pairs_per_this_image - gt_pair_inds.size), replace=False)
     fg_pair_inds = np.append(fg_pair_inds, gt_pair_inds)
