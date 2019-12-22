@@ -61,6 +61,26 @@ DATASETS = {
         ANN_FN3:
             _DATA_DIR + '/vg/predicates.json',
     },
+    'gvqa_train': {
+        IM_DIR:
+            _DATA_DIR + '/gvqa/images',
+        ANN_FN:
+            _DATA_DIR + '/gvqa/detections_train.json',
+        ANN_FN2:
+            _DATA_DIR + '/gvqa/rel_annotations_train.json',
+        ANN_FN3:
+            _DATA_DIR + '/gvqa/predicates.json',
+    },
+    'gvqa_val': {
+        IM_DIR:
+            _DATA_DIR + '/gvqa/images',
+        ANN_FN:
+            _DATA_DIR + '/gvqa/detections_val.json',
+        ANN_FN2:
+            _DATA_DIR + '/gvqa/rel_annotations_val.json',
+        ANN_FN3:
+            _DATA_DIR + '/gvqa/predicates.json',
+    },
     # VRD dataset
     'vrd_train': {
         IM_DIR:

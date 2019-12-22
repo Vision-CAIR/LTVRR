@@ -86,14 +86,20 @@ if __name__ == '__main__':
     if args.set_cfgs is not None:
         merge_cfg_from_list(args.set_cfgs)
 
-    if args.dataset == "vg":
-        cfg.TEST.DATASETS = ('vg_val',)
-        cfg.MODEL.NUM_CLASSES = 151
-        cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
-    elif args.dataset == "vrd":
-        cfg.TEST.DATASETS = ('vrd_val',)
+    if args.dataset == "vrd":
+        cfg.TRAIN.DATASETS = ('vrd_train',)
         cfg.MODEL.NUM_CLASSES = 101
         cfg.MODEL.NUM_PRD_CLASSES = 70  # exclude background
+    elif args.dataset == "vg":
+        cfg.TRAIN.DATASETS = ('vg_train',)
+        # cfg.MODEL.NUM_CLASSES = 151
+        cfg.MODEL.NUM_CLASSES = 53305 # includes background
+        # cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
+        cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
+    elif args.dataset == "vg":
+        cfg.TRAIN.DATASETS = ('gvqa_train',)
+        cfg.MODEL.NUM_CLASSES = 1704 # includes background
+        cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     else:  # For subprocess call
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
     assert_and_infer_cfg()
