@@ -96,7 +96,7 @@ if __name__ == '__main__':
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         # cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
-    elif args.dataset == "vg":
+    elif args.dataset == "gvqa":
         cfg.TRAIN.DATASETS = ('gvqa_train',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
