@@ -26,6 +26,8 @@ class FrequencyBias(nn.Module):
             ds_name = 'vg'
         elif ds_name.find('vrd') >= 0:
             ds_name = 'vrd'
+        elif ds_name.find('gvqa') >= 0:
+            ds_name = 'gvqa'
         else:
             raise NotImplementedError
 
