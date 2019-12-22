@@ -75,6 +75,8 @@ def get_obj_prd_vecs(dataset_name):
     for key in all_keys:
         new_key = key.lower()
         word2vec_model.vocab[new_key] = word2vec_model.vocab.pop(key)
+    temp_dict = {x.replace('_', '-'): y for x, y in word2vec_model.vocab.items()}
+    word2vec_model.vocab.update(temp_dict)
     logger.info('Wiki words converted to lowercase.')
 
     if dataset_name.find('vrd') >= 0:
