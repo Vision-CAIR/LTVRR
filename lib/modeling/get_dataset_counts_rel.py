@@ -38,12 +38,12 @@ def get_rel_counts(ds_name, must_overlap=True):
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_PRD_CLASSES + 1,  # include background
-    ), dtype=np.int6)
+    ), dtype=np.int64)
 
     sparse_bg_matrix = sparse.DOK((
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
-    ), dtype=np.int6)
+    ), dtype=np.int64)
 
     for _, im_rels in train_data.items():
         # get all object boxes
