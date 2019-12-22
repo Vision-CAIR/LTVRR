@@ -14,8 +14,7 @@ import json
 import _init_paths
 import utils.boxes as box_utils
 from core.config import cfg
-# import sparray
-import sparse
+
 
 def get_rel_counts(ds_name, must_overlap=True):
     """
@@ -34,13 +33,13 @@ def get_rel_counts(ds_name, must_overlap=True):
     else:
         raise NotImplementedError
 
-    sparse_fg_matrix = sparse.DOK((
+    fg_matrix = np.zeros((
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_PRD_CLASSES + 1,  # include background
     ), dtype=np.int64)
 
-    sparse_bg_matrix = sparse.DOK((
+    bg_matrix = np.zeros((
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
         cfg.MODEL.NUM_CLASSES - 1,  # not include background
     ), dtype=np.int64)
@@ -59,7 +58,7 @@ def get_rel_counts(ds_name, must_overlap=True):
             if tuple(obj_box) not in gt_box_to_label:
                 gt_box_to_label[tuple(obj_box)] = obj_lbl
 
-            sparse_fg_matrix[sbj_lbl, obj_lbl, prd_lbl + 1] += 1
+            fg_matrix[sbj_lbl, obj_lbl, prd_lbl + 1] += 1
 
         if cfg.MODEL.USE_OVLP_FILTER:
             if len(gt_box_to_label):
@@ -68,17 +67,16 @@ def get_rel_counts(ds_name, must_overlap=True):
                 o1o2_total = gt_classes[np.array(
                     box_filter(gt_boxes, must_overlap=must_overlap), dtype=int)]
                 for (o1, o2) in o1o2_total:
-                    sparse_bg_matrix[o1, o2] += 1
-
+                    bg_matrix[o1, o2] += 1
         else:
             # consider all pairs of boxes, overlapped or non-overlapped
             for b1, l1 in gt_box_to_label.items():
                 for b2, l2 in gt_box_to_label.items():
                     if b1 == b2:
                         continue
-                    sparse_bg_matrix[l1, l2] += 1
+                    bg_matrix[l1, l2] += 1
 
-    return sparse_fg_matrix.to_coo(), sparse_bg_matrix.to_coo()
+    return fg_matrix, bg_matrix
 
 
 def box_filter(boxes, must_overlap=False):
