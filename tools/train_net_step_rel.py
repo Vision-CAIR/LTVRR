@@ -372,7 +372,8 @@ def main():
     maskRCNN.train()
 
     # CHECKPOINT_PERIOD = int(cfg.TRAIN.SNAPSHOT_ITERS / cfg.NUM_GPUS)
-    CHECKPOINT_PERIOD = cfg.SOLVER.MAX_ITER / cfg.TRAIN.SNAPSHOT_FREQ
+    # CHECKPOINT_PERIOD = cfg.SOLVER.MAX_ITER / cfg.TRAIN.SNAPSHOT_FREQ
+    CHECKPOINT_PERIOD = 10000
 
     # Set index for decay steps
     decay_steps_ind = None
@@ -447,6 +448,7 @@ def main():
             training_stats.LogIterStats(step, lr, backbone_lr)
 
             if (step+1) % CHECKPOINT_PERIOD == 0:
+                print('Saving Checkpoint..')
                 save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
 
         # ---- Training ends ----
