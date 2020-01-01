@@ -87,17 +87,17 @@ if __name__ == '__main__':
         merge_cfg_from_list(args.set_cfgs)
 
     if args.dataset == "vrd":
-        cfg.TRAIN.DATASETS = ('vrd_train',)
+        cfg.TEST.DATASETS = ('vrd_test',)
         cfg.MODEL.NUM_CLASSES = 101
         cfg.MODEL.NUM_PRD_CLASSES = 70  # exclude background
     elif args.dataset == "vg":
-        cfg.TRAIN.DATASETS = ('vg_train',)
+        cfg.TEST.DATASETS = ('vg_test',)
         # cfg.MODEL.NUM_CLASSES = 151
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         # cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
     elif args.dataset == "gvqa":
-        cfg.TRAIN.DATASETS = ('gvqa_train',)
+        cfg.TEST.DATASETS = ('gvqa_test',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     else:  # For subprocess call
@@ -137,8 +137,10 @@ if __name__ == '__main__':
         logger.info('Starting evaluation now...')
         task_evaluation.eval_rel_results(all_results, args.output_dir, args.do_val)
     else:
-        run_inference(
-            args,
-            ind_range=args.range,
-            multi_gpu_testing=args.multi_gpu_testing,
-            check_expected_results=True)
+        all_results = run_inference(
+                        args,
+                        ind_range=args.range,
+                        multi_gpu_testing=args.multi_gpu_testing,
+                        check_expected_results=True)
+        logger.info('Starting evaluation now...')
+        task_evaluation.eval_rel_results(all_results, args.output_dir, args.do_val)
