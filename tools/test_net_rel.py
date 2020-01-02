@@ -87,17 +87,17 @@ if __name__ == '__main__':
         merge_cfg_from_list(args.set_cfgs)
 
     if args.dataset == "vrd":
-        cfg.TEST.DATASETS = ('vrd_test',)
+        cfg.TEST.DATASETS = ('vrd_val',)
         cfg.MODEL.NUM_CLASSES = 101
         cfg.MODEL.NUM_PRD_CLASSES = 70  # exclude background
     elif args.dataset == "vg":
-        cfg.TEST.DATASETS = ('vg_test',)
+        cfg.TEST.DATASETS = ('vg_val',)
         # cfg.MODEL.NUM_CLASSES = 151
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         # cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
     elif args.dataset == "gvqa":
-        cfg.TEST.DATASETS = ('gvqa_test',)
+        cfg.TEST.DATASETS = ('gvqa_val',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     else:  # For subprocess call
