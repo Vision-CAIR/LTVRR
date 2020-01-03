@@ -61,6 +61,36 @@ DATASETS = {
         ANN_FN3:
             _DATA_DIR + '/vg/predicates.json',
     },
+    'vg80k_train': {
+        IM_DIR:
+            _DATA_DIR + '/vg80k/VG_100K',
+        ANN_FN:
+            _DATA_DIR + '/vg80k/detections_train.json',
+        ANN_FN2:
+            _DATA_DIR + '/vg80k/rel_annotations_train.json',
+        ANN_FN3:
+            _DATA_DIR + '/vg80k/predicates.json',
+    },
+    'vg80k_val': {
+        IM_DIR:
+            _DATA_DIR + '/vg80k/VG_100K',
+        ANN_FN:
+            _DATA_DIR + '/vg80k/detections_val.json',
+        ANN_FN2:
+            _DATA_DIR + '/vg80k/rel_annotations_val.json',
+        ANN_FN3:
+            _DATA_DIR + '/vg80k/predicates.json',
+    },
+    'vg80k_test': {
+        IM_DIR:
+            _DATA_DIR + '/vg80k/VG_100K',
+        ANN_FN:
+            _DATA_DIR + '/vg80k/detections_test.json',
+        ANN_FN2:
+            _DATA_DIR + '/vg80k/rel_annotations_test.json',
+        ANN_FN3:
+            _DATA_DIR + '/vg80k/predicates.json',
+    },
     'gvqa_train': {
         IM_DIR:
             _DATA_DIR + '/gvqa/images',
@@ -78,6 +108,16 @@ DATASETS = {
             _DATA_DIR + '/gvqa/detections_val.json',
         ANN_FN2:
             _DATA_DIR + '/gvqa/rel_annotations_val.json',
+        ANN_FN3:
+            _DATA_DIR + '/gvqa/predicates.json',
+    },
+    'gvqa_test': {
+        IM_DIR:
+            _DATA_DIR + '/gvqa/images',
+        ANN_FN:
+            _DATA_DIR + '/gvqa/detections_test.json',
+        ANN_FN2:
+            _DATA_DIR + '/gvqa/rel_annotations_test.json',
         ANN_FN3:
             _DATA_DIR + '/gvqa/predicates.json',
     },

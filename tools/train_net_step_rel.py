@@ -157,9 +157,11 @@ def main():
         cfg.MODEL.NUM_PRD_CLASSES = 70  # exclude background
     elif args.dataset == "vg":
         cfg.TRAIN.DATASETS = ('vg_train',)
-        # cfg.MODEL.NUM_CLASSES = 151
+        cfg.MODEL.NUM_CLASSES = 151
+        cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
+    elif args.dataset == "vg80k":
+        cfg.TRAIN.DATASETS = ('vg80k_train',)
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
-        # cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
     elif args.dataset == "gvqa":
         cfg.TRAIN.DATASETS = ('gvqa_train',)

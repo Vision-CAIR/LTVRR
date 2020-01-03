@@ -92,9 +92,11 @@ if __name__ == '__main__':
         cfg.MODEL.NUM_PRD_CLASSES = 70  # exclude background
     elif args.dataset == "vg":
         cfg.TEST.DATASETS = ('vg_val',)
-        # cfg.MODEL.NUM_CLASSES = 151
+        cfg.MODEL.NUM_CLASSES = 151
+        cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
+    elif args.dataset == "vg80k":
+        cfg.TEST.DATASETS = ('vg80k_val',)
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
-        # cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
     elif args.dataset == "gvqa":
         cfg.TEST.DATASETS = ('gvqa_val',)
@@ -142,5 +144,3 @@ if __name__ == '__main__':
                         ind_range=args.range,
                         multi_gpu_testing=args.multi_gpu_testing,
                         check_expected_results=True)
-        logger.info('Starting evaluation now...')
-        task_evaluation.eval_rel_results(all_results, args.output_dir, args.do_val)
