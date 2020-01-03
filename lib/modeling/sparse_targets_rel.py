@@ -39,7 +39,7 @@ class FrequencyBias(nn.Module):
         bg_matrix += 1
         fg_matrix[:, :, 0] = bg_matrix
 
-        pred_dist = np.log(fg_matrix / (fg_matrix.sum(2)[:, :, None] + 1e-08) + eps)
+        pred_dist = np.log(fg_matrix / (fg_matrix.sum(2)[:, :, None] + 1e-08) + eps) # (59k, 59k, 29k)
 
         self.num_objs = pred_dist.shape[0]
         pred_dist = torch.FloatTensor(pred_dist).view(-1, pred_dist.shape[2])
