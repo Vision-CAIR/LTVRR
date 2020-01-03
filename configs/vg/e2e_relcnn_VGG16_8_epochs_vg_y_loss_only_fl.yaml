@@ -2,7 +2,7 @@ MODEL:
   TYPE: generalized_rcnn
   SUBTYPE: 3
   USE_OVLP_FILTER: False
-  USE_FREQ_BIAS: False
+  USE_FREQ_BIAS: True
   NO_FC7_RELU: True
   CONV_BODY: VGG16.VGG16_conv_body
   FASTER_RCNN: True
@@ -19,8 +19,8 @@ SOLVER:
   MAX_ITER: 125446  # 125446 roidbs
   STEPS: [0, 83631, 111508]
 VGG16:
-  VRD_PRETRAINED_WEIGHTS: ''
-  VRD_PRD_PRETRAINED_WEIGHTS: ''
+  VRD_PRETRAINED_WEIGHTS: 'detection_models/vg/VGG16/model_step479999.pth'
+  VRD_PRD_PRETRAINED_WEIGHTS: 'detection_models/vg/VGG16/model_step479999.pth'
 FAST_RCNN:
   ROI_BOX_HEAD: VGG16.VGG16_roi_conv5_head
   ROI_XFORM_METHOD: RoIAlign
