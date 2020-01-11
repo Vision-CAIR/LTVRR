@@ -233,8 +233,9 @@ class Generalized_RCNN(nn.Module):
         if not cfg.MODEL.UNFREEZE_DET:
             for p in self.Box_Head.parameters():
                 p.requires_grad = False
-            for p in self.Box_Outs.parameters():
-                p.requires_grad = False
+            if cfg.VGG16.INCLUDE_CLASSIFIER:
+                for p in self.Box_Outs.parameters():
+                    p.requires_grad = False
 
     def forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, **rpn_kwargs):
         if cfg.PYTORCH_VERSION_LESS_THAN_040:
