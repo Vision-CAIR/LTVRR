@@ -28,6 +28,34 @@ import utils.resnet_weights_helper as resnet_utils
 
 logger = logging.getLogger(__name__)
 
+def _augment_gt_boxes_by_perturbation(unique_gt_boxes, im_width, im_height):
+    num_gt = unique_gt_boxes.shape[0]
+    num_rois = 30
+    rois = np.zeros((num_rois, 4), dtype=np.float32)
+    cnt = 0
+    for i in range(num_gt):
+        box = unique_gt_boxes[i]
+        box_width = box[2] - box[0] + 1
+        box_height = box[3] - box[1] + 1
+        x_offset_max = (box_width - 1) // 2
+        y_offset_max = (box_height - 1) // 2
+        for _ in range(num_rois // num_gt):
+            x_min_offset = np.random.uniform(low=-x_offset_max, high=x_offset_max)
+            y_min_offset = np.random.uniform(low=-y_offset_max, high=y_offset_max)
+            x_max_offset = np.random.uniform(low=-x_offset_max, high=x_offset_max)
+            y_max_offset = np.random.uniform(low=-y_offset_max, high=y_offset_max)
+
+            new_x_min = min(max(np.round(box[0] + x_min_offset), 0), im_width - 1)
+            new_y_min = min(max(np.round(box[1] + y_min_offset), 0), im_height - 1)
+            new_x_max = min(max(np.round(box[2] + x_max_offset), 0), im_width - 1)
+            new_y_max = min(max(np.round(box[3] + y_max_offset), 0), im_height - 1)
+
+            new_box = np.array(
+                [new_x_min, new_y_min, new_x_max, new_y_max]).astype(np.float32)
+            rois[cnt] = new_box
+            cnt += 1
+
+    return rois
 
 def get_func(func_name):
     """Helper to return a function object by name. func_name must identify a
@@ -130,7 +158,7 @@ class Generalized_RCNN(nn.Module):
         self.Conv_Body = get_func(cfg.MODEL.CONV_BODY)()
 
         # Region Proposal Network
-        if cfg.RPN.RPN_ON:
+        if not cfg.TRAIN.USE_GT_BOXES and cfg.RPN.RPN_ON:
             self.RPN = rpn_heads.generic_rpn_outputs(
                 self.Conv_Body.dim_out, self.Conv_Body.spatial_scale)
             
@@ -150,13 +178,16 @@ class Generalized_RCNN(nn.Module):
 
         # BBOX Branch
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(
-            self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
-        self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
-            self.Box_Head.dim_out)
+            self.Conv_Body.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
+            # self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
+        if not cfg.TRAIN.USE_GT_BOXES:
+            self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
+                self.Box_Head.dim_out)
             
         self.Prd_RCNN = copy.deepcopy(self)
-        del self.Prd_RCNN.RPN
-        del self.Prd_RCNN.Box_Outs
+        if not cfg.TRAIN.USE_GT_BOXES:
+            del self.Prd_RCNN.RPN
+            del self.Prd_RCNN.Box_Outs
         
         # initialize word vectors
         ds_name = cfg.TRAIN.DATASETS[0] if len(cfg.TRAIN.DATASETS) else cfg.TEST.DATASETS[0]
@@ -219,7 +250,7 @@ class Generalized_RCNN(nn.Module):
     def load_detector_weights(self, weight_name):
         logger.info("loading pretrained weights from %s", weight_name)
         checkpoint = torch.load(weight_name, map_location=lambda storage, loc: storage)
-        if not cfg.VGG16.INCLUDE_CLASSIFIER:
+        if not cfg.VGG16.INCLUDE_CLASSIFIER or cfg.TRAIN.USE_GT_BOXES:
             del checkpoint['model']['Box_Outs.cls_score.weight']
             del checkpoint['model']['Box_Outs.cls_score.bias']
             del checkpoint['model']['Box_Outs.bbox_pred.weight']
@@ -228,12 +259,13 @@ class Generalized_RCNN(nn.Module):
         # freeze everything above the rel module
         for p in self.Conv_Body.parameters():
             p.requires_grad = False
-        for p in self.RPN.parameters():
-            p.requires_grad = False
+        if not cfg.TRAIN.USE_GT_BOXES:
+            for p in self.RPN.parameters():
+                p.requires_grad = False
         if not cfg.MODEL.UNFREEZE_DET:
             for p in self.Box_Head.parameters():
                 p.requires_grad = False
-            if cfg.VGG16.INCLUDE_CLASSIFIER:
+            if cfg.VGG16.INCLUDE_CLASSIFIER and not cfg.TRAIN.USE_GT_BOXES:
                 for p in self.Box_Outs.parameters():
                     p.requires_grad = False
 
@@ -260,32 +292,51 @@ class Generalized_RCNN(nn.Module):
         blob_conv = self.Conv_Body(im_data)
         blob_conv_prd = self.Prd_RCNN.Conv_Body(im_data)
 
-        rpn_ret = self.RPN(blob_conv, im_info, roidb)
-        
         if cfg.FPN.FPN_ON:
             # Retain only the blobs that will be used for RoI heads. `blob_conv` may include
             # extra blobs that are used for RPN proposals, but not for RoI heads.
             blob_conv = blob_conv[-self.num_roi_levels:]
             blob_conv_prd = blob_conv_prd[-self.num_roi_levels:]
 
-        if cfg.MODEL.SHARE_RES5 and self.training:
-            box_feat, res5_feat = self.Box_Head(blob_conv, rpn_ret, use_relu=True)
-        else:
-            box_feat = self.Box_Head(blob_conv, rpn_ret, use_relu=True)
-        cls_score, bbox_pred = self.Box_Outs(box_feat)
+        if not cfg.TRAIN.USE_GT_BOXES:
+            rpn_ret = self.RPN(blob_conv, im_info, roidb)
+
+            if cfg.MODEL.SHARE_RES5 and self.training:
+                box_feat, res5_feat = self.Box_Head(blob_conv, rpn_ret, use_relu=True)
+            else:
+                box_feat = self.Box_Head(blob_conv, rpn_ret, use_relu=True)
+            cls_score, bbox_pred = self.Box_Outs(box_feat)
         
         # now go through the predicate branch
         use_relu = False if cfg.MODEL.NO_FC7_RELU else True
         if self.training:
-            fg_inds = np.where(rpn_ret['labels_int32'] > 0)[0]
-            det_rois = rpn_ret['rois'][fg_inds]
-            det_labels = rpn_ret['labels_int32'][fg_inds]
-            det_scores = F.softmax(cls_score[fg_inds], dim=1)
-            rel_ret = self.RelPN(det_rois, det_labels, det_scores, im_info, dataset_name, roidb)
+            if cfg.TRAIN.USE_GT_BOXES:
+                # we always feed one image per batch during training
+                assert len(roidb) == 1
+                im_scale = im_info.data.numpy()[:, 2][0]
+                im_w = im_info.data.numpy()[:, 1][0]
+                im_h = im_info.data.numpy()[:, 0][0]
+                sbj_boxes = roidb[0]['sbj_gt_boxes']
+                obj_boxes = roidb[0]['obj_gt_boxes']
+                sbj_all_boxes = _augment_gt_boxes_by_perturbation(sbj_boxes, im_w, im_h)
+                obj_all_boxes = _augment_gt_boxes_by_perturbation(obj_boxes, im_w, im_h)
+                det_all_boxes = np.vstack((sbj_all_boxes, obj_all_boxes))
+                det_all_boxes = np.unique(det_all_boxes, axis=0)
+                det_all_rois = det_all_boxes * im_scale
+                repeated_batch_idx = 0 * blob_utils.ones((det_all_rois.shape[0], 1))
+                det_all_rois = np.hstack((repeated_batch_idx, det_all_rois))
+                rel_ret = self.RelPN(det_all_rois, None, None, im_info, dataset_name, roidb)
+            else:
+                fg_inds = np.where(rpn_ret['labels_int32'] > 0)[0]
+                det_rois = rpn_ret['rois'][fg_inds]
+                det_labels = rpn_ret['labels_int32'][fg_inds]
+                det_scores = F.softmax(cls_score[fg_inds], dim=1)
+                rel_ret = self.RelPN(det_rois, det_labels, det_scores, im_info, dataset_name, roidb)
             sbj_feat = self.Box_Head(blob_conv, rel_ret, rois_name='sbj_rois', use_relu=use_relu)
             obj_feat = self.Box_Head(blob_conv, rel_ret, rois_name='obj_rois', use_relu=use_relu)
         else:
-            if roidb is not None:
+            # if roidb is not None:
+            if cfg.TRAIN.USE_GT_BOXES
                 im_scale = im_info.data.numpy()[:, 2][0]
                 im_w = im_info.data.numpy()[:, 1][0]
                 im_h = im_info.data.numpy()[:, 0][0]
@@ -395,26 +446,27 @@ class Generalized_RCNN(nn.Module):
         if self.training:
             return_dict['losses'] = {}
             return_dict['metrics'] = {}
-            # rpn loss
-            rpn_kwargs.update(dict(
-                (k, rpn_ret[k]) for k in rpn_ret.keys()
-                if (k.startswith('rpn_cls_logits') or k.startswith('rpn_bbox_pred'))
-            ))
-            loss_rpn_cls, loss_rpn_bbox = rpn_heads.generic_rpn_losses(**rpn_kwargs)
-            if cfg.FPN.FPN_ON:
-                for i, lvl in enumerate(range(cfg.FPN.RPN_MIN_LEVEL, cfg.FPN.RPN_MAX_LEVEL + 1)):
-                    return_dict['losses']['loss_rpn_cls_fpn%d' % lvl] = loss_rpn_cls[i]
-                    return_dict['losses']['loss_rpn_bbox_fpn%d' % lvl] = loss_rpn_bbox[i]
-            else:
-                return_dict['losses']['loss_rpn_cls'] = loss_rpn_cls
-                return_dict['losses']['loss_rpn_bbox'] = loss_rpn_bbox
-            # bbox loss
-            loss_cls, loss_bbox, accuracy_cls = fast_rcnn_heads.fast_rcnn_losses(
-                cls_score, bbox_pred, rpn_ret['labels_int32'], rpn_ret['bbox_targets'],
-                rpn_ret['bbox_inside_weights'], rpn_ret['bbox_outside_weights'])
-            return_dict['losses']['loss_cls'] = loss_cls
-            return_dict['losses']['loss_bbox'] = loss_bbox
-            return_dict['metrics']['accuracy_cls'] = accuracy_cls
+            if not cfg.TRAIN.USE_GT_BOXES:
+                # rpn loss
+                rpn_kwargs.update(dict(
+                    (k, rpn_ret[k]) for k in rpn_ret.keys()
+                    if (k.startswith('rpn_cls_logits') or k.startswith('rpn_bbox_pred'))
+                ))
+                loss_rpn_cls, loss_rpn_bbox = rpn_heads.generic_rpn_losses(**rpn_kwargs)
+                if cfg.FPN.FPN_ON:
+                    for i, lvl in enumerate(range(cfg.FPN.RPN_MIN_LEVEL, cfg.FPN.RPN_MAX_LEVEL + 1)):
+                        return_dict['losses']['loss_rpn_cls_fpn%d' % lvl] = loss_rpn_cls[i]
+                        return_dict['losses']['loss_rpn_bbox_fpn%d' % lvl] = loss_rpn_bbox[i]
+                else:
+                    return_dict['losses']['loss_rpn_cls'] = loss_rpn_cls
+                    return_dict['losses']['loss_rpn_bbox'] = loss_rpn_bbox
+                # bbox loss
+                loss_cls, loss_bbox, accuracy_cls = fast_rcnn_heads.fast_rcnn_losses(
+                    cls_score, bbox_pred, rpn_ret['labels_int32'], rpn_ret['bbox_targets'],
+                    rpn_ret['bbox_inside_weights'], rpn_ret['bbox_outside_weights'])
+                return_dict['losses']['loss_cls'] = loss_cls
+                return_dict['losses']['loss_bbox'] = loss_bbox
+                return_dict['metrics']['accuracy_cls'] = accuracy_cls
 
             loss_cls_prd, accuracy_cls_prd = reldn_heads.reldn_losses(
                 prd_cls_scores, rel_ret['all_prd_labels_int32'])
