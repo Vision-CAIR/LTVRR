@@ -336,7 +336,7 @@ class Generalized_RCNN(nn.Module):
             obj_feat = self.Box_Head(blob_conv, rel_ret, rois_name='obj_rois', use_relu=use_relu)
         else:
             # if roidb is not None:
-            if cfg.TRAIN.USE_GT_BOXES
+            if cfg.TRAIN.USE_GT_BOXES:
                 im_scale = im_info.data.numpy()[:, 2][0]
                 im_w = im_info.data.numpy()[:, 1][0]
                 im_h = im_info.data.numpy()[:, 0][0]
