@@ -457,7 +457,7 @@ def main():
         # Save last checkpoint
         save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
 
-    except (RuntimeError, KeyboardInterrupt):
+    except Exception as e:
         del dataiterator
         logger.info('Save ckpt on exception ...')
         save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
