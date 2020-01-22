@@ -101,6 +101,8 @@ def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxe
         obj_labels = return_dict['obj_labels'].data.cpu().numpy() - 1
         obj_scores = return_dict['obj_scores'].data.cpu().numpy()
         prd_scores = return_dict['prd_scores'].data.cpu().numpy()
+        sbj_scores_out = return_dict['sbj_scores_out'].data.cpu().numpy()
+        obj_scores_out = return_dict['obj_scores_out'].data.cpu().numpy()
         if cfg.MODEL.USE_EMBED:
             prd_scores_embd = return_dict['prd_embd_scores'].data.cpu().numpy()
 
@@ -110,7 +112,9 @@ def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxe
                             obj_boxes=obj_boxes,
                             obj_labels=obj_labels.astype(np.int32, copy=False),
                             obj_scores=obj_scores,
-                            prd_scores=prd_scores)
+                            prd_scores=prd_scores,
+                            sbj_scores_out=sbj_scores_out,
+                            obj_scores_out=obj_scores_out)
         if cfg.MODEL.USE_EMBED:
             return_dict2['prd_scores_embd'] = prd_scores_embd
     else:
@@ -120,7 +124,9 @@ def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxe
                             obj_boxes=None,
                             obj_labels=None,
                             obj_scores=None,
-                            prd_scores=None)
+                            prd_scores=None, 
+                            sbj_scores_out=None,
+                            obj_scores_out=None)
     
     return return_dict2
 

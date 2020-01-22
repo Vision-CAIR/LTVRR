@@ -3,7 +3,7 @@ import os
 # import pickle
 from six.moves import cPickle as pickle
 import numpy as np
-
+from tqdm import tqdm
 # if not os.path.exists('./reports/' + data):
 #     os.mkdir('./reports/' + data)
 # if not os.path.exists('./reports/' + data + '/' + split):
@@ -18,7 +18,7 @@ import numpy as np
 
 def generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path):
     with open(csv_path, 'w', newline='') as csvfile:
-        total_test_iters = len(detections['image_idx'])
+        total_test_iters = len(detections)
         spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
         spamwriter.writerow(['image_id',
@@ -35,34 +35,50 @@ def generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path):
                              'obj_freq_gt',
                              'obj_rank'])
 
-        for i in range(0, total_test_iters):
-            image_idx = detections['image_idx'][i]
-            image_id = detections['image_id'][i]
-            for j in range(len(detections['gt_labels_sbj'][i])):
-                gt_labels_sbj = detections['gt_labels_sbj'][i][j]
-                gt_labels_obj = detections['gt_labels_obj'][i][j]
-                gt_labels_rel = detections['gt_labels_rel'][i][j]
-                det_labels_sbj = detections['labels_sbj'][i][j]
-                det_labels_obj = detections['labels_obj'][i][j]
-                det_labels_rel = detections['labels_rel'][i][j]
+        for i in tqdm(range(0, total_test_iters)):
+            #image_idx = detections[i]['image_idx']
+            #image_id = detections[i]['image_id']
+            image_id = detections[i]['image'].split('/')[-1].split('.')[0]
+            det_scores_prd_all = detections[i]['prd_scores'][:, 1:]
+            det_labels_rel_all = np.argsort(-det_scores_prd_all, axis=1)
+            det_scores_sbj_all = detections[i]['sbj_scores_out']
+            det_labels_sbj_all = np.argsort(-det_scores_sbj_all, axis=1)
+            
+            det_scores_obj_all = detections[i]['obj_scores_out']
+            det_labels_obj_all = np.argsort(-det_scores_obj_all, axis=1)
 
+            for j in range(len(detections[i]['gt_sbj_labels'])):
+                gt_labels_sbj = detections[i]['gt_sbj_labels'][j]
+                gt_labels_obj = detections[i]['gt_obj_labels'][j]
+                gt_labels_rel = detections[i]['gt_prd_labels'][j]
+                det_labels_sbj = det_labels_sbj_all[j, 0]
+                sbj_rank = np.where(det_labels_sbj_all[j, :] == gt_labels_sbj)[0][0]
+                det_labels_obj = det_labels_obj_all[j, 0]
+                obj_rank = np.where(det_labels_obj_all[j, :] == gt_labels_obj)[0][0]
+                det_labels_rel = det_labels_rel_all[j, 0]
+                rel_rank = np.where(det_labels_rel_all[j, :] == gt_labels_rel)[0][0]
+                #print('rel_rank', rel_rank)
+                #print('det_labels_rel_all[j, :]', det_labels_rel_all[j, :])
+                #print('gt_labels_rel', gt_labels_rel)
+                #exit()
+                #det_labels_rel = detections[i]['prd_labels'][j]
                 #print(det_labels_rel[:10])
                 #print(gt_labels_rel)
                 #print(np.where(det_labels_rel == gt_labels_rel))
-                try:
-                    rel_rank = np.where(det_labels_rel == gt_labels_rel)[0][0]
-                except IndexError as e:
-                    rel_rank = 251
+                #try:
+                #    rel_rank = np.where(det_labels_rel == gt_labels_rel)[0][0]
+                #except IndexError as e:
+                #    rel_rank = 251
 
-                try:
-                    sbj_rank = np.where(det_labels_sbj == gt_labels_sbj)[0][0]
-                except IndexError as e:
-                    sbj_rank = 251
+                #try:
+                #    sbj_rank = np.where(det_labels_sbj == gt_labels_sbj)[0][0]
+                #except IndexError as e:
+                #    sbj_rank = 251
 
-                try:
-                    obj_rank = np.where(det_labels_obj == gt_labels_obj)[0][0]
-                except IndexError as e:
-                    obj_rank = 251
+                #try:
+                #    obj_rank = np.where(det_labels_obj == gt_labels_obj)[0][0]
+                #except IndexError as e:
+                #    obj_rank = 251
 
                 # rel_top1 = gt_labels_rel in det_labels_rel[:1]
                 # rel_top5 = gt_labels_rel in det_labels_rel[:5]
@@ -79,31 +95,40 @@ def generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path):
                 spamwriter.writerow(
                     [image_id,
                      gt_labels_rel,
-                     det_labels_rel[0],
+                     det_labels_rel,
                      pred_freq[gt_labels_rel],
                      rel_rank,
                      gt_labels_sbj,
-                     det_labels_sbj[0],
+                     det_labels_sbj,
                      obj_freq[gt_labels_sbj],
                      sbj_rank,
                      gt_labels_obj,
-                     det_labels_obj[0],
+                     det_labels_obj,
                      obj_freq[gt_labels_obj],
                      obj_rank])
 
 
-out_dir = '/home/x_abdelks/c2044/Large_Scale_VRD_pytorch/Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only/gvqa/Jan13-05-44-10_gpu208-10_step_with_prd_cls_v3/test/'
-detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
-csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
+#out_dir = '/home/x_abdelks/c2044/Large_Scale_VRD_pytorch/Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only/gvqa/Jan13-05-44-10_gpu208-10_step_with_prd_cls_v3/test/'
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only/vg/Jan08-04-43-19_gpu211-06_step_with_prd_cls_v3/'
+#detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
+#detections_file = '/ibex/scratch/projects/c2044/Large_Scale_VRD_pytorch/Outputs/test/rel_detections_gt_boxes_sgcls.pkl' 
+#detections_file = 'Outputs/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only/rel_detections.pkl'
+detections_file = '/ibex/scratch/projects/c2044/Large_Scale_VRD_pytorch/Outputs/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only/rel_detections.pkl'
+detections_file = 'Outputs/test/rel_detections_gt_boxes_sgcls.pkl'
+#csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
+#csv_path = out_dir + 'rel_detections.csv'
+csv_path = out_dir + 'rel_detections_gt_boxes_sgcls.csv'
 
 detections = pickle.load(open(detections_file, 'rb'))
-
 pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_pred.npy'
+#pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_pred.npy'
 
 obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_obj.npy'
+#obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_obj.npy'
 
 pred_freq = np.load(pred_freq_paths)
 obj_freq = np.load(obj_freq_paths)
 
 
 generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path)
+print('Wrote csv detections to:', csv_path)

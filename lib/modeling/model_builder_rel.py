@@ -180,8 +180,8 @@ class Generalized_RCNN(nn.Module):
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(
             self.Conv_Body.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
             # self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
-        if not cfg.TRAIN.USE_GT_BOXES:
-            self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
+        #if not cfg.TRAIN.USE_GT_BOXES:
+        self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
                 self.Box_Head.dim_out)
             
         self.Prd_RCNN = copy.deepcopy(self)
@@ -335,8 +335,7 @@ class Generalized_RCNN(nn.Module):
             sbj_feat = self.Box_Head(blob_conv, rel_ret, rois_name='sbj_rois', use_relu=use_relu)
             obj_feat = self.Box_Head(blob_conv, rel_ret, rois_name='obj_rois', use_relu=use_relu)
         else:
-            # if roidb is not None:
-            if cfg.TRAIN.USE_GT_BOXES:
+            if roidb is not None:
                 im_scale = im_info.data.numpy()[:, 2][0]
                 im_w = im_info.data.numpy()[:, 1][0]
                 im_h = im_info.data.numpy()[:, 0][0]
@@ -502,9 +501,11 @@ class Generalized_RCNN(nn.Module):
             return_dict['sbj_labels'] = rel_ret['sbj_labels']
             return_dict['obj_labels'] = rel_ret['obj_labels']
             return_dict['sbj_scores'] = rel_ret['sbj_scores']
+            return_dict['sbj_scores_out'] = sbj_cls_scores
             return_dict['obj_scores'] = rel_ret['obj_scores']
+            return_dict['obj_scores_out'] = obj_cls_scores
             return_dict['prd_scores'] = prd_cls_scores
-
+            
         return return_dict
     
     def get_roi_inds(self, det_labels, lbls):
