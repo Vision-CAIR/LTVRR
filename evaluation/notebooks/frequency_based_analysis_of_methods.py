@@ -45,34 +45,45 @@ dataset = 'gvqa'
 
 # In[12]:
 
-all_csvs = np.array([f for f in files_in_subdirs(top_data_dir, '.csv$')])
-method_names = np.array([osp.basename(f)[1:-len('.csv')] for f in all_csvs])
-
-sids = np.argsort(method_names)
+all_csvs = np.array([f for f in files_in_subdirs(top_data_dir, 'prdcls.csv$')])
+#method_names = np.array([osp.basename(f)[1:-len('.csv')] for f in all_csvs])
+#sids = np.argsort(method_names)
+sids = np.argsort(all_csvs)
 all_csvs = all_csvs[sids]
-method_names = method_names[sids]
+#method_names = method_names[sids]
 
-print ('Found {} methods.'.format(len(method_names)))
+print ('Found {} methods.'.format(len(all_csvs)))
 
 
 # In[13]:
 
 apply_mask = True
 
-methods_to_keep = ['baseline', 'focal_loss_g025', 'focal_loss_g1', 'focal_loss_g10',
-                   'focal_loss_g2', 'focal_loss_g5', 'focal_loss_g50', 'hubness',
+#methods_to_keep = ['baseline', 'focal_loss_g025', 'focal_loss_g1', 'focal_loss_g10',
+#                   'focal_loss_g2', 'focal_loss_g5', 'focal_loss_g50', 'hubness',
+#                   'hubness10k', 'hubness50k']
+methods_to_keep = ['baseline', 'focal_025', 'focal_1', 'focal_10',
+                   'focal_2', 'focal_5', 'focal_50', 'hubness',
                    'hubness10k', 'hubness50k']
 
 if apply_mask:
-    keep_mask = np.zeros(len(method_names), dtype=np.bool)
-    for i, m in enumerate(method_names):
-        if m in methods_to_keep:
+    keep_mask = np.zeros(len(all_csvs), dtype=np.bool)
+    #for i, m in enumerate(method_names):
+    for i, m in enumerate(all_csvs):
+        #if m in methods_to_keep:
+        if np.any([x in m for x in methods_to_keep]):
             keep_mask[i] = True
     all_csvs = all_csvs[keep_mask]
-    method_names = method_names[keep_mask]
+    method_names = np.array([None for _ in all_csvs])
+    for i, csv_path in enumerate(all_csvs):
+        for method in methods_to_keep:
+            if method in csv_path:
+                method_names[i] = method
+
+    #method_names = method_names[keep_mask]
 
     print ('Kept methods', len(method_names))
-
+    print(method_names)
 
 # In[14]:
 
@@ -102,7 +113,7 @@ object_prefix = 'obj'
 subject_prefix = 'sbj'
 gt_prefix = 'gt'
 all_prediction_types  = [relation_prefix, object_prefix, subject_prefix]
-raw_metrics = ['top1', 'top5', 'top10']
+raw_metrics = ['top1']
 
 
 # In[16]:
@@ -133,22 +144,29 @@ for i, m in enumerate(method_names):
         print(m)
     df = pd.read_csv(all_csvs[i])
     
-    if drop_left_right and dataset == 'gvqa':
-        print ('dropping left/right')
-        df = df[(df.gt_rel != 286) & (df.gt_rel != 35)]
-        
+    #if drop_left_right and dataset == 'gvqa':
+    #    print ('dropping left/right')
+    #    df = df[(df.gt_rel != 286) & (df.gt_rel != 35)]
+    df['rel_top1'] = df['rel_rank'] < 1
+    for metric_type in raw_metrics:
+        for prediction_type in all_prediction_types:
+            df[prediction_type + '_' + metric_type] = df[prediction_type + '_rank'] < int(metric_type[3:])
+
     for metric_type in raw_metrics:
         if verbose:
             print('------', metric_type, '------')
         for prediction_type in all_prediction_types:
-            mu = df[prediction_type + '_' + metric_type].mean() * 100
+            mu = (len(df[df[prediction_type + '_rank'] < int(metric_type[3:])])/len(df)) * 100.0
+            #mu = df[prediction_type + '_' + metric_type].mean() * 100
             
             if verbose:
                 print ('simple-average', prediction_type, '{:2.2f}'.format(mu))
             
             collected_simple_means[(m, prediction_type, metric_type)] = mu
-            
+             
             mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean() * 100
+            #mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
+            #print(mu)
             
             if verbose:
                 print ('per-class-average', prediction_type, '{:2.2f}'.format(mu))
