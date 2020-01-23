@@ -8,7 +8,7 @@
 import numpy as np
 import pandas as pd
 import os.path as osp
-import seaborn as sns # not critical.
+# import seaborn as sns # not critical.
 import matplotlib.pylab as plt
 
 
@@ -78,9 +78,9 @@ if apply_mask:
 
 # Load meta-information (integer to "human" readable names)
 if dataset == 'gvqa':
-    meta_file_name = 'GQA_data_files'
+    meta_file_name = 'GVQA'
 else:
-    meta_file_name = 'VG_data_files'
+    meta_file_name = 'Visual_Genome'
     
 obj_names = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/{}/object_categories_spo_joined_and_merged.txt'.format(meta_file_name)
 rel_names = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/{}/predicate_categories_spo_joined_and_merged.txt'.format(meta_file_name)
