@@ -16,7 +16,9 @@ from tqdm import tqdm
 # if not os.path.exists(csv_path):
 #     os.mkdir(csv_path)
 
-def generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path):
+def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path):
+    detections = pickle.load(open(detections_file, 'rb'))
+
     with open(csv_path, 'w', newline='') as csvfile:
         total_test_iters = len(detections)
         spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -39,8 +41,10 @@ def generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path):
             #image_idx = detections[i]['image_idx']
             #image_id = detections[i]['image_id']
             image_id = detections[i]['image'].split('/')[-1].split('.')[0]
+
             det_scores_prd_all = detections[i]['prd_scores'][:, 1:]
             det_labels_rel_all = np.argsort(-det_scores_prd_all, axis=1)
+
             det_scores_sbj_all = detections[i]['sbj_scores_out']
             det_labels_sbj_all = np.argsort(-det_scores_sbj_all, axis=1)
             
@@ -108,18 +112,7 @@ def generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path):
                      obj_rank])
 
 
-#out_dir = '/home/x_abdelks/c2044/Large_Scale_VRD_pytorch/Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only/gvqa/Jan13-05-44-10_gpu208-10_step_with_prd_cls_v3/test/'
-out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only/vg/Jan08-04-43-19_gpu211-06_step_with_prd_cls_v3/'
-#detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
-#detections_file = '/ibex/scratch/projects/c2044/Large_Scale_VRD_pytorch/Outputs/test/rel_detections_gt_boxes_sgcls.pkl' 
-#detections_file = 'Outputs/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only/rel_detections.pkl'
-detections_file = '/ibex/scratch/projects/c2044/Large_Scale_VRD_pytorch/Outputs/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only/rel_detections.pkl'
-detections_file = 'Outputs/test/rel_detections_gt_boxes_sgcls.pkl'
-#csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
-#csv_path = out_dir + 'rel_detections.csv'
-csv_path = out_dir + 'rel_detections_gt_boxes_sgcls.csv'
 
-detections = pickle.load(open(detections_file, 'rb'))
 pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_pred.npy'
 #pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_pred.npy'
 
@@ -129,6 +122,44 @@ obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_V
 pred_freq = np.load(pred_freq_paths)
 obj_freq = np.load(obj_freq_paths)
 
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only/gvqa/Jan13-05-44-10_gpu208-10_step_with_prd_cls_v3/test/'
+detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
+csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
 
-generate_csv_file_from_det_file(detections, pred_freq, obj_freq, csv_path)
+generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path)
+print('Wrote csv detections to:', csv_path)
+
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness/gvqa/Jan13-05-44-14_gpu214-02_step_with_prd_cls_v3/test/'
+detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
+csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
+
+generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path)
+print('Wrote csv detections to:', csv_path)
+
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_focal/gvqa/Jan13-05-42-54_gpu208-18_step_with_prd_cls_v3/test/'
+detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
+csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
+
+generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path)
+print('Wrote csv detections to:', csv_path)
+
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_focal_025/gvqa/Jan13-05-44-39_gpu211-06_step_with_prd_cls_v3/test/'
+detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
+csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
+
+generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path)
+print('Wrote csv detections to:', csv_path)
+
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_focal_1/gvqa/Jan14-06-21-51_gpu208-10_step_with_prd_cls_v3/test/'
+detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
+csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
+
+generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path)
+print('Wrote csv detections to:', csv_path)
+
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_focal_5/gvqa/Jan14-06-25-03_gpu211-06_step_with_prd_cls_v3/test/'
+detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
+csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
+
+generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path)
 print('Wrote csv detections to:', csv_path)
