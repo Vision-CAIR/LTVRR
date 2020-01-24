@@ -415,7 +415,7 @@ class Generalized_RCNN(nn.Module):
         
         # when MODEL.USE_SEM_CONCAT, memory runs out if the whole batch is fed once
         # so we need to feed the batch twice if it's big
-        gn_size = 4000
+        gn_size = 1000
         if cfg.MODEL.USE_SEM_CONCAT and concat_feat.shape[0] > gn_size:
             group = int(math.floor(concat_feat.shape[0] / gn_size)) + 1
             prd_cls_scores = None
