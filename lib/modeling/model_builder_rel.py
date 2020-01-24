@@ -25,6 +25,7 @@ import utils.boxes as box_utils
 import utils.blob as blob_utils
 import utils.net as net_utils
 import utils.resnet_weights_helper as resnet_utils
+import utils.fpn as fpn_utils
 
 logger = logging.getLogger(__name__)
 
@@ -180,8 +181,8 @@ class Generalized_RCNN(nn.Module):
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(
             self.Conv_Body.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
             # self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
-        #if not cfg.TRAIN.USE_GT_BOXES:
-        self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
+        if not cfg.TRAIN.USE_GT_BOXES:
+            self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(
                 self.Box_Head.dim_out)
             
         self.Prd_RCNN = copy.deepcopy(self)
@@ -362,18 +363,18 @@ class Generalized_RCNN(nn.Module):
                         fpn_utils.add_multilevel_roi_blobs(
                             rel_ret, rois_blob_name, rel_ret[rois_blob_name], target_lvls,
                             lvl_min, lvl_max)
-                sbj_det_feat = self.Box_Head(blob_conv, rel_ret, rois_name='sbj_rois', use_relu=True)
-                sbj_cls_scores, _ = self.Box_Outs(sbj_det_feat)
-                sbj_cls_scores = sbj_cls_scores.data.cpu().numpy()
-                obj_det_feat = self.Box_Head(blob_conv, rel_ret, rois_name='obj_rois', use_relu=True)
-                obj_cls_scores, _ = self.Box_Outs(obj_det_feat)
-                obj_cls_scores = obj_cls_scores.data.cpu().numpy()
                 if use_gt_labels:
                     sbj_labels = roidb['sbj_gt_classes']  # start from 0
                     obj_labels = roidb['obj_gt_classes']  # start from 0
                     sbj_scores = np.ones_like(sbj_labels, dtype=np.float32)
                     obj_scores = np.ones_like(obj_labels, dtype=np.float32)
                 else:
+                    sbj_det_feat = self.Box_Head(blob_conv, rel_ret, rois_name='sbj_rois', use_relu=True)
+                    sbj_cls_scores, _ = self.Box_Outs(sbj_det_feat)
+                    sbj_cls_scores = sbj_cls_scores.data.cpu().numpy()
+                    obj_det_feat = self.Box_Head(blob_conv, rel_ret, rois_name='obj_rois', use_relu=True)
+                    obj_cls_scores, _ = self.Box_Outs(obj_det_feat)
+                    obj_cls_scores = obj_cls_scores.data.cpu().numpy()
                     sbj_labels = np.argmax(sbj_cls_scores[:, 1:], axis=1)
                     obj_labels = np.argmax(obj_cls_scores[:, 1:], axis=1)
                     sbj_scores = np.amax(sbj_cls_scores[:, 1:], axis=1)
