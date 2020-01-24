@@ -122,7 +122,7 @@ obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_V
 pred_freq = np.load(pred_freq_paths)
 obj_freq = np.load(obj_freq_paths)
 
-out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only/gvqa/Jan13-05-44-10_gpu208-10_step_with_prd_cls_v3/test/'
+out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline/gvqa/Jan13-05-44-10_gpu208-10_step_with_prd_cls_v3/test/'
 detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
 csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
 
