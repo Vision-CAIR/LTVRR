@@ -21,11 +21,13 @@ import modeling.rpn_heads as rpn_heads
 import modeling.fast_rcnn_heads as fast_rcnn_heads
 import modeling.relpn_heads as relpn_heads
 import modeling.reldn_heads as reldn_heads
+import modeling.dot_product_classifier as dot_product_classifier
 import utils.boxes as box_utils
 import utils.blob as blob_utils
 import utils.net as net_utils
 import utils.resnet_weights_helper as resnet_utils
 import utils.fpn as fpn_utils
+from utils.memory_utils import *
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +200,35 @@ class Generalized_RCNN(nn.Module):
         self.RelPN = relpn_heads.generic_relpn_outputs()
         # RelDN
         self.RelDN = reldn_heads.reldn_head(self.Box_Head.dim_out * 3, self.obj_vecs, self.prd_vecs)  # concat of SPO
+
+        if cfg.MODEL.MEMORY_MODULE and cfg.MODEL.MEMORY_MODULE_STAGE == 1:
+            classifier_param = {'in_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES,
+                                'stage1_weights': False, 'dataset': cfg.DATASET}
+            classifier_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
+            classifier_params = {'def_file': './models/DotProductClassifier.py',
+                                      'params': classifier_param,
+                                      'optim_params': classifier_optim_param}
+            model_args = list(classifier_params['params'].values())
+            model_args.append(not self.training)
+
+
+            self.classifier = dot_product_classifier.create_model(*model_args)
+            # self.classifier = nn.DataParallel(self.classifier).to(self.device)
+
+            prd_classifier_param = {'in_dim': 4096 * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES,
+                                'stage1_weights': False, 'dataset': cfg.DATASET}
+
+            prd_classifier_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
+            prd_classifier_params = {'def_file': './models/DotProductClassifier.py',
+                                      'params': prd_classifier_param,
+                                      'optim_params': prd_classifier_optim_param}
+            prd_model_args = list(prd_classifier_params['params'].values())
+            prd_model_args.append(not self.training)
+
+
+            self.prd_classifier = dot_product_classifier.create_model(*prd_model_args)
+            # self.classifier = nn.DataParallel(self.classifier).to(self.device)
+
 
         self._init_modules()
 
@@ -440,8 +471,14 @@ class Generalized_RCNN(nn.Module):
                     sbj_cls_scores = torch.cat((sbj_cls_scores, sbj_cls_scores_i)) if sbj_cls_scores_i is not None else sbj_cls_scores
                     obj_cls_scores = torch.cat((obj_cls_scores, obj_cls_scores_i)) if obj_cls_scores_i is not None else obj_cls_scores
         else:
-            prd_cls_scores, sbj_cls_scores, obj_cls_scores = \
-                self.RelDN(concat_feat, sbj_labels, obj_labels, sbj_feat, obj_feat)
+            if cfg.MODEL.MEMORY_MODULE:
+                sbj_cls_scores = self.classifier(sbj_feat)
+                obj_cls_scores = self.classifier(obj_feat)
+                prd_cls_scores = self.prd_classifier(concat_feat)
+
+            else:
+                prd_cls_scores, sbj_cls_scores, obj_cls_scores = \
+                    self.RelDN(concat_feat, sbj_labels, obj_labels, sbj_feat, obj_feat)
 
         if self.training:
             return_dict['losses'] = {}

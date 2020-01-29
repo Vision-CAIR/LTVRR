@@ -440,6 +440,8 @@ __C.MODEL.UNFREEZE_DET = False
 __C.MODEL.CONV_BODY = ''
 
 __C.MODEL.USE_SEM_CONCAT = False
+__C.MODEL.MEMORY_MODULE = False
+__C.MODEL.MEMORY_MODULE_STAGE = 1
 
 # Number of classes in the dataset; must be set
 # E.g., 81 for COCO (80 foreground + 1 background)
