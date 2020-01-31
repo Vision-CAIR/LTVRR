@@ -329,7 +329,11 @@ def main():
 
     print('Initializing model and classifier optimizers.')
     classifier_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
-    params.append({'params': maskRCNN.classifier.parameters() + maskRCNN.prd_classifier.parameters(),
+    params.append({'params': maskRCNN.classifier.parameters(),
+                    'lr': classifier_optim_param['lr'],
+                    'momentum': classifier_optim_param['momentum'],
+                    'weight_decay': classifier_optim_param['weight_decay']})
+    params.append({'params': maskRCNN.prd_classifier.parameters(),
                     'lr': classifier_optim_param['lr'],
                     'momentum': classifier_optim_param['momentum'],
                     'weight_decay': classifier_optim_param['weight_decay']})
@@ -351,10 +355,15 @@ def main():
         feat_loss_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
 
         optim_params = feat_loss_optim_param
-        optim_params = [{'params': maskRCNN.feature_loss_sbj_obj.parameters() + maskRCNN.feature_loss_prd.parameters(),
+        optim_params = [{'params': maskRCNN.feature_loss_sbj_obj.parameters(),
                          'lr': optim_params['lr'],
                          'momentum': optim_params['momentum'],
-                         'weight_decay': optim_params['weight_decay']}]
+                         'weight_decay': optim_params['weight_decay']},
+                        {'params': maskRCNN.feature_loss_prd.parameters(),
+                         'lr': optim_params['lr'],
+                         'momentum': optim_params['momentum'],
+                         'weight_decay': optim_params['weight_decay']}
+                        ]
 
         # Initialize criterion optimizer and scheduler
         criterion_optimizer, criterion_optimizer_scheduler = init_optimizers(optim_params)
