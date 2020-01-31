@@ -117,7 +117,7 @@ def parse_args():
 
 
 def init_optimizers(optim_params, scheduler_params):
-    optimizer = torch.optim.SGD(optim_params)
+    optimizer = torch.optim.SGD(optim_params, momentum=cfg.SOLVER.MOMENTUM)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                           step_size=scheduler_params['step_size'],
                                           gamma=scheduler_params['gamma'])
@@ -282,6 +282,8 @@ def main():
     backbone_nonbias_param_names = []
     prd_branch_nonbias_params = []
     prd_branch_nonbias_param_names = []
+    classifier_params = []
+    classifier_param_names = []
     for key, value in dict(maskRCNN.named_parameters()).items():
         if value.requires_grad:
             if 'gn' in key:
@@ -293,6 +295,9 @@ def main():
                 else:
                     backbone_nonbias_params.append(value)
                     backbone_nonbias_param_names.append(key)
+            elif 'classifier' in key:
+                classifier_params.append(value)
+                classifier_param_names.append(value)
             else:
                 if 'bias' in key:
                     prd_branch_bias_params.append(value)
@@ -316,7 +321,9 @@ def main():
          'weight_decay': cfg.SOLVER.WEIGHT_DECAY if cfg.SOLVER.BIAS_WEIGHT_DECAY else 0},
         {'params': gn_params,
          'lr': 0,
-         'weight_decay': cfg.SOLVER.WEIGHT_DECAY_GN}
+         'weight_decay': cfg.SOLVER.WEIGHT_DECAY_GN},
+        {'params': classifier_params,
+         'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
     ]
 
     # print('Initializing model optimizer.')
@@ -328,15 +335,15 @@ def main():
 
 
     print('Initializing model and classifier optimizers.')
-    classifier_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
-    params.append({'params': maskRCNN.classifier.parameters(),
-                    'lr': classifier_optim_param['lr'],
-                    'momentum': classifier_optim_param['momentum'],
-                    'weight_decay': classifier_optim_param['weight_decay']})
-    params.append({'params': maskRCNN.prd_classifier.parameters(),
-                    'lr': classifier_optim_param['lr'],
-                    'momentum': classifier_optim_param['momentum'],
-                    'weight_decay': classifier_optim_param['weight_decay']})
+    #classifier_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
+    #params.append({'params': maskRCNN.classifier.parameters(),
+    #                'lr': classifier_optim_param['lr']),
+    #                'momentum': classifier_optim_param['momentum'],
+    #                'weight_decay': classifier_optim_param['weight_decay']})
+    #params.append({'params': maskRCNN.prd_classifier.parameters(),
+    #                'lr': classifier_optim_param['lr'],
+    #                'momentum': classifier_optim_param['momentum'],
+    #                'weight_decay': classifier_optim_param['weight_decay']})
 
     if cfg.MODEL.MEMORY_MODULE_STAGE == 1:
         step_size = 10
@@ -480,7 +487,6 @@ def main():
 
             training_stats.IterTic()
             optimizer.zero_grad()
-            criterion_optimizer.zero_grad()
             if criterion_optimizer:
                 criterion_optimizer.zero_grad()
             for inner_iter in range(args.iter_size):
