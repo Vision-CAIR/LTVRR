@@ -357,9 +357,9 @@ class Generalized_RCNN(nn.Module):
                 concat_feat_i = concat_feat[i * gn_size : end]
                 sbj_feat_i = sbj_feat[i * gn_size : end]
                 obj_feat_i = obj_feat[i * gn_size : end]
-                sbj_cls_scores_i = self.classifier(sbj_feat_i)
-                obj_cls_scores_i = self.classifier(obj_feat_i)
-                prd_cls_scores_i = self.prd_classifier(concat_feat_i)
+                sbj_cls_scores_i, _ = self.classifier(sbj_feat_i)
+                obj_cls_scores_i, _ = self.classifier(obj_feat_i)
+                prd_cls_scores_i, _ = self.prd_classifier(concat_feat_i)
 
                 if prd_cls_scores is None:
                     prd_cls_scores = prd_cls_scores_i
@@ -370,9 +370,9 @@ class Generalized_RCNN(nn.Module):
                     sbj_cls_scores = torch.cat((sbj_cls_scores, sbj_cls_scores_i)) if sbj_cls_scores_i is not None else sbj_cls_scores
                     obj_cls_scores = torch.cat((obj_cls_scores, obj_cls_scores_i)) if obj_cls_scores_i is not None else obj_cls_scores
         else:
-            sbj_cls_scores = self.classifier(sbj_feat)
-            obj_cls_scores = self.classifier(obj_feat)
-            prd_cls_scores = self.prd_classifier(concat_feat)
+            sbj_cls_scores, _ = self.classifier(sbj_feat)
+            obj_cls_scores, _ = self.classifier(obj_feat)
+            prd_cls_scores, _ = self.prd_classifier(concat_feat)
 
         if self.training:
             return_dict['losses'] = {}

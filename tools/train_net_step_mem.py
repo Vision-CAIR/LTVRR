@@ -159,7 +159,7 @@ def main():
     else:
         raise ValueError("Need Cuda device to run !")
 
-    cfg.DATASETS = args.dataset
+    cfg.DATASET = args.dataset
     if args.dataset == "vrd":
         cfg.TRAIN.DATASETS = ('vrd_train',)
         cfg.MODEL.NUM_CLASSES = 101
