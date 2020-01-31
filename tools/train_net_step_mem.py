@@ -25,7 +25,7 @@ import utils.misc as misc_utils
 from core.config import cfg, cfg_from_file, cfg_from_list, assert_and_infer_cfg
 from datasets.roidb_rel import combined_roidb_for_training
 from roi_data.loader_rel import RoiDataLoader, MinibatchSampler, BatchSampler, collate_minibatch
-from modeling.model_builder_rel import Generalized_RCNN
+from modeling.model_builder_mem import Generalized_RCNN
 from utils.detectron_weight_helper import load_detectron_weight
 from utils.logging import setup_logging
 from utils.timer import Timer
