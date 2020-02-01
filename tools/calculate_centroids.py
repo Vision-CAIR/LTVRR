@@ -34,6 +34,8 @@ def parse_args():
 
     parser.add_argument(
         '--load_ckpt', help='path of checkpoint to load')
+    parser.add_argument(
+        '--load_detectron', help='path to the detectron weight pickle file')
 
     parser.add_argument(
         '--output_dir',
@@ -41,10 +43,26 @@ def parse_args():
              'defaults to [args.load_ckpt|args.load_detectron]/../test.')
 
     parser.add_argument(
+        '--set', dest='set_cfgs',
+        help='set config keys, will overwrite config in the cfg_file.'
+             ' See lib/core/config.py for all options',
+        default=[], nargs='*')
+
+    parser.add_argument(
+        '--range',
+        help='start (inclusive) and end (exclusive) indices',
+        type=int, nargs=2)
+    parser.add_argument(
+        '--multi-gpu-testing', help='using multiple gpus for inference',
+        action='store_true')
+    parser.add_argument(
+        '--vis', dest='vis', help='visualize detections', action='store_true')
+    parser.add_argument(
+        '--do_val', dest='do_val', help='do evaluation', action='store_true')
+    parser.add_argument(
         '--use_gt_boxes', dest='use_gt_boxes', help='use gt boxes for sgcls/prdcls', action='store_true')
     parser.add_argument(
-        '--use_gt_labels', dest='use_gt_labels', help='use gt boxes for sgcls/prdcls', action='store_true')
-
+        '--use_gt_labels', dest='use_gt_labels', help='use gt boxes for sgcls/prdcls', action='store_true')    
     return parser.parse_args()
 
 
@@ -58,9 +76,6 @@ if __name__ == '__main__':
     logger.info('Called with args:')
     logger.info(args)
 
-    assert (torch.cuda.device_count() == 1) ^ bool(args.multi_gpu_testing)
-
-    cfg.VIS = args.vis
 
     if args.cfg_file is not None:
         merge_cfg_from_file(args.cfg_file)
@@ -113,8 +128,4 @@ if __name__ == '__main__':
             det_file = os.path.join(args.output_dir, 'rel_detections_gt_boxes_sgcls.pkl')
     else:
         det_file = os.path.join(args.output_dir, 'rel_detections.pkl')
-    all_results = get_features_for_centroids(
-                    args,
-                    ind_range=args.range,
-                    multi_gpu_testing=args.multi_gpu_testing,
-                    check_expected_results=True)
+    all_results = get_features_for_centroids(args)
