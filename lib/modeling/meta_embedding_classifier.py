@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.CosNormClassifier import CosNorm_Classifier
+from modeling.cos_norm_classifier import CosNorm_Classifier
 from utils.memory_utils import *
 
 import pdb

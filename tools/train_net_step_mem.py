@@ -31,6 +31,7 @@ from utils.logging import setup_logging
 from utils.timer import Timer
 from utils.training_stats_rel import TrainingStats
 
+from torch import autograd
 # Set up logging and load config options
 logger = setup_logging(__name__)
 logging.getLogger('roi_data.loader').setLevel(logging.INFO)
@@ -295,9 +296,9 @@ def main():
                 else:
                     backbone_nonbias_params.append(value)
                     backbone_nonbias_param_names.append(key)
-            elif 'classifier' in key:
-                classifier_params.append(value)
-                classifier_param_names.append(value)
+            #elif 'classifier' in key:
+            #    classifier_params.append(value)
+            #    classifier_param_names.append(value)
             else:
                 if 'bias' in key:
                     prd_branch_bias_params.append(value)
@@ -321,9 +322,9 @@ def main():
          'weight_decay': cfg.SOLVER.WEIGHT_DECAY if cfg.SOLVER.BIAS_WEIGHT_DECAY else 0},
         {'params': gn_params,
          'lr': 0,
-         'weight_decay': cfg.SOLVER.WEIGHT_DECAY_GN},
-        {'params': classifier_params,
-         'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
+         'weight_decay': cfg.SOLVER.WEIGHT_DECAY_GN}#,
+        #{'params': classifier_params,
+        # 'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
     ]
 
     # print('Initializing model optimizer.')
@@ -495,11 +496,12 @@ def main():
                 except StopIteration:
                     dataiterator = iter(dataloader)
                     input_data = next(dataiterator)
+                #print('input_data', [torch.isnan(x) for x in input_data.values()])    
                 
                 for key in input_data:
                     if key != 'roidb': # roidb is a list of ndarrays with inconsistent length
                         input_data[key] = list(map(Variable, input_data[key]))
-                
+                #with autograd.detect_anomaly():
                 net_outputs = maskRCNN(**input_data)
                 training_stats.UpdateIterStats(net_outputs, inner_iter)
                 loss = net_outputs['total_loss']

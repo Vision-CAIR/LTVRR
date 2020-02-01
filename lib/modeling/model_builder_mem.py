@@ -136,9 +136,9 @@ class Generalized_RCNN(nn.Module):
         else:
             raise NotImplementedError
 
-        classifier_param = {'in_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES,
+        classifier_param = {'in_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES - 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
-        classifier_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
+        classifier_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
         classifier_params = {'params': classifier_param,
                              'optim_params': classifier_optim_param}
         model_args = list(classifier_params['params'].values())
@@ -152,10 +152,10 @@ class Generalized_RCNN(nn.Module):
             raise NotImplementedError
 
         # self.classifier = nn.DataParallel(self.classifier).to(self.device)
-        prd_classifier_param = {'in_dim': 4096 * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES,
+        prd_classifier_param = {'in_dim': 4096 * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
 
-        prd_classifier_optim_param = {'lr': 0.1, 'momentum': 0.9, 'weight_decay': 0.0005}
+        prd_classifier_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
         prd_classifier_params = {'params': prd_classifier_param,
                                  'optim_params': prd_classifier_optim_param}
         prd_model_args = list(prd_classifier_params['params'].values())
@@ -172,12 +172,12 @@ class Generalized_RCNN(nn.Module):
         self.feature_loss_sbj_obj  = None
         self.feature_loss_prd  = None
         if cfg.MODEL.MEMORY_MODULE_STAGE == 2:
-            feat_loss_param_sbj_obj = {'feat_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES}
+            feat_loss_param_sbj_obj = {'feat_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES - 1}
             loss_args_sbj_obj = feat_loss_param_sbj_obj.values()
             self.feature_loss_sbj_obj = disc_centroids_loss.create_loss(*loss_args_sbj_obj)
             self.feature_loss_weight_sbj_obj = 0.01
 
-            feat_loss_param_prd = {'feat_dim': 4096 * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES}
+            feat_loss_param_prd = {'feat_dim': 4096 * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1}
             loss_args_prd = feat_loss_param_prd.values()
             self.feature_loss_prd = disc_centroids_loss.create_loss(*loss_args_prd)
             self.feature_loss_weight_prd = 0.01
@@ -377,6 +377,18 @@ class Generalized_RCNN(nn.Module):
         if self.training:
             return_dict['losses'] = {}
             return_dict['metrics'] = {}
+            #print('prd_cls_scores.shape', prd_cls_scores.shape)
+            #print('obj_cls_scores.shape', obj_cls_scores.shape)
+            #print('sbj_cls_scores.shape', sbj_cls_scores.shape)
+            #print('all_prd_labels_int32', np.max(rel_ret['all_prd_labels_int32']))
+            #print('all_sbj_labels_int32', np.max(rel_ret['all_sbj_labels_int32']))
+            #print('all_obj_labels_int32', np.max(rel_ret['all_obj_labels_int32']))
+            #print('max prd_cls_scores', np.amax(prd_cls_scores, axis=None))
+            #print('max obj_cls_scores', np.amax(obj_cls_scores, axis=None))
+            #print('max sbj_cls_scores', np.amax(sbj_cls_scores, axis=None))
+            #print('max all_prd_labels_int32', np.amax(all_prd_labels_int32, axis=None))
+            #print('max all_obj_labels_int32', np.amax(all_obj_labels_int32, axis=None))
+            #print('max all_sbj_labels_int32', np.amax(all_sbj_labels_int32, axis=None))
 
             # Performance Loss
             loss_cls_prd, accuracy_cls_prd = reldn_heads.reldn_losses(
@@ -393,7 +405,6 @@ class Generalized_RCNN(nn.Module):
                 obj_cls_scores, rel_ret['all_obj_labels_int32'])
             return_dict['losses']['loss_cls_obj'] = loss_cls_obj
             return_dict['metrics']['accuracy_cls_obj'] = accuracy_cls_obj
-
 
             # Feature Loss
 
