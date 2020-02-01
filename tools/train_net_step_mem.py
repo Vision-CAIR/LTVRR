@@ -453,7 +453,7 @@ def main():
         for step in range(args.start_step, cfg.SOLVER.MAX_ITER):
             optimizer_scheduler.step()
             if criterion_optimizer:
-                criterion_optimizer_scheduler.stfep()
+                criterion_optimizer_scheduler.step()
             # Warm up
             if step < cfg.SOLVER.WARM_UP_ITERS:
                 method = cfg.SOLVER.WARM_UP_METHOD
