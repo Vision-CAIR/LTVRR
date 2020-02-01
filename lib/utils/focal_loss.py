@@ -8,10 +8,10 @@ import torch.nn.functional as F
 import utils.one_hot
 from utils.one_hot import one_hot
 
+# https://torchgeometry.readthedocs.io/en/latest/_modules/kornia/losses/focal.html#focal_loss
 
 # based on:
 # https://github.com/zhezh/focalloss/blob/master/focalloss.py
-
 class FocalLoss(nn.Module):
     r"""Criterion that computes Focal loss.
 

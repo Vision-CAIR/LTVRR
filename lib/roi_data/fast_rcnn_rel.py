@@ -92,7 +92,7 @@ def _sample_pairs(roidb, im_scale, batch_idx):
             bg_pair_inds, size=bg_pairs_per_this_image, replace=False)
     keep_pair_inds = np.append(fg_pair_inds, bg_pair_inds)
     all_prd_labels = np.zeros(keep_pair_inds.size, dtype=np.int32)
-    all_prd_labels[:fg_pair_inds.size] = fg_prd_labels + 1  # class should start from 1
+    all_prd_labels[:fg_pair_inds.size] = fg_prd_labels + 1  # class should start from 1 # size 311
 
     blob_dict['all_prd_labels_int32'] = all_prd_labels.astype(np.int32, copy=False)
     blob_dict['fg_size'] = np.array([fg_pair_inds.size], dtype=np.int32)  # this is used to check if there is at least one fg to learn
@@ -112,8 +112,8 @@ def _sample_pairs(roidb, im_scale, batch_idx):
     if cfg.MODEL.USE_FREQ_BIAS or cfg.MODEL.USE_SEPARATE_SO_SCORES:
         sbj_labels = roidb['max_sbj_classes'][keep_pair_inds]
         obj_labels = roidb['max_obj_classes'][keep_pair_inds]
-        blob_dict['all_sbj_labels_int32'] = sbj_labels.astype(np.int32, copy=False)
-        blob_dict['all_obj_labels_int32'] = obj_labels.astype(np.int32, copy=False)
+        blob_dict['all_sbj_labels_int32'] = sbj_labels.astype(np.int32, copy=False) # 1703
+        blob_dict['all_obj_labels_int32'] = obj_labels.astype(np.int32, copy=False) # 1703
 
     return blob_dict
 
