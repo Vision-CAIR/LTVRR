@@ -249,14 +249,14 @@ class Generalized_RCNN(nn.Module):
                 p.requires_grad = False
 
 
-    def forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, **rpn_kwargs):
+    def forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, include_feat=False, **rpn_kwargs):
         if cfg.PYTORCH_VERSION_LESS_THAN_040:
-            return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, **rpn_kwargs)
+            return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, include_feat, **rpn_kwargs)
         else:
             with torch.set_grad_enabled(self.training):
-                return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, **rpn_kwargs)
+                return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, include_feat, **rpn_kwargs)
 
-    def _forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, **rpn_kwargs):
+    def _forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, include_feat=False,  **rpn_kwargs):
         im_data = data
         if self.training:
             roidb = list(map(lambda x: blob_utils.deserialize(x)[0], roidb))
@@ -424,7 +424,11 @@ class Generalized_RCNN(nn.Module):
             return_dict['sbj_scores_out'] = sbj_cls_scores
             return_dict['obj_scores_out'] = obj_cls_scores
             return_dict['prd_scores'] = prd_cls_scores
-            
+            if include_feat:
+                return_dict['sbj_feat'] = sbj_feat
+                return_dict['obj_feat'] = obj_feat
+                return_dict['prd_feat'] = concat_feat
+
         return return_dict
     
     def get_roi_inds(self, det_labels, lbls):
@@ -620,7 +624,32 @@ class Generalized_RCNN(nn.Module):
 
         return xform_out
 
+    def centroids_cal(self, data, num_classes, feature_dim):
 
+        centroids = torch.zeros(num_classes,
+                                feature_dim).cuda()
+
+        print('Calculating centroids.')
+
+        for model in self.networks.values():
+            model.eval()
+
+        # Calculate initial centroids only on training data.
+        with torch.set_grad_enabled(False):
+
+            for inputs, labels, _ in tqdm(data):
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                # Calculate Features of each training data
+                self.batch_forward(inputs, feature_ext=True)
+                # Add all calculated features to center tensor
+                for i in range(len(labels)):
+                    label = labels[i]
+                    centroids[label] += self.features[i]
+
+        # Average summed features with class count
+        centroids /= torch.tensor(class_count(data)).float().unsqueeze(1).cuda()
+
+        return centroids
     @check_inference
     def convbody_net(self, data):
         """For inference. Run Conv Body only"""

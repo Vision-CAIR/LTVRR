@@ -59,7 +59,7 @@ def im_detect_rels(model, im, dataset_name, box_proposals, timers=None, roidb=No
     return rel_results
 
 
-def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxes=None, roidb=None, use_gt_labels=False):
+def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxes=None, roidb=None, use_gt_labels=False, include_feat=False):
     """Prepare the bbox for testing"""
 
     inputs, im_scale = _get_blobs(im, boxes, target_scale, target_max_size)
@@ -89,6 +89,9 @@ def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxe
         inputs['roidb'] = [roidb]
     if use_gt_labels:
         inputs['use_gt_labels'] = [use_gt_labels]
+    if include_feat:
+        inputs['include_feat'] = [include_feat]
+
 
     return_dict = model(**inputs)
     
@@ -103,6 +106,10 @@ def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxe
         prd_scores = return_dict['prd_scores'].data.cpu().numpy()
         sbj_scores_out = return_dict['sbj_scores_out'].data.cpu().numpy()
         obj_scores_out = return_dict['obj_scores_out'].data.cpu().numpy()
+        if include_feat:
+            sbj_feat = return_dict['sbj_feat'].data.cpu().numpy()
+            obj_feat = return_dict['obj_feat'].data.cpu().numpy()
+            prd_feat = return_dict['prd_feat'].data.cpu().numpy()
         if cfg.MODEL.USE_EMBED:
             prd_scores_embd = return_dict['prd_embd_scores'].data.cpu().numpy()
 
@@ -115,6 +122,11 @@ def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxe
                             prd_scores=prd_scores,
                             sbj_scores_out=sbj_scores_out,
                             obj_scores_out=obj_scores_out)
+        if include_feat:
+            return_dict2['sbj_feat'] = sbj_feat
+            return_dict2['obj_feat'] = obj_feat
+            return_dict2['prd_feat'] = prd_feat
+
         if cfg.MODEL.USE_EMBED:
             return_dict2['prd_scores_embd'] = prd_scores_embd
     else:
@@ -124,10 +136,10 @@ def im_get_det_rels(model, im, dataset_name, target_scale, target_max_size, boxe
                             obj_boxes=None,
                             obj_labels=None,
                             obj_scores=None,
-                            prd_scores=None, 
+                            prd_scores=None,
                             sbj_scores_out=None,
                             obj_scores_out=None)
-    
+
     return return_dict2
 
 
