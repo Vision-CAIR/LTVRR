@@ -47,13 +47,13 @@ import utils.fpn as fpn_utils
 import utils.image as image_utils
 
 
-def im_detect_rels(model, im, dataset_name, box_proposals, timers=None, roidb=None, use_gt_labels=False):
+def im_detect_rels(model, im, dataset_name, box_proposals, timers=None, roidb=None, use_gt_labels=False, include_feat=False):
     
     if timers is None:
         timers = defaultdict(Timer)
     
     timers['im_detect_rels'].tic()
-    rel_results = im_get_det_rels(model, im, dataset_name, cfg.TEST.SCALE, cfg.TEST.MAX_SIZE, box_proposals, roidb, use_gt_labels)
+    rel_results = im_get_det_rels(model, im, dataset_name, cfg.TEST.SCALE, cfg.TEST.MAX_SIZE, box_proposals, roidb, use_gt_labels, include_feat=include_feat)
     timers['im_detect_rels'].toc()
     
     return rel_results

@@ -136,6 +136,13 @@ class Generalized_RCNN(nn.Module):
         else:
             raise NotImplementedError
 
+        if cfg.MODEL.MEMORY_MODULE_STAGE == 2:
+            sbj_obj_centroids = np.load(cfg.MODEL.SBJ_OBJ_CENTROIDS_PATH)
+            prd_centroids = np.load(cfg.MODEL.PRD_CENTROIDS_PATH)
+            self.sbj_obj_centroids = torch.Variable(torch.from_numpy(sbj_obj_centroids))
+            self.prd_centroids = torch.Variable(torch.from_numpy(prd_centroids))
+
+        # Initialize Centroids
         classifier_param = {'in_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES - 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
         classifier_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
@@ -267,6 +274,9 @@ class Generalized_RCNN(nn.Module):
 
         device_id = im_data.get_device()
 
+        self.sbj_obj_centroids = self.sbj_obj_centroids.cuda(device_id)
+        self.prd_centroids = self.prd_centroids.cuda(device_id)
+
         return_dict = {}  # A dict to collect return variables
 
         blob_conv = self.Conv_Body(im_data)
@@ -370,9 +380,9 @@ class Generalized_RCNN(nn.Module):
                     sbj_cls_scores = torch.cat((sbj_cls_scores, sbj_cls_scores_i)) if sbj_cls_scores_i is not None else sbj_cls_scores
                     obj_cls_scores = torch.cat((obj_cls_scores, obj_cls_scores_i)) if obj_cls_scores_i is not None else obj_cls_scores
         else:
-            sbj_cls_scores, _ = self.classifier(sbj_feat)
-            obj_cls_scores, _ = self.classifier(obj_feat)
-            prd_cls_scores, _ = self.prd_classifier(concat_feat)
+            sbj_cls_scores, _ = self.classifier(sbj_feat, self.sbj_obj_centroids)
+            obj_cls_scores, _ = self.classifier(obj_feat, self.sbj_obj_centroids)
+            prd_cls_scores, _ = self.prd_classifier(concat_feat, self.prd_centroids)
 
         if self.training:
             return_dict['losses'] = {}

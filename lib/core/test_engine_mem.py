@@ -160,7 +160,7 @@ def test_net_on_dataset(
 
 
 def multi_gpu_test_net_on_dataset(
-        args, dataset_name, proposal_file, num_images, output_dir,include_feat):
+        args, dataset_name, proposal_file, num_images, output_dir, include_feat):
     """Multi-gpu inference on a dataset."""
     binary_dir = envu.get_runtime_dir()
     binary_ext = envu.get_py_bin_ext()
@@ -233,9 +233,9 @@ def test_net(
             
         im = cv2.imread(entry['image'])
         if args.use_gt_boxes:
-            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, entry, args.use_gt_labels, include_feat)
+            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, entry, args.use_gt_labels, include_feat=include_feat)
         else:
-            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, include_feat)
+            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, include_feat=include_feat)
         
         im_results.update(dict(image=entry['image']))
         # add gt

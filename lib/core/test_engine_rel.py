@@ -69,6 +69,18 @@ def get_inference_dataset(index, is_parent=True):
 
     return dataset_name, proposal_file
 
+def get_features_for_centroids(args):
+    all_results = []
+    dataset_name, proposal_file = get_inference_dataset(0)
+    output_dir = args.output_dir
+    results = test_net_on_dataset(
+        args,
+        dataset_name,
+        proposal_file,
+        output_dir,
+        include_feat=True)
+    all_results.append(results)
+    return results
 
 def run_inference(
         args, ind_range=None,
@@ -123,7 +135,8 @@ def test_net_on_dataset(
         proposal_file,
         output_dir,
         multi_gpu=False,
-        gpu_id=0):
+        gpu_id=0,
+        include_feat=False):
     """Run inference on a dataset."""
     dataset = JsonDataset(dataset_name)
     test_timer = Timer()
@@ -131,11 +144,11 @@ def test_net_on_dataset(
     if multi_gpu:
         num_images = len(dataset.get_roidb(gt=args.do_val))
         all_results = multi_gpu_test_net_on_dataset(
-            args, dataset_name, proposal_file, num_images, output_dir
+            args, dataset_name, proposal_file, num_images, output_dir, include_feat=include_feat
         )
     else:
         all_results = test_net(
-            args, dataset_name, proposal_file, output_dir, gpu_id=gpu_id
+            args, dataset_name, proposal_file, output_dir, gpu_id=gpu_id, include_feat=include_feat
         )
     test_timer.toc()
     logger.info('Total inference time: {:.3f}s'.format(test_timer.average_time))
@@ -147,7 +160,7 @@ def test_net_on_dataset(
 
 
 def multi_gpu_test_net_on_dataset(
-        args, dataset_name, proposal_file, num_images, output_dir):
+        args, dataset_name, proposal_file, num_images, output_dir, include_feat):
     """Multi-gpu inference on a dataset."""
     binary_dir = envu.get_runtime_dir()
     binary_ext = envu.get_py_bin_ext()
@@ -199,7 +212,8 @@ def test_net(
         proposal_file,
         output_dir,
         ind_range=None,
-        gpu_id=0):
+        gpu_id=0,
+        include_feat=False):
     """Run inference on all images in a dataset or over an index range of images
     in a dataset using a single GPU.
     """
@@ -219,9 +233,9 @@ def test_net(
             
         im = cv2.imread(entry['image'])
         if args.use_gt_boxes:
-            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, entry, args.use_gt_labels)
+            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, entry, args.use_gt_labels, include_feat=include_feat)
         else:
-            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers)
+            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, include_feat=include_feat)
         
         im_results.update(dict(image=entry['image']))
         # add gt

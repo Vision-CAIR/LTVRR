@@ -272,14 +272,15 @@ class Generalized_RCNN(nn.Module):
                 for p in self.Box_Outs.parameters():
                     p.requires_grad = False
 
-    def forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, **rpn_kwargs):
+
+    def forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, include_feat=False, **rpn_kwargs):
         if cfg.PYTORCH_VERSION_LESS_THAN_040:
-            return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, **rpn_kwargs)
+            return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, include_feat, **rpn_kwargs)
         else:
             with torch.set_grad_enabled(self.training):
-                return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, **rpn_kwargs)
+                return self._forward(data, im_info, dataset_name, roidb, use_gt_labels, include_feat, **rpn_kwargs)
 
-    def _forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, **rpn_kwargs):
+    def _forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, include_feat=False,  **rpn_kwargs):
         im_data = data
         if self.training:
             roidb = list(map(lambda x: blob_utils.deserialize(x)[0], roidb))
@@ -508,7 +509,11 @@ class Generalized_RCNN(nn.Module):
             return_dict['obj_scores'] = rel_ret['obj_scores']
             return_dict['obj_scores_out'] = obj_cls_scores
             return_dict['prd_scores'] = prd_cls_scores
-            
+            if include_feat:
+                return_dict['sbj_feat'] = sbj_feat
+                return_dict['obj_feat'] = obj_feat
+                return_dict['prd_feat'] = concat_feat
+
         return return_dict
     
     def get_roi_inds(self, det_labels, lbls):
