@@ -21,7 +21,6 @@ import modeling.rpn_heads as rpn_heads
 import modeling.fast_rcnn_heads as fast_rcnn_heads
 import modeling.relpn_heads as relpn_heads
 import modeling.reldn_heads as reldn_heads
-import modeling.dot_product_classifier as dot_product_classifier
 import utils.boxes as box_utils
 import utils.blob as blob_utils
 import utils.net as net_utils
