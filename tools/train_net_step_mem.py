@@ -374,7 +374,7 @@ def main():
                         ]
 
         # Initialize criterion optimizer and scheduler
-        criterion_optimizer, criterion_optimizer_scheduler = init_optimizers(optim_params)
+        criterion_optimizer, criterion_optimizer_scheduler = init_optimizers(optim_params, scheduler_params)
 
     ### Load checkpoint
     if args.load_ckpt:

@@ -23,15 +23,16 @@ class MetaEmbedding_Classifier(nn.Module):
         feat_size = x.size(1)
         
         # set up visual memory
-        x_expand = x.unsqueeze(1).expand(-1, self.num_classes, -1)
-        centroids_expand = centroids.unsqueeze(0).expand(batch_size, -1, -1)
+        #x_expand = x.unsqueeze(1).expand(-1, self.num_classes, -1)
+        #centroids_expand = centroids.unsqueeze(0).expand(batch_size, -1, -1)
         keys_memory = centroids
-        
+        #print(x_expand.shape)
+        #print(centroids_expand.shape)
         # computing reachability
-        dist_cur = torch.norm(x_expand - centroids_expand, 2, 2)
-        values_nn, labels_nn = torch.sort(dist_cur, 1)
-        scale = 10.0
-        reachability = (scale / values_nn[:, 0]).unsqueeze(1).expand(-1, feat_size)
+        #dist_cur = torch.norm(x_expand - centroids_expand, 2, 2)
+        #values_nn, labels_nn = torch.sort(dist_cur, 1)
+        #scale = 10.0
+        #reachability = (scale / values_nn[:, 0]).unsqueeze(1).expand(-1, feat_size)
 
         # computing memory feature by querying and associating visual memory
         values_memory = self.fc_hallucinator(x)
@@ -41,7 +42,8 @@ class MetaEmbedding_Classifier(nn.Module):
         # computing concept selector
         concept_selector = self.fc_selector(x)
         concept_selector = concept_selector.tanh() 
-        x = reachability * (direct_feature + concept_selector * memory_feature)
+        #x = reachability * (direct_feature + concept_selector * memory_feature)
+        x = (direct_feature + concept_selector * memory_feature)
 
         # storing infused feature
         infused_feature = concept_selector * memory_feature
@@ -50,17 +52,18 @@ class MetaEmbedding_Classifier(nn.Module):
 
         return logits, [direct_feature, infused_feature]
     
-def create_model(feat_dim=2048, num_classes=1000, stage1_weights=False, dataset=None, test=False, *args):
+def create_model(feat_dim=2048, num_classes=1000, stage1_weights=False, dataset=None, test=False, prd=False, *args):
     print('Loading Meta Embedding Classifier.')
     clf = MetaEmbedding_Classifier(feat_dim, num_classes)
-
+    weights = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_1_gpu/gvqa/Feb02-01-59-32_login104-09_step_with_prd_cls_v3/ckpt/model_step212.pth'
     if not test:
         if stage1_weights:
             assert(dataset)
             print('Loading %s Stage 1 Classifier Weights.' % dataset)
             clf.fc_hallucinator = init_weights(model=clf.fc_hallucinator,
-                                                    weights_path='./logs/%s/stage1/final_model_checkpoint.pth' % dataset,
-                                                    classifier=True)
+                                                    weights_path=weights,
+                                                    classifier=True,
+                                                    prd=prd)
         else:
             print('Random initialized classifier weights.')
 

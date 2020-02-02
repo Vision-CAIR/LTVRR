@@ -29,7 +29,7 @@ def print_write(print_str, log_file):
     with open(log_file, 'a') as f:
         print(*print_str, file=f)
 
-def init_weights(model, weights_path, caffe=False, classifier=False):  
+def init_weights(model, weights_path, caffe=False, classifier=False, prd=False):  
     """Initialize weights"""
     print('Pretrained %s weights path: %s' % ('classifier' if classifier else 'feature model',
                                               weights_path))    
@@ -39,12 +39,16 @@ def init_weights(model, weights_path, caffe=False, classifier=False):
             weights = {k: weights[k] if k in weights else model.state_dict()[k] 
                        for k in model.state_dict()}
         else:
-            weights = weights['state_dict_best']['feat_model']
+            weights = weights['model']
             weights = {k: weights['module.' + k] if 'module.' + k in weights else model.state_dict()[k] 
                        for k in model.state_dict()}
     else:      
-        weights = weights['state_dict_best']['classifier']
-        weights = {k: weights['module.fc.' + k] if 'module.fc.' + k in weights else model.state_dict()[k] 
+        weights = weights['model']
+        if prd:
+            classifier_name = 'prd_classifier'
+        else:
+            classifier_name = 'classfier'
+        weights = {k: weights[classifier_name + '.fc.' + k] if classifier_name + '.fc.' + k in weights else model.state_dict()[k] 
                    for k in model.state_dict()}
     model.load_state_dict(weights)   
     return model

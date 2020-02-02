@@ -135,13 +135,15 @@ class Generalized_RCNN(nn.Module):
             stage1_weights = True
         else:
             raise NotImplementedError
-
+        self.sbj_obj_centroids = None
+        self.prd_centroids = None
         if cfg.MODEL.MEMORY_MODULE_STAGE == 2:
-            sbj_obj_centroids = np.load(cfg.MODEL.SBJ_OBJ_CENTROIDS_PATH)
-            prd_centroids = np.load(cfg.MODEL.PRD_CENTROIDS_PATH)
-            self.sbj_obj_centroids = torch.Variable(torch.from_numpy(sbj_obj_centroids))
-            self.prd_centroids = torch.Variable(torch.from_numpy(prd_centroids))
-
+            #sbj_obj_centroids = np.load(cfg.MODEL.SBJ_OBJ_CENTROIDS_PATH)
+            #prd_centroids = np.load(cfg.MODEL.PRD_CENTROIDS_PATH)
+            #self.sbj_obj_centroids = torch.Variable(torch.from_numpy(sbj_obj_centroids))
+            #self.prd_centroids = torch.Variable(torch.from_numpy(prd_centroids))
+            self.sbj_obj_centroids = torch.zeros(cfg.MODEL.NUM_CLASSES - 1, 4096)
+            self.prd_centroids = torch.zeros(cfg.MODEL.NUM_PRD_CLASSES + 1, 4096 * 3)
         # Initialize Centroids
         classifier_param = {'in_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES - 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
@@ -167,6 +169,7 @@ class Generalized_RCNN(nn.Module):
                                  'optim_params': prd_classifier_optim_param}
         prd_model_args = list(prd_classifier_params['params'].values())
         prd_model_args.append(not self.training)
+        prd_model_args.append(True)
 
         if cfg.MODEL.MEMORY_MODULE_STAGE == 1:
             self.prd_classifier = dot_product_classifier.create_model(*prd_model_args)
@@ -273,9 +276,9 @@ class Generalized_RCNN(nn.Module):
             dataset_name = cfg.TRAIN.DATASETS[0] if self.training else cfg.TEST.DATASETS[0]  # assuming only one dataset per run
 
         device_id = im_data.get_device()
-
-        self.sbj_obj_centroids = self.sbj_obj_centroids.cuda(device_id)
-        self.prd_centroids = self.prd_centroids.cuda(device_id)
+        if cfg.MODEL.MEMORY_MODULE_STAGE == 2:
+            self.sbj_obj_centroids = self.sbj_obj_centroids.cuda(device_id)
+            self.prd_centroids = self.prd_centroids.cuda(device_id)
 
         return_dict = {}  # A dict to collect return variables
 
@@ -356,8 +359,9 @@ class Generalized_RCNN(nn.Module):
 
         # when MODEL.USE_SEM_CONCAT, memory runs out if the whole batch is fed once
         # so we need to feed the batch twice if it's big
-        gn_size = 1000
+        gn_size = 5000
         if cfg.MODEL.USE_SEM_CONCAT and concat_feat.shape[0] > gn_size:
+        #if concat_feat.shape[0] > gn_size:
             group = int(math.floor(concat_feat.shape[0] / gn_size)) + 1
             prd_cls_scores = None
             sbj_cls_scores = None
@@ -367,9 +371,9 @@ class Generalized_RCNN(nn.Module):
                 concat_feat_i = concat_feat[i * gn_size : end]
                 sbj_feat_i = sbj_feat[i * gn_size : end]
                 obj_feat_i = obj_feat[i * gn_size : end]
-                sbj_cls_scores_i, _ = self.classifier(sbj_feat_i)
-                obj_cls_scores_i, _ = self.classifier(obj_feat_i)
-                prd_cls_scores_i, _ = self.prd_classifier(concat_feat_i)
+                sbj_cls_scores_i, _ = self.classifier(sbj_feat_i, self.sbj_obj_centroids)
+                obj_cls_scores_i, _ = self.classifier(obj_feat_i, self.sbj_obj_centroids)
+                prd_cls_scores_i, _ = self.prd_classifier(concat_feat_i, self.prd_centroids)
 
                 if prd_cls_scores is None:
                     prd_cls_scores = prd_cls_scores_i
@@ -415,8 +419,14 @@ class Generalized_RCNN(nn.Module):
                 obj_cls_scores, rel_ret['all_obj_labels_int32'])
             return_dict['losses']['loss_cls_obj'] = loss_cls_obj
             return_dict['metrics']['accuracy_cls_obj'] = accuracy_cls_obj
-
+            if cfg.MODEL.MEMORY_MODULE_STAGE == 2:
             # Feature Loss
+                sbj_labels = torch.from_numpy(rel_ret['all_sbj_labels_int32'].astype(np.int64)).to(device_id)
+                obj_labels = torch.from_numpy(rel_ret['all_obj_labels_int32'].astype(np.int64)).to(device_id)
+                prd_labels = torch.from_numpy(rel_ret['all_prd_labels_int32'].astype(np.int64)).to(device_id)
+                return_dict['losses']['loss_centroid_sbj'] = self.feature_loss_sbj_obj(sbj_feat, sbj_labels) * 0.01
+                return_dict['losses']['loss_centroid_obj'] = self.feature_loss_sbj_obj(obj_feat, obj_labels) * 0.01
+                return_dict['losses']['loss_centroid_prd'] = self.feature_loss_prd(concat_feat, prd_labels) * 0.01
 
             # pytorch0.4 bug on gathering scalar(0-dim) tensors
             for k, v in return_dict['losses'].items():
