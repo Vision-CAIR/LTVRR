@@ -55,7 +55,7 @@ class MetaEmbedding_Classifier(nn.Module):
 def create_model(feat_dim=2048, num_classes=1000, stage1_weights=False, dataset=None, test=False, prd=False, *args):
     print('Loading Meta Embedding Classifier.')
     clf = MetaEmbedding_Classifier(feat_dim, num_classes)
-    weights = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_1_gpu/gvqa/Feb02-01-59-32_login104-09_step_with_prd_cls_v3/ckpt/model_step212.pth'
+    weights = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_1_gpu/gvqa/Feb07-10-55-03_login104-09_step_with_prd_cls_v3/ckpt/model_step1439.pth'
     if not test:
         if stage1_weights:
             assert(dataset)

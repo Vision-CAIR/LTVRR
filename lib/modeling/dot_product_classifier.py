@@ -20,7 +20,7 @@ def create_model(feat_dim, num_classes=1000, stage1_weights=False, dataset=None,
             assert(dataset)
             print('Loading %s Stage 1 Classifier Weights.' % dataset)
             clf.fc = init_weights(model=clf.fc,
-                                  weights_path='./Outputs/memory_models/%s/stage1/final_model_checkpoint.pth' % dataset,
+                                  weights_path='Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_1_gpu/gvqa/Feb07-10-55-03_login104-09_step_with_prd_cls_v3/ckpt/model_step1439.pth',
                                   classifier=True)
         else:
             print('Random initialized classifier weights.')
