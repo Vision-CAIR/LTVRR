@@ -375,6 +375,18 @@ def main():
 
         # Initialize criterion optimizer and scheduler
         criterion_optimizer, criterion_optimizer_scheduler = init_optimizers(optim_params, scheduler_params)
+    if cfg.MODEL.MEMORY_MODULE_STAGE == 2:
+        weights_path = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_1_gpu/gvqa/Feb07-10-55-03_login104-09_step_with_prd_cls_v3/ckpt/model_step1439.pth'
+        weights = torch.load(weights_path)
+        #print('weights', weights['model'].keys())
+        #print(maskRCNN.state_dict().keys())
+        maskRCNN.load_state_dict(weights['model'], strict=False)
+        #print(list(maskRCNN.parameters()))
+        #print(maskRCNN.state_dict().keys())
+        #print(maskRCNN.state_dict()['prd_classifier.fc_hallucinator.weight'] == weights['model']['prd_classifier.fc.weight'])
+        #print(torch.all(torch.eq(maskRCNN.state_dict()['prd_classifier.fc_hallucinator.weight'], weights['model']['prd_classifier.fc.weight'])))
+        #print(torch.all(torch.eq(maskRCNN.state_dict()['Box_Head.heads.0.weight'], weights['model']['Box_Head.heads.0.weight'])))
+        #exit()
 
     ### Load checkpoint
     if args.load_ckpt:
