@@ -137,16 +137,18 @@ verbose = True
 collected_simple_means = dict()
 collected_per_class_means = dict()
 drop_left_right = False
-
+#all_csvs = ['/home/x_abdelks/scratch/freq_bias_files/evaluator/reports/gvqa/test/_weighted_ce_s0/csv_files/_weighted_ce_s0.csv',
+#            '/home/x_abdelks/scratch/freq_bias_files/evaluator/reports/gvqa/test/_retrain_s0/csv_files/_retrain_s0.csv']
+#method_names = ['weighted_ce_s0', 'baseline']
 for i, m in enumerate(method_names):
     if verbose:
         print('=============================')
         print(m)
     df = pd.read_csv(all_csvs[i])
     
-    #if drop_left_right and dataset == 'gvqa':
-    #    print ('dropping left/right')
-    #    df = df[(df.gt_rel != 286) & (df.gt_rel != 35)]
+    if drop_left_right and dataset == 'gvqa':
+        print ('dropping left/right')
+        df = df[(df.gt_rel != 286) & (df.gt_rel != 35)]
     df['rel_top1'] = df['rel_rank'] < 1
     for metric_type in raw_metrics:
         for prediction_type in all_prediction_types:
@@ -164,6 +166,7 @@ for i, m in enumerate(method_names):
             
             collected_simple_means[(m, prediction_type, metric_type)] = mu
              
+        for prediction_type in all_prediction_types:
             mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean() * 100
             #mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
             #print(mu)
