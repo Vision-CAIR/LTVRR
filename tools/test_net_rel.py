@@ -13,6 +13,8 @@ import torch
 import _init_paths  # pylint: disable=unused-import
 from core.config import cfg, merge_cfg_from_file, merge_cfg_from_list, assert_and_infer_cfg
 from core.test_engine_rel import run_inference
+#from core.test_engine_rel import run_inference, get_features_for_centroids
+
 import utils.logging
 
 from datasets import task_evaluation_rel as task_evaluation
@@ -99,7 +101,7 @@ if __name__ == '__main__':
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
     elif args.dataset == "gvqa":
-        cfg.TEST.DATASETS = ('gvqa_val',)
+        cfg.TEST.DATASETS = ('gvqa_test',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     else:  # For subprocess call
@@ -124,7 +126,10 @@ if __name__ == '__main__':
     args.test_net_file, _ = os.path.splitext(__file__)
     # manually set args.cuda
     args.cuda = True
-
+    #print('Generating Centroids')
+    #all_results = get_features_for_centroids(args) 
+    #print('Done!')
+    #exit()
     if args.use_gt_boxes:
         if args.use_gt_labels:
             det_file = os.path.join(args.output_dir, 'rel_detections_gt_boxes_prdcls.pkl')
