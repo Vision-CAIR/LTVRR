@@ -193,6 +193,7 @@ def add_hubness_loss(cls_scores):
     # hubness_dist = xp_yall_probT_average_reshape - hubness_blob
     # hubness_dist_sqr = hubness_dist.pow(2)
     # hubness_dist_sqr_scaled = hubness_dist_sqr * cfg.TRAIN.HUBNESS_SCALE
+    cls_scores = F.softmax(cls_scores, dim=1)
     hubness_blob = 1./cls_scores.size(1)
     cls_scores_T = cls_scores.transpose(0, 1)
     cls_scores_T = cls_scores_T.unsqueeze(1).unsqueeze(3).expand(-1, 1, -1, 1)
