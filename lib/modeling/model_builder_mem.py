@@ -116,6 +116,10 @@ class Generalized_RCNN(nn.Module):
                 self.Conv_Body.dim_out, self.Conv_Body.spatial_scale)
 
         self.conv5_dim_out = 2048
+        if cfg.MODEL.USE_SEM_CONCAT:
+            self.prd_dim_out = self.conv5_dim_out * 3
+        else:
+            self.prd_dim_out = self.conv5_dim_out
         # BBOX Branch
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(
             self.Conv_Body.dim_out, self.conv5_dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
@@ -144,7 +148,7 @@ class Generalized_RCNN(nn.Module):
             #self.sbj_obj_centroids = torch.Variable(torch.from_numpy(sbj_obj_centroids))
             #self.prd_centroids = torch.Variable(torch.from_numpy(prd_centroids))
             self.sbj_obj_centroids = torch.zeros(cfg.MODEL.NUM_CLASSES - 1, self.conv5_dim_out)
-            self.prd_centroids = torch.zeros(cfg.MODEL.NUM_PRD_CLASSES + 1, self.conv5_dim_out * 3)
+            self.prd_centroids = torch.zeros(cfg.MODEL.NUM_PRD_CLASSES + 1, self.prd_dim_out)
         # Initialize Centroids
         classifier_param = {'in_dim': self.conv5_dim_out, 'num_classes': cfg.MODEL.NUM_CLASSES - 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
@@ -162,7 +166,8 @@ class Generalized_RCNN(nn.Module):
             raise NotImplementedError
 
         # self.classifier = nn.DataParallel(self.classifier).to(self.device)
-        prd_classifier_param = {'in_dim': self.conv5_dim_out * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1,
+
+        prd_classifier_param = {'in_dim': prd_dim_out, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
 
         prd_classifier_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
@@ -188,7 +193,7 @@ class Generalized_RCNN(nn.Module):
             self.feature_loss_sbj_obj = disc_centroids_loss.create_loss(*loss_args_sbj_obj)
             self.feature_loss_weight_sbj_obj = 0.01
 
-            feat_loss_param_prd = {'feat_dim': self.conv5_dim_out * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1}
+            feat_loss_param_prd = {'feat_dim': prd_dim_out, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1}
             loss_args_prd = feat_loss_param_prd.values()
             self.feature_loss_prd = disc_centroids_loss.create_loss(*loss_args_prd)
             self.feature_loss_weight_prd = 0.01
