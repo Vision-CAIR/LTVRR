@@ -168,6 +168,10 @@ def main():
         cfg.TRAIN.DATASETS = ('gvqa20k_train',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
+    elif args.dataset == "gvqa10k":
+        cfg.TRAIN.DATASETS = ('gvqa10k_train',)
+        cfg.MODEL.NUM_CLASSES = 1704 # includes background
+        cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     elif args.dataset == "gvqa":
         cfg.TRAIN.DATASETS = ('gvqa_train',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
