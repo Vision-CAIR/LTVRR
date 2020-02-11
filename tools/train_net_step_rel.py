@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument(
         '--disp_interval',
         help='Display training info every N iterations',
-        default=20, type=int)
+        default=10, type=int)
     parser.add_argument(
         '--no_cuda', dest='cuda', help='Do not use CUDA device', action='store_false')
 
