@@ -115,9 +115,10 @@ class Generalized_RCNN(nn.Module):
             self.RPN = rpn_heads.generic_rpn_outputs(
                 self.Conv_Body.dim_out, self.Conv_Body.spatial_scale)
 
+        self.conv5_dim_out = 2048
         # BBOX Branch
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(
-            self.Conv_Body.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
+            self.Conv_Body.dim_out, self.conv5_dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
             # self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
 
         self.Prd_RCNN = copy.deepcopy(self)
@@ -142,10 +143,10 @@ class Generalized_RCNN(nn.Module):
             #prd_centroids = np.load(cfg.MODEL.PRD_CENTROIDS_PATH)
             #self.sbj_obj_centroids = torch.Variable(torch.from_numpy(sbj_obj_centroids))
             #self.prd_centroids = torch.Variable(torch.from_numpy(prd_centroids))
-            self.sbj_obj_centroids = torch.zeros(cfg.MODEL.NUM_CLASSES - 1, 4096)
-            self.prd_centroids = torch.zeros(cfg.MODEL.NUM_PRD_CLASSES + 1, 4096 * 3)
+            self.sbj_obj_centroids = torch.zeros(cfg.MODEL.NUM_CLASSES - 1, self.conv5_dim_out)
+            self.prd_centroids = torch.zeros(cfg.MODEL.NUM_PRD_CLASSES + 1, self.conv5_dim_out * 3)
         # Initialize Centroids
-        classifier_param = {'in_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES - 1,
+        classifier_param = {'in_dim': self.conv5_dim_out, 'num_classes': cfg.MODEL.NUM_CLASSES - 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
         classifier_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
         classifier_params = {'params': classifier_param,
@@ -161,7 +162,7 @@ class Generalized_RCNN(nn.Module):
             raise NotImplementedError
 
         # self.classifier = nn.DataParallel(self.classifier).to(self.device)
-        prd_classifier_param = {'in_dim': 4096 * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1,
+        prd_classifier_param = {'in_dim': self.conv5_dim_out * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1,
                             'stage1_weights': stage1_weights, 'dataset': cfg.DATASET}
 
         prd_classifier_optim_param = {'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005}
@@ -182,12 +183,12 @@ class Generalized_RCNN(nn.Module):
         self.feature_loss_sbj_obj  = None
         self.feature_loss_prd  = None
         if cfg.MODEL.MEMORY_MODULE_STAGE == 2:
-            feat_loss_param_sbj_obj = {'feat_dim': 4096, 'num_classes': cfg.MODEL.NUM_CLASSES - 1}
+            feat_loss_param_sbj_obj = {'feat_dim': self.conv5_dim_out, 'num_classes': cfg.MODEL.NUM_CLASSES - 1}
             loss_args_sbj_obj = feat_loss_param_sbj_obj.values()
             self.feature_loss_sbj_obj = disc_centroids_loss.create_loss(*loss_args_sbj_obj)
             self.feature_loss_weight_sbj_obj = 0.01
 
-            feat_loss_param_prd = {'feat_dim': 4096 * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1}
+            feat_loss_param_prd = {'feat_dim': self.conv5_dim_out * 3, 'num_classes': cfg.MODEL.NUM_PRD_CLASSES + 1}
             loss_args_prd = feat_loss_param_prd.values()
             self.feature_loss_prd = disc_centroids_loss.create_loss(*loss_args_prd)
             self.feature_loss_weight_prd = 0.01

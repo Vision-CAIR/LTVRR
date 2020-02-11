@@ -190,7 +190,7 @@ class Generalized_RCNN(nn.Module):
 
         # BBOX Branch
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(
-            self.Conv_Body.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
+            self.Conv_Body.dim_out, 4096, self.roi_feature_transform, self.Conv_Body.spatial_scale)
             # self.RPN.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
         if not cfg.TRAIN.USE_GT_BOXES:
             self.Box_Outs = fast_rcnn_heads.fast_rcnn_outputs(

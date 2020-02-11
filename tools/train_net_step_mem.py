@@ -471,9 +471,9 @@ def main():
         logger.info('Training starts !')
         step = args.start_step
         for step in range(args.start_step, cfg.SOLVER.MAX_ITER):
-            optimizer_scheduler.step()
-            if criterion_optimizer:
-                criterion_optimizer_scheduler.step()
+            # optimizer_scheduler.step()
+            # if criterion_optimizer:
+            #     criterion_optimizer_scheduler.step()
             # Warm up
             if step < cfg.SOLVER.WARM_UP_ITERS:
                 method = cfg.SOLVER.WARM_UP_METHOD
@@ -501,9 +501,12 @@ def main():
                 logger.info('Decay the learning on step %d', step)
                 lr_new = lr * cfg.SOLVER.GAMMA
                 net_utils.update_learning_rate_rel(optimizer, lr, lr_new)
+                if criterion_optimizer:
+                    net_utils.update_learning_rate_rel(criterion_optimizer, lr, lr_new)
                 lr = optimizer.param_groups[2]['lr']
                 backbone_lr = optimizer.param_groups[0]['lr']
                 assert lr == lr_new
+
                 decay_steps_ind += 1
 
             training_stats.IterTic()

@@ -48,12 +48,12 @@ class VGG16_conv_body(nn.Module):
 
 
 class VGG16_roi_conv5_head(nn.Module):
-    def __init__(self, dim_in, roi_xform_func, spatial_scale):
+    def __init__(self, dim_in, dim_out, roi_xform_func, spatial_scale):
         super().__init__()
         self.roi_xform = roi_xform_func
         self.spatial_scale = spatial_scale
 
-        self.dim_out = 4096
+        self.dim_out = dim_out
         self.dim_roi_out = dim_in  # 512
 
         self._init_modules()
