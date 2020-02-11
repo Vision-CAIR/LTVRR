@@ -152,7 +152,11 @@ def main():
         raise ValueError("Need Cuda device to run !")
 
     cfg.DATASETS = args.dataset
-    if args.dataset == "vrd":
+    if args.dataset == "vg80k":
+        cfg.TRAIN.DATASETS = ('vg80k_train',)
+        cfg.MODEL.NUM_CLASSES = 53305 # includes background
+        cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
+    elif args.dataset == "vrd":
         cfg.TRAIN.DATASETS = ('vrd_train',)
         cfg.MODEL.NUM_CLASSES = 101
         cfg.MODEL.NUM_PRD_CLASSES = 70  # exclude background
@@ -160,10 +164,10 @@ def main():
         cfg.TRAIN.DATASETS = ('vg_train',)
         cfg.MODEL.NUM_CLASSES = 151
         cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
-    elif args.dataset == "vg80k":
-        cfg.TRAIN.DATASETS = ('vg80k_train',)
-        cfg.MODEL.NUM_CLASSES = 53305 # includes background
-        cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
+    elif args.dataset == "gvqa20k":
+        cfg.TRAIN.DATASETS = ('gvqa20k_train',)
+        cfg.MODEL.NUM_CLASSES = 1704 # includes background
+        cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     elif args.dataset == "gvqa":
         cfg.TRAIN.DATASETS = ('gvqa_train',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background

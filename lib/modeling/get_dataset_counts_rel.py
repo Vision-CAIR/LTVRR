@@ -30,6 +30,9 @@ def get_rel_counts(ds_name, must_overlap=True):
     elif ds_name.find('vrd') >= 0:
         with open(cfg.DATA_DIR + '/vrd/new_annotations_train.json') as f:
             train_data = json.load(f)
+    elif ds_name.find('gvqa20k') >= 0:
+        with open(cfg.DATA_DIR + '/gvqa20k/rel_annotations_train.json') as f:
+            train_data = json.load(f)
     elif ds_name.find('gvqa') >= 0:
         with open(cfg.DATA_DIR + '/gvqa/rel_annotations_train.json') as f:
             train_data = json.load(f)

@@ -100,6 +100,10 @@ if __name__ == '__main__':
         cfg.TEST.DATASETS = ('vg80k_val',)
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
+    elif args.dataset == "gvqa20k":
+        cfg.TEST.DATASETS = ('gvqa20k_test',)
+        cfg.MODEL.NUM_CLASSES = 1704 # includes background
+        cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     elif args.dataset == "gvqa":
         cfg.TEST.DATASETS = ('gvqa_test',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
