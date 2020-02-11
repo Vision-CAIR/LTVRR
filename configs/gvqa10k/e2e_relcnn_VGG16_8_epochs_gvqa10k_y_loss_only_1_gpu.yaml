@@ -2,23 +2,23 @@ MODEL:
   TYPE: generalized_rcnn
   SUBTYPE: 3
   USE_OVLP_FILTER: False
-  USE_FREQ_BIAS: True
+  USE_FREQ_BIAS: False
   NO_FC7_RELU: True
   CONV_BODY: VGG16.VGG16_conv_body
   FASTER_RCNN: True
   USE_SEPARATE_SO_SCORES: True
   NORM_SCALE: 10.0
-  LOSS: focal
-NUM_GPUS: 8
+NUM_GPUS: 1
 SOLVER:
   WEIGHT_DECAY: 0.0001
   LR_POLICY: steps_with_decay
   # 1x schedule (note TRAIN.IMS_PER_BATCH: 1)
   BASE_LR: 0.01
   GAMMA: 0.1
-  MAX_ITER: 125446  # 125446 roidbs # 16 epochs
-  STEPS: [0, 83631, 111508]
+  MAX_ITER: 20000  # 20000 roidbs
+  STEPS: [0, 13333, 17777] # 0, 0.66, 0.888
 VGG16:
+  INCLUDE_CLASSIFIER: False
   VRD_PRETRAINED_WEIGHTS: 'detection_models/vg/VGG16/model_step479999.pth'
   VRD_PRD_PRETRAINED_WEIGHTS: 'detection_models/vg/VGG16/model_step479999.pth'
 FAST_RCNN:
