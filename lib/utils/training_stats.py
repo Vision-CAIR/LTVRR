@@ -36,7 +36,7 @@ import utils.net as nu
 class TrainingStats(object):
     """Track vital training statistics."""
 
-    def __init__(self, misc_args, log_period=20, tensorboard_logger=None):
+    def __init__(self, misc_args, log_period=10, tensorboard_logger=None):
         # Output logging period in SGD iterations
         self.misc_args = misc_args
         self.LOG_PERIOD = log_period
