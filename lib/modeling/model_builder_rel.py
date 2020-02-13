@@ -210,6 +210,21 @@ class Generalized_RCNN(nn.Module):
         # RelDN
         self.RelDN = reldn_heads.reldn_head(self.Box_Head.dim_out * 3, self.obj_vecs, self.prd_vecs)  # concat of SPO
 
+        self.prd_weights = None
+        self.obj_weights = None
+
+        if cfg.MODEL.LOSS == 'weighted_cross_entropy':
+            freq_prd = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy'
+            freq_obj = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy'
+
+            freq_prd += 1
+            freq_obj += 1
+            prd_weights = np.sum(freq_prd) / freq_prd
+            obj_weights = np.sum(freq_obj) / freq_obj
+
+            self.prd_weights = (prd_weights / np.mean(prd_weights)).astype(np.float32)
+            self.obj_weights = (obj_weights / np.mean(obj_weights)).astype(np.float32)
+
         self._init_modules()
 
     def _init_modules(self):
@@ -481,16 +496,16 @@ class Generalized_RCNN(nn.Module):
                 return_dict['metrics']['accuracy_cls'] = accuracy_cls
 
             loss_cls_prd, accuracy_cls_prd = reldn_heads.reldn_losses(
-                prd_cls_scores, rel_ret['all_prd_labels_int32'])
+                prd_cls_scores, rel_ret['all_prd_labels_int32'], weight=self.prd_weights)
             return_dict['losses']['loss_cls_prd'] = loss_cls_prd
             return_dict['metrics']['accuracy_cls_prd'] = accuracy_cls_prd
             if cfg.MODEL.USE_SEPARATE_SO_SCORES:
                 loss_cls_sbj, accuracy_cls_sbj = reldn_heads.reldn_losses(
-                    sbj_cls_scores, rel_ret['all_sbj_labels_int32'])
+                    sbj_cls_scores, rel_ret['all_sbj_labels_int32'], weight=self.obj_weights)
                 return_dict['losses']['loss_cls_sbj'] = loss_cls_sbj
                 return_dict['metrics']['accuracy_cls_sbj'] = accuracy_cls_sbj
                 loss_cls_obj, accuracy_cls_obj = reldn_heads.reldn_losses(
-                    obj_cls_scores, rel_ret['all_obj_labels_int32'])
+                    obj_cls_scores, rel_ret['all_obj_labels_int32'], weight=self.obj_weights)
                 return_dict['losses']['loss_cls_obj'] = loss_cls_obj
                 return_dict['metrics']['accuracy_cls_obj'] = accuracy_cls_obj
 
