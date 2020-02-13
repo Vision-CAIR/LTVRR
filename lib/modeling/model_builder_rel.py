@@ -214,8 +214,9 @@ class Generalized_RCNN(nn.Module):
         self.obj_weights = None
 
         if cfg.MODEL.LOSS == 'weighted_cross_entropy':
-            freq_prd = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy'
-            freq_obj = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy'
+            logger.info('loading frequencies')
+            freq_prd = np.load('/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy')
+            freq_obj = np.load('/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy')
 
             freq_prd += 1
             freq_obj += 1
@@ -224,7 +225,9 @@ class Generalized_RCNN(nn.Module):
 
             self.prd_weights = (prd_weights / np.mean(prd_weights)).astype(np.float32)
             self.obj_weights = (obj_weights / np.mean(obj_weights)).astype(np.float32)
-
+            temp = np.zeros(shape=self.prd_weights.shape[0] + 1, dtype=np.float32) 
+            temp[1:] = self.prd_weights
+            self.prd_weights = temp
         self._init_modules()
 
     def _init_modules(self):
@@ -494,7 +497,6 @@ class Generalized_RCNN(nn.Module):
                 return_dict['losses']['loss_cls'] = loss_cls
                 return_dict['losses']['loss_bbox'] = loss_bbox
                 return_dict['metrics']['accuracy_cls'] = accuracy_cls
-
             loss_cls_prd, accuracy_cls_prd = reldn_heads.reldn_losses(
                 prd_cls_scores, rel_ret['all_prd_labels_int32'], weight=self.prd_weights)
             return_dict['losses']['loss_cls_prd'] = loss_cls_prd

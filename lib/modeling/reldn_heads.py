@@ -171,7 +171,7 @@ class reldn_head(nn.Module):
             obj_cls_scores = F.softmax(obj_cls_scores, dim=1)
             prd_cls_scores = F.softmax(prd_cls_scores, dim=1)
         
-        return prd_cls_scores, sbj_cls_scores, obj_cls_scores, prd_vis_embeddings, sbj_vis_embeddings, obj_vis_embeddings
+        return prd_cls_scores, sbj_cls_scores, obj_cls_scores
 
 
 def add_cls_loss(cls_scores, labels, weight=None):
@@ -210,6 +210,8 @@ def add_hubness_loss(cls_scores):
 def reldn_losses(prd_cls_scores, prd_labels_int32, fg_only=False, weight=None):
     device_id = prd_cls_scores.get_device()
     prd_labels = Variable(torch.from_numpy(prd_labels_int32.astype('int64'))).cuda(device_id)
+    if cfg.MODEL.LOSS == 'weighted_cross_entropy':
+        weight = Variable(torch.from_numpy(weight)).cuda(device_id)
     loss_cls_prd = add_cls_loss(prd_cls_scores, prd_labels, weight=weight)
     # class accuracy
     prd_cls_preds = prd_cls_scores.max(dim=1)[1].type_as(prd_labels)
