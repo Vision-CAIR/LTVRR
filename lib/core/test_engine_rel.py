@@ -130,7 +130,7 @@ def run_inference(
     return all_results
 
 def run_eval_inference(
-        model, args, ind_range=None,
+        model, roidb, args, dataset, dataset_name, proposal_file, ind_range=None,
         multi_gpu_testing=False, gpu_id=0,
         check_expected_results=False):
     # Parent case:
@@ -139,11 +139,13 @@ def run_eval_inference(
     # launch subprocesses that each run inference on a range of the dataset
     all_results = []
     for i in range(len(cfg.TEST.DATASETS)):
-        dataset_name, proposal_file = get_inference_dataset(i)
+        # dataset_name, proposal_file = get_inference_dataset(i)
         output_dir = args.output_dir
         results = eval_net_on_dataset(
             model,
+            roidb,
             args,
+            dataset,
             dataset_name,
             proposal_file,
             output_dir,
@@ -183,7 +185,10 @@ def test_net_on_dataset(
     return all_results
 
 def eval_net_on_dataset(
-        model, args,
+        model,
+        roidb,
+        args,
+        dataset,
         dataset_name,
         proposal_file,
         output_dir,
@@ -191,17 +196,17 @@ def eval_net_on_dataset(
         gpu_id=0,
         include_feat=False):
     """Run inference on a dataset."""
-    dataset = JsonDataset(dataset_name)
+    # dataset = JsonDataset(dataset_name)
     test_timer = Timer()
     test_timer.tic()
     if multi_gpu:
         num_images = len(dataset.get_roidb(gt=args.do_val))
-        all_results = multi_gpu_test_net_on_dataset(
-            args, dataset_name, proposal_file, num_images, output_dir, include_feat=include_feat
+        all_results = multi_gpu_eval_net_on_dataset(
+            model, args, dataset_name, proposal_file, num_images, output_dir, include_feat=include_feat
         )
     else:
         all_results = eval_net(
-            model, args, dataset_name, proposal_file, output_dir, gpu_id=gpu_id, include_feat=include_feat
+            model, roidb, args, dataset_name, proposal_file, output_dir, gpu_id=gpu_id, include_feat=include_feat
         )
     test_timer.toc()
     logger.info('Total inference time: {:.3f}s'.format(test_timer.average_time))
@@ -256,8 +261,48 @@ def multi_gpu_test_net_on_dataset(
 
     return all_results
 
+
+def multi_gpu_eval_net_on_dataset(
+        model, args, dataset_name, proposal_file, num_images, output_dir, include_feat):
+    """Multi-gpu inference on a dataset."""
+    binary_dir = envu.get_runtime_dir()
+    binary_ext = envu.get_py_bin_ext()
+    binary = os.path.join(binary_dir, args.test_net_file + binary_ext)
+    assert os.path.exists(binary), 'Binary \'{}\' not found'.format(binary)
+
+    # Pass the target dataset and proposal file (if any) via the command line
+    opts = ['TEST.DATASETS', '("{}",)'.format(dataset_name)]
+    if proposal_file:
+        opts += ['TEST.PROPOSAL_FILES', '("{}",)'.format(proposal_file)]
+
+    if args.do_val:
+        opts += ['--do_val']
+    if args.use_gt_boxes:
+        opts += ['--use_gt_boxes']
+
+    if args.use_gt_labels:
+        opts += ['--use_gt_labels']
+
+    # Run inference in parallel in subprocesses
+    # Outputs will be a list of outputs from each subprocess, where the output
+    # of each subprocess is the dictionary saved by test_net().
+    outputs = subprocess_utils.process_in_parallel(
+        'rel_detection', num_images, binary, output_dir,
+        args.load_ckpt, args.load_detectron, opts
+    )
+
+    # Collate the results from each subprocess
+    all_results = []
+    for det_data in outputs:
+        all_results += det_data
+
+    return all_results
+
+
 def eval_net(
-        model, args,
+        model,
+        roidb,
+        args,
         dataset_name,
         proposal_file,
         output_dir,
@@ -270,9 +315,9 @@ def eval_net(
     assert not cfg.MODEL.RPN_ONLY, \
         'Use rpn_generate to generate proposals from RPN-only models'
 
-    roidb, dataset, start_ind, end_ind, total_num_images = get_roidb_and_dataset(
-        dataset_name, proposal_file, ind_range, args.do_val
-    )
+    # roidb, dataset, start_ind, end_ind, total_num_images = get_roidb_and_dataset(
+    #     dataset_name, proposal_file, ind_range, args.do_val
+    # )
     roidb = roidb[:100]
     num_images = len(roidb)
     all_results = [None for _ in range(num_images)]

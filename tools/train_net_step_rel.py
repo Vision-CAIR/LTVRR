@@ -34,6 +34,9 @@ from core.test_engine_rel import run_eval_inference
 from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
 import json
+
+from datasets.json_dataset_rel import JsonDataset
+from core.test_engine_rel import get_inference_dataset, get_roidb_and_dataset
 # Set up logging and load config options
 logger = setup_logging(__name__)
 logging.getLogger('roi_data.loader').setLevel(logging.INFO)
@@ -318,6 +321,13 @@ def main():
         collate_fn=collate_minibatch)
     dataiterator = iter(dataloader)
 
+
+    logger.info('Creating val riodb')
+    val_dataset_name, val_proposal_file = get_inference_dataset(0)
+    val_roidb, val_dataset, start_ind, end_ind, total_num_images = get_roidb_and_dataset(
+        val_dataset_name, val_proposal_file, None, args.do_val)
+    logger.info('Done')
+
     ### Model ###
     maskRCNN = Generalized_RCNN()
 
@@ -523,17 +533,24 @@ def main():
             training_stats.IterToc()
 
             training_stats.LogIterStats(step, lr, backbone_lr)
-            
-            #if (step+1) % EVAL_PERIOD == 0:
+
             if (step+1) % EVAL_PERIOD == 0:
                 logger.info('Validating model')
-                save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
+                # save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
                 args.output_dir = output_dir
                 args.do_val = True
                 args.use_gt_boxes = True
                 args.use_gt_labels = True
                 maskRCNN.eval()
-                all_results = run_eval_inference(maskRCNN, args, ind_range=None, multi_gpu_testing=False, check_expected_results=True)
+                all_results = run_eval_inference(maskRCNN,
+                                                 val_roidb,
+                                                 args,
+                                                 val_dataset,
+                                                 val_dataset_name,
+                                                 val_proposal_file,
+                                                 ind_range=None,
+                                                 multi_gpu_testing=False,
+                                                 check_expected_results=True)
                 csv_path = os.path.join(output_dir, 'eval.csv')
                 logger.info('generating csv file')
                 all_results = all_results[0]
@@ -547,6 +564,7 @@ def main():
                 prd_acc = per_class_metrics[(csv_path, 'rel', 'top1')]
                 avg_obj_sbj = (obj_acc + sbj_acc) / 2.0
                 avg_acc = (prd_acc + avg_obj_sbj) / 2.0
+
                 #best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
                 if avg_acc > best['avg_per_class_acc']:
                     print('Found new best validation accuracy at {}%'.format(avg_acc))
