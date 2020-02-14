@@ -321,6 +321,10 @@ def main():
         collate_fn=collate_minibatch)
     dataiterator = iter(dataloader)
 
+    args.output_dir = output_dir
+    args.do_val = True
+    args.use_gt_boxes = True
+    args.use_gt_labels = True
 
     logger.info('Creating val riodb')
     val_dataset_name, val_proposal_file = get_inference_dataset(0)
@@ -537,10 +541,6 @@ def main():
             if (step+1) % EVAL_PERIOD == 0:
                 logger.info('Validating model')
                 # save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
-                args.output_dir = output_dir
-                args.do_val = True
-                args.use_gt_boxes = True
-                args.use_gt_labels = True
                 maskRCNN.eval()
                 all_results = run_eval_inference(maskRCNN,
                                                  val_roidb,
