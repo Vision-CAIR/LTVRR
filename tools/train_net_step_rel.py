@@ -406,7 +406,8 @@ def main():
 
     lr = optimizer.param_groups[2]['lr']  # lr of non-backbone parameters, for commmand line outputs.
     backbone_lr = optimizer.param_groups[0]['lr']  # lr of backbone parameters, for commmand line outputs.
-
+    freq_prd = maskRCNN.freq_prd
+    freq_obj = maskRCNN.freq_obj
     maskRCNN = mynn.DataParallel(maskRCNN, cpu_keywords=['im_info', 'roidb'],
                                  minibatch=True)
 
@@ -432,7 +433,7 @@ def main():
             best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
         else:
             best = {}
-            best['best_avg_top1_acc'] = 0.0
+            best['avg_per_class_acc'] = 0.0
             best['iteration'] = 0
             best['accuracies'] = []
             json.dump(best, open(os.path.join(ckpt_dir, 'best.json'), 'w'))
@@ -448,7 +449,7 @@ def main():
     # CHECKPOINT_PERIOD = int(cfg.TRAIN.SNAPSHOT_ITERS / cfg.NUM_GPUS)
     # CHECKPOINT_PERIOD = cfg.SOLVER.MAX_ITER / cfg.TRAIN.SNAPSHOT_FREQ
     CHECKPOINT_PERIOD = 200000
-    EVAL_PERIOD = 100
+    EVAL_PERIOD = 40
     # Set index for decay steps
     decay_steps_ind = None
     for i in range(1, len(cfg.SOLVER.STEPS)):
@@ -525,6 +526,7 @@ def main():
             
             #if (step+1) % EVAL_PERIOD == 0:
             if (step+1) % EVAL_PERIOD == 0:
+                logger.info('Validating model')
                 save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
                 args.output_dir = output_dir
                 args.do_val = True
@@ -532,20 +534,31 @@ def main():
                 args.use_gt_labels = True
                 maskRCNN.eval()
                 all_results = run_eval_inference(maskRCNN, args, ind_range=None, multi_gpu_testing=False, check_expected_results=True)
-
-                csv_path = args.output_dir + 'eval.csv'
-                generate_csv_file_from_det_obj(all_results, maskRCNN.freq_prd, maskRCNN.freq_obj, csv_path)
-                metrics = get_metrics_from_csv(csv_path)
-                print(metrics)
-                curr_avg_top1_acc = 0
-
-                # best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
-                if curr_avg_top1_acc > best['best_avg_top1_acc']:
-                    print('Found new best validation accuracy at {}%'.format(curr_avg_top1_acc))
+                csv_path = os.path.join(output_dir, 'eval.csv')
+                logger.info('generating csv file')
+                all_results = all_results[0]
+                #print('all_results', all_results[0].keys())
+                generate_csv_file_from_det_obj(all_results, freq_prd, freq_obj, csv_path)
+                logger.info('calculating metrics')
+                overall_metrics, per_class_metrics = get_metrics_from_csv(csv_path)
+                logger.info('done')
+                obj_acc = per_class_metrics[(csv_path, 'obj', 'top1')]
+                sbj_acc = per_class_metrics[(csv_path, 'sbj', 'top1')]
+                prd_acc = per_class_metrics[(csv_path, 'rel', 'top1')]
+                avg_obj_sbj = (obj_acc + sbj_acc) / 2.0
+                avg_acc = (prd_acc + avg_obj_sbj) / 2.0
+                #best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
+                if avg_acc > best['avg_per_class_acc']:
+                    print('Found new best validation accuracy at {}%'.format(avg_acc))
                     print('Saving best model..')
-                    best['best_avg_top1_acc'] = curr_avg_top1_acc
+                    best['avg_per_class_acc'] = avg_acc
                     best['iteration'] = step
-                    best['accuracies'] = [metrics]
+                    best['per_class_metrics'] = {'obj_top1': per_class_metrics[(csv_path, 'obj', 'top1')],
+                                    'sbj_top1': per_class_metrics[(csv_path, 'sbj', 'top1')],
+                                    'prd_top1': per_class_metrics[(csv_path, 'rel', 'top1')]}
+                    best['overall_metrics'] = {'obj_top1': overall_metrics[(csv_path, 'obj', 'top1')],
+                            'sbj_top1': overall_metrics[(csv_path, 'sbj', 'top1')],
+                            'prd_top1': overall_metrics[(csv_path, 'rel', 'top1')]}
                     save_best_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
                     json.dump(best, open(os.path.join(ckpt_dir, 'best.json'), 'w'))
 

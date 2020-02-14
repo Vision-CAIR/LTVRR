@@ -41,14 +41,18 @@ def keep_only_heavy_tail_observations(dataframe, prediction_type, threshold_of_t
 
 
 def get_metrics_from_csv(csv_file):
+    verbose = True
+    collected_simple_means = dict()
+    collected_per_class_means = dict()
+    print('reading csv file')
     df = pd.read_csv(csv_file)
+    print('done')
     # df['rel_top1'] = df['rel_rank'] < 1
     metric_type = 'top1'
     all_prediction_types = ['rel', 'obj', 'sbj']
-
-    for metric_type in raw_metrics:
-        for prediction_type in all_prediction_types:
-            df[prediction_type + '_' + metric_type] = df[prediction_type + '_rank'] < int(metric_type[3:])
+    gt_prefix = 'gt'
+    for prediction_type in all_prediction_types:
+        df[prediction_type + '_' + metric_type] = df[prediction_type + '_rank'] < int(metric_type[3:])
 
     if verbose:
         print('------', metric_type, '------')
@@ -61,7 +65,7 @@ def get_metrics_from_csv(csv_file):
         if verbose:
             print('simple-average', prediction_type, '{:2.2f}'.format(mu))
 
-        collected_simple_means[(m, prediction_type, metric_type)] = mu
+        collected_simple_means[(csv_file, prediction_type, metric_type)] = mu
 
     # Per-class Accuracy
     for prediction_type in all_prediction_types:
@@ -72,7 +76,7 @@ def get_metrics_from_csv(csv_file):
         if verbose:
             print('per-class-average', prediction_type, '{:2.2f}'.format(mu))
 
-        collected_per_class_means[(m, prediction_type, metric_type)] = mu
+        collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
 
     return collected_simple_means, collected_per_class_means
 
