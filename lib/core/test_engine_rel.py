@@ -128,6 +128,51 @@ def run_inference(
 
     return all_results
 
+def run_eval_inference(
+        args, ind_range=None,
+        multi_gpu_testing=False, gpu_id=0,
+        check_expected_results=False):
+    parent_func, child_func = get_eval_functions()
+    is_parent = ind_range is None
+
+    def result_getter():
+        if is_parent:
+            # Parent case:
+            # In this case we're either running inference on the entire dataset in a
+            # single process or (if multi_gpu_testing is True) using this process to
+            # launch subprocesses that each run inference on a range of the dataset
+            all_results = []
+            for i in range(len(cfg.TEST.DATASETS)):
+                dataset_name, proposal_file = get_inference_dataset(i)
+                output_dir = args.output_dir
+                results = parent_func(
+                    args,
+                    dataset_name,
+                    proposal_file,
+                    output_dir,
+                    multi_gpu=multi_gpu_testing
+                )
+                all_results.append(results)
+
+            return all_results
+        else:
+            # Subprocess child case:
+            # In this case test_net was called via subprocess.Popen to execute on a
+            # range of inputs on a single dataset
+            dataset_name, proposal_file = get_inference_dataset(0, is_parent=False)
+            output_dir = args.output_dir
+            return child_func(
+                args,
+                dataset_name,
+                proposal_file,
+                output_dir,
+                ind_range=ind_range,
+                gpu_id=gpu_id
+            )
+
+    all_results = result_getter()
+
+    return all_results
 
 def test_net_on_dataset(
         args,

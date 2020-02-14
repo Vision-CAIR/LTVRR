@@ -30,6 +30,7 @@ from utils.detectron_weight_helper import load_detectron_weight
 from utils.logging import setup_logging
 from utils.timer import Timer
 from utils.training_stats_rel import TrainingStats
+from core.test_engine_rel import run_eval_inference
 
 # Set up logging and load config options
 logger = setup_logging(__name__)
@@ -135,6 +136,25 @@ def save_ckpt(output_dir, args, step, train_size, model, optimizer):
         'optimizer': optimizer.state_dict()}, save_name)
     logger.info('save model: %s', save_name)
 
+def save_eval_ckpt(output_dir, args, step, train_size, model, optimizer):
+    """Save checkpoint"""
+    if args.no_save:
+        return
+    ckpt_dir = os.path.join(output_dir, 'ckpt')
+    if not os.path.exists(ckpt_dir):
+        os.makedirs(ckpt_dir)
+    save_name = os.path.join(ckpt_dir, 'eval.pth'.format(step))
+    if isinstance(model, mynn.DataParallel):
+        model = model.module
+    model_state_dict = model.state_dict()
+    torch.save({
+        'step': step,
+        'train_size': train_size,
+        'batch_size': args.batch_size,
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict()}, save_name)
+    logger.info('save model: %s', save_name)
+
 
 def main():
     """Main function"""
@@ -154,26 +174,32 @@ def main():
     cfg.DATASETS = args.dataset
     if args.dataset == "vg80k":
         cfg.TRAIN.DATASETS = ('vg80k_train',)
+        cfg.TEST.DATASETS = ('vg80k_val',)
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
     elif args.dataset == "vrd":
         cfg.TRAIN.DATASETS = ('vrd_train',)
+        cfg.TEST.DATASETS = ('vrd_val',)
         cfg.MODEL.NUM_CLASSES = 101
         cfg.MODEL.NUM_PRD_CLASSES = 70  # exclude background
     elif args.dataset == "vg":
         cfg.TRAIN.DATASETS = ('vg_train',)
+        cfg.TEST.DATASETS = ('vg_val',)
         cfg.MODEL.NUM_CLASSES = 151
         cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
     elif args.dataset == "gvqa20k":
         cfg.TRAIN.DATASETS = ('gvqa20k_train',)
+        cfg.TEST.DATASETS = ('gvqa20k_val',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     elif args.dataset == "gvqa10k":
         cfg.TRAIN.DATASETS = ('gvqa10k_train',)
+        cfg.TEST.DATASETS = ('gvqa10k_val',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     elif args.dataset == "gvqa":
         cfg.TRAIN.DATASETS = ('gvqa_train',)
+        cfg.TEST.DATASETS = ('gvqa_val',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
 
@@ -385,7 +411,7 @@ def main():
     # CHECKPOINT_PERIOD = int(cfg.TRAIN.SNAPSHOT_ITERS / cfg.NUM_GPUS)
     # CHECKPOINT_PERIOD = cfg.SOLVER.MAX_ITER / cfg.TRAIN.SNAPSHOT_FREQ
     CHECKPOINT_PERIOD = 200000
-
+    EVAL_PERIOD = 2500
     # Set index for decay steps
     decay_steps_ind = None
     for i in range(1, len(cfg.SOLVER.STEPS)):
@@ -453,11 +479,18 @@ def main():
                 training_stats.UpdateIterStats(net_outputs, inner_iter)
                 loss = net_outputs['total_loss']
                 loss.backward()
+
             optimizer.step()
             training_stats.IterToc()
 
             training_stats.LogIterStats(step, lr, backbone_lr)
 
+            if (step+1) % EVAL_PERIOD == 0:
+                save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
+                all_results = run_eval_inference(args, ind_range=None, multi_gpu_testing=True, check_expected_results=True)
+
+                # mean_sbj_obj = (obj_acc + sbj_acc) / 2.0
+                # avg_acc = (prd_acc + mean_sbj_obj) / 2.0
             if (step+1) % CHECKPOINT_PERIOD == 0:
                 print('Saving Checkpoint..')
                 save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
