@@ -199,9 +199,44 @@ for i, m in enumerate(method_names):
             if verbose:
                 print ('per-class-mr', prediction_type, '{:2.2f}'.format(mu))
                 
-            collected_per_class_means[(m, prediction_type, metric_type)] = mu                        
+            collected_per_class_means[(m, prediction_type, metric_type)] = mu
 
-            
+
+def get_metrics_from_csv(csv_file):
+    df = pd.read_csv(csv_file)
+    # df['rel_top1'] = df['rel_rank'] < 1
+    metric_type = 'top1'
+    all_prediction_types = ['rel', 'obj', 'sbj']
+
+    for metric_type in raw_metrics:
+        for prediction_type in all_prediction_types:
+            df[prediction_type + '_' + metric_type] = df[prediction_type + '_rank'] < int(metric_type[3:])
+
+    if verbose:
+        print('------', metric_type, '------')
+
+    # Overall Accuracy
+    for prediction_type in all_prediction_types:
+        mu = (len(df[df[prediction_type + '_rank'] < int(metric_type[3:])]) / len(df)) * 100.0
+        # mu = df[prediction_type + '_' + metric_type].mean() * 100
+
+        if verbose:
+            print('simple-average', prediction_type, '{:2.2f}'.format(mu))
+
+        collected_simple_means[(m, prediction_type, metric_type)] = mu
+
+    # Per-class Accuracy
+    for prediction_type in all_prediction_types:
+        mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean() * 100
+        # mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
+        # print(mu)
+
+        if verbose:
+            print('per-class-average', prediction_type, '{:2.2f}'.format(mu))
+
+        collected_per_class_means[(m, prediction_type, metric_type)] = mu
+
+    return collected_simple_means, collected_per_class_means
 
 # In[10]:
 
