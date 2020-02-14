@@ -33,7 +33,7 @@ from utils.training_stats_rel import TrainingStats
 from core.test_engine_rel import run_eval_inference
 from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
-
+import json
 # Set up logging and load config options
 logger = setup_logging(__name__)
 logging.getLogger('roi_data.loader').setLevel(logging.INFO)
@@ -137,6 +137,27 @@ def save_ckpt(output_dir, args, step, train_size, model, optimizer):
         'model': model.state_dict(),
         'optimizer': optimizer.state_dict()}, save_name)
     logger.info('save model: %s', save_name)
+
+
+def save_best_ckpt(output_dir, args, step, train_size, model, optimizer):
+    """Save checkpoint"""
+    if args.no_save:
+        return
+    ckpt_dir = os.path.join(output_dir, 'ckpt')
+    if not os.path.exists(ckpt_dir):
+        os.makedirs(ckpt_dir)
+    save_name = os.path.join(ckpt_dir, 'best.pth'.format(step))
+    if isinstance(model, mynn.DataParallel):
+        model = model.module
+    model_state_dict = model.state_dict()
+    torch.save({
+        'step': step,
+        'train_size': train_size,
+        'batch_size': args.batch_size,
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict()}, save_name)
+    logger.info('save model: %s', save_name)
+
 
 def save_eval_ckpt(output_dir, args, step, train_size, model, optimizer):
     """Save checkpoint"""
@@ -402,6 +423,20 @@ def main():
         with open(os.path.join(output_dir, 'config_and_args.pkl'), 'wb') as f:
             pickle.dump(blob, f, pickle.HIGHEST_PROTOCOL)
 
+        ckpt_dir = os.path.join(output_dir, 'ckpt')
+
+        if not os.path.exists(ckpt_dir):
+            os.makedirs(ckpt_dir)
+
+        if os.path.exists(os.path.join(ckpt_dir, 'best.json')):
+            best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
+        else:
+            best = {}
+            best['best_avg_top1_acc'] = 0.0
+            best['iteration'] = 0
+            best['accuracies'] = []
+            json.dump(best, open(os.path.join(ckpt_dir, 'best.json'), 'w'))
+
         if args.use_tfboard:
             from tensorboardX import SummaryWriter
             # Set the Tensorboard logger
@@ -502,6 +537,18 @@ def main():
                 generate_csv_file_from_det_obj(all_results, maskRCNN.freq_prd, maskRCNN.freq_obj, csv_path)
                 metrics = get_metrics_from_csv(csv_path)
                 print(metrics)
+                curr_avg_top1_acc = 0
+
+                # best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
+                if curr_avg_top1_acc > best['best_avg_top1_acc']:
+                    print('Found new best validation accuracy at {}%'.format(curr_avg_top1_acc))
+                    print('Saving best model..')
+                    best['best_avg_top1_acc'] = curr_avg_top1_acc
+                    best['iteration'] = step
+                    best['accuracies'] = [metrics]
+                    save_best_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
+                    json.dump(best, open(os.path.join(ckpt_dir, 'best.json'), 'w'))
+
                 # mean_sbj_obj = (obj_acc + sbj_acc) / 2.0
                 # avg_acc = (prd_acc + mean_sbj_obj) / 2.0
             if (step+1) % CHECKPOINT_PERIOD == 0:
