@@ -14,6 +14,13 @@ from utils.resnet_weights_helper import convert_state_dict
 # Bits for specific architectures (ResNet50, ResNet101, ...)
 # ---------------------------------------------------------------------------- #
 
+def ResNet10_conv4_body():
+    return ResNet_convX_body((1, 1, 1))
+
+def ResNet10_conv5_body():
+    return ResNet_convX_body((1, 1, 1, 1))
+
+
 def ResNet50_conv4_body():
     return ResNet_convX_body((3, 4, 6))
 
