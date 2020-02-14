@@ -31,6 +31,7 @@ import yaml
 import gensim
 import json
 from six.moves import cPickle as pickle
+from tqdm import tqdm
 
 import torch
 
@@ -129,48 +130,26 @@ def run_inference(
     return all_results
 
 def run_eval_inference(
-        args, ind_range=None,
+        model, args, ind_range=None,
         multi_gpu_testing=False, gpu_id=0,
         check_expected_results=False):
-    parent_func, child_func = get_eval_functions()
-    is_parent = ind_range is None
-
-    def result_getter():
-        if is_parent:
-            # Parent case:
-            # In this case we're either running inference on the entire dataset in a
-            # single process or (if multi_gpu_testing is True) using this process to
-            # launch subprocesses that each run inference on a range of the dataset
-            all_results = []
-            for i in range(len(cfg.TEST.DATASETS)):
-                dataset_name, proposal_file = get_inference_dataset(i)
-                output_dir = args.output_dir
-                results = parent_func(
-                    args,
-                    dataset_name,
-                    proposal_file,
-                    output_dir,
-                    multi_gpu=multi_gpu_testing
-                )
-                all_results.append(results)
-
-            return all_results
-        else:
-            # Subprocess child case:
-            # In this case test_net was called via subprocess.Popen to execute on a
-            # range of inputs on a single dataset
-            dataset_name, proposal_file = get_inference_dataset(0, is_parent=False)
-            output_dir = args.output_dir
-            return child_func(
-                args,
-                dataset_name,
-                proposal_file,
-                output_dir,
-                ind_range=ind_range,
-                gpu_id=gpu_id
-            )
-
-    all_results = result_getter()
+    # Parent case:
+    # In this case we're either running inference on the entire dataset in a
+    # single process or (if multi_gpu_testing is True) using this process to
+    # launch subprocesses that each run inference on a range of the dataset
+    all_results = []
+    for i in range(len(cfg.TEST.DATASETS)):
+        dataset_name, proposal_file = get_inference_dataset(i)
+        output_dir = args.output_dir
+        results = eval_net_on_dataset(
+            model,
+            args,
+            dataset_name,
+            proposal_file,
+            output_dir,
+            multi_gpu=multi_gpu_testing
+        )
+        all_results.append(results)
 
     return all_results
 
@@ -202,6 +181,33 @@ def test_net_on_dataset(
     task_evaluation.eval_rel_results(all_results, output_dir, args.do_val)
     
     return all_results
+
+def eval_net_on_dataset(
+        model, args,
+        dataset_name,
+        proposal_file,
+        output_dir,
+        multi_gpu=False,
+        gpu_id=0,
+        include_feat=False):
+    """Run inference on a dataset."""
+    dataset = JsonDataset(dataset_name)
+    test_timer = Timer()
+    test_timer.tic()
+    if multi_gpu:
+        num_images = len(dataset.get_roidb(gt=args.do_val))
+        all_results = multi_gpu_test_net_on_dataset(
+            args, dataset_name, proposal_file, num_images, output_dir, include_feat=include_feat
+        )
+    else:
+        all_results = eval_net(
+            model, args, dataset_name, proposal_file, output_dir, gpu_id=gpu_id, include_feat=include_feat
+        )
+    test_timer.toc()
+    logger.info('Total inference time: {:.3f}s'.format(test_timer.average_time))
+    
+    return all_results
+
 
 
 def multi_gpu_test_net_on_dataset(
@@ -248,6 +254,72 @@ def multi_gpu_test_net_on_dataset(
     save_object(all_results, det_file)
     logger.info('Wrote rel_detections to: {}'.format(os.path.abspath(det_file)))
 
+    return all_results
+
+def eval_net(
+        model, args,
+        dataset_name,
+        proposal_file,
+        output_dir,
+        ind_range=None,
+        gpu_id=0,
+        include_feat=False):
+    """Run inference on all images in a dataset or over an index range of images
+    in a dataset using a single GPU.
+    """
+    assert not cfg.MODEL.RPN_ONLY, \
+        'Use rpn_generate to generate proposals from RPN-only models'
+
+    roidb, dataset, start_ind, end_ind, total_num_images = get_roidb_and_dataset(
+        dataset_name, proposal_file, ind_range, args.do_val
+    )
+    roidb = roidb[:100]
+    num_images = len(roidb)
+    all_results = [None for _ in range(num_images)]
+    timers = defaultdict(Timer)
+    for i, entry in enumerate(tqdm(roidb)):
+        box_proposals = None
+            
+        im = cv2.imread(entry['image'])
+        if args.use_gt_boxes:
+            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, entry, args.use_gt_labels, include_feat=include_feat)
+        else:
+            im_results = im_detect_rels(model, im, dataset_name, box_proposals, timers, include_feat=include_feat)
+        
+        im_results.update(dict(image=entry['image']))
+        # add gt
+        if args.do_val:
+            im_results.update(
+                dict(gt_sbj_boxes=entry['sbj_gt_boxes'],
+                     gt_sbj_labels=entry['sbj_gt_classes'],
+                     gt_obj_boxes=entry['obj_gt_boxes'],
+                     gt_obj_labels=entry['obj_gt_classes'],
+                     gt_prd_labels=entry['prd_gt_classes']))
+        
+        all_results[i] = im_results
+
+        #if i % 10 == 0:  # Reduce log file size
+        #    ave_total_time = np.sum([t.average_time for t in timers.values()])
+        #    eta_seconds = ave_total_time * (num_images - i - 1)
+        #    eta = str(datetime.timedelta(seconds=int(eta_seconds)))
+        #    det_time = (timers['im_detect_rels'].average_time)
+            #logger.info((
+            #    'im_detect: range [{:d}, {:d}] of {:d}: '
+            #    '{:d}/{:d} {:.3f}s (eta: {})').format(
+            #    start_ind + 1, end_ind, total_num_images, start_ind + i + 1,
+            #    start_ind + num_images, det_time, eta))
+
+    #cfg_yaml = yaml.dump(cfg)
+    if ind_range is not None:
+        det_name = 'rel_detection_range_%s_%s.pkl' % tuple(ind_range)
+    else:
+        if args.use_gt_boxes:
+            if args.use_gt_labels:
+                det_name = 'rel_detections_gt_boxes_prdcls.pkl'
+            else:
+                det_name = 'rel_detections_gt_boxes_sgcls.pkl'
+        else:
+            det_name = 'rel_detections.pkl'
     return all_results
 
 
@@ -341,7 +413,6 @@ def initialize_model_from_cfg(args, gpu_id=0):
     if args.load_detectron:
         logger.info("loading detectron weights %s", args.load_detectron)
         load_detectron_weight(model, args.load_detectron)
-
     model = mynn.DataParallel(model, cpu_keywords=['im_info', 'roidb'], minibatch=True)
 
     return model

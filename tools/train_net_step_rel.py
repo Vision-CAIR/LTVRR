@@ -430,6 +430,7 @@ def main():
         step = args.start_step
         for step in range(args.start_step, cfg.SOLVER.MAX_ITER):
 
+            maskRCNN.train()
             # Warm up
             if step < cfg.SOLVER.WARM_UP_ITERS:
                 method = cfg.SOLVER.WARM_UP_METHOD
@@ -484,11 +485,16 @@ def main():
             training_stats.IterToc()
 
             training_stats.LogIterStats(step, lr, backbone_lr)
-
-            if (step+1) % EVAL_PERIOD == 0:
+            
+            #if (step+1) % EVAL_PERIOD == 0:
+            if (step+1) % 100 == 0:
                 save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
-                all_results = run_eval_inference(args, ind_range=None, multi_gpu_testing=True, check_expected_results=True)
-
+                args.output_dir = output_dir
+                args.do_val = True
+                args.use_gt_boxes = True
+                args.use_gt_labels = True
+                maskRCNN.eval()
+                all_results = run_eval_inference(maskRCNN, args, ind_range=None, multi_gpu_testing=False, check_expected_results=True)
                 # mean_sbj_obj = (obj_acc + sbj_acc) / 2.0
                 # avg_acc = (prd_acc + mean_sbj_obj) / 2.0
             if (step+1) % CHECKPOINT_PERIOD == 0:

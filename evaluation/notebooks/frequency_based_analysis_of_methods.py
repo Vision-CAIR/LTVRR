@@ -65,13 +65,13 @@ apply_mask = True
 methods_to_keep = ['baseline', 'focal_025', 'focal_1', 'focal_10',
                    'focal_2', 'focal_5', 'focal_50', 'hubness',
                    'hubness10k', 'hubness50k']
-
+data_name = 'gvqa10k'
 if apply_mask:
     keep_mask = np.zeros(len(all_csvs), dtype=np.bool)
     #for i, m in enumerate(method_names):
     for i, m in enumerate(all_csvs):
         #if m in methods_to_keep:
-        if np.any([x in m for x in methods_to_keep]):
+        if np.any([x in m for x in methods_to_keep]) and (data_name in m):
             keep_mask[i] = True
     all_csvs = all_csvs[keep_mask]
     method_names = np.array([None for _ in all_csvs])
@@ -84,7 +84,7 @@ if apply_mask:
 
     print ('Kept methods', len(method_names))
     print(method_names)
-
+    print(all_csvs)
 # In[14]:
 
 # Load meta-information (integer to "human" readable names)
@@ -138,8 +138,9 @@ collected_simple_means = dict()
 collected_per_class_means = dict()
 drop_left_right = False
 #all_csvs = ['/home/x_abdelks/scratch/freq_bias_files/evaluator/reports/gvqa/test/_weighted_ce_s0/csv_files/_weighted_ce_s0.csv',
-#            '/home/x_abdelks/scratch/freq_bias_files/evaluator/reports/gvqa/test/_retrain_s0/csv_files/_retrain_s0.csv']
-#method_names = ['weighted_ce_s0', 'baseline']
+#            '/home/x_abdelks/scratch/freq_bias_files/evaluator/reports/gvqa/test/_retrain_s0/csv_files/_retrain_s0.csv',
+#            '/home/x_abdelks/scratch/freq_bias_files/evaluator/reports/gvqa/test/_hubness_exp_s0/csv_files/_hubness_exp_s0.csv']
+#method_names = ['weighted_ce_s0', 'baseline', '_hubness_exp_s0']
 for i, m in enumerate(method_names):
     if verbose:
         print('=============================')
@@ -157,6 +158,7 @@ for i, m in enumerate(method_names):
     for metric_type in raw_metrics:
         if verbose:
             print('------', metric_type, '------')
+        # Overall Accuracy
         for prediction_type in all_prediction_types:
             mu = (len(df[df[prediction_type + '_rank'] < int(metric_type[3:])])/len(df)) * 100.0
             #mu = df[prediction_type + '_' + metric_type].mean() * 100
@@ -166,6 +168,18 @@ for i, m in enumerate(method_names):
             
             collected_simple_means[(m, prediction_type, metric_type)] = mu
              
+        # Overall Mean Rank
+        for prediction_type in all_prediction_types:
+            mu = df[prediction_type + '_rank'].mean() * 100.0 / 250.0
+            #mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
+            #print(mu)
+            
+            if verbose:
+                print ('overall-mr', prediction_type, '{:2.2f}'.format(mu))
+                
+            collected_per_class_means[(m, prediction_type, metric_type)] = mu                        
+
+        # Per-class Accuracy
         for prediction_type in all_prediction_types:
             mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean() * 100
             #mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
@@ -176,6 +190,18 @@ for i, m in enumerate(method_names):
                 
             collected_per_class_means[(m, prediction_type, metric_type)] = mu                        
 
+        # Per-class Mean Rank
+        for prediction_type in all_prediction_types:
+            mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean().mean() * 100.0 / 250.0
+            #mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
+            #print(mu)
+            
+            if verbose:
+                print ('per-class-mr', prediction_type, '{:2.2f}'.format(mu))
+                
+            collected_per_class_means[(m, prediction_type, metric_type)] = mu                        
+
+            
 
 # In[10]:
 
