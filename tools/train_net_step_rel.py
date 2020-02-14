@@ -31,6 +31,8 @@ from utils.logging import setup_logging
 from utils.timer import Timer
 from utils.training_stats_rel import TrainingStats
 from core.test_engine_rel import run_eval_inference
+from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
+from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
 
 # Set up logging and load config options
 logger = setup_logging(__name__)
@@ -411,7 +413,7 @@ def main():
     # CHECKPOINT_PERIOD = int(cfg.TRAIN.SNAPSHOT_ITERS / cfg.NUM_GPUS)
     # CHECKPOINT_PERIOD = cfg.SOLVER.MAX_ITER / cfg.TRAIN.SNAPSHOT_FREQ
     CHECKPOINT_PERIOD = 200000
-    EVAL_PERIOD = 2500
+    EVAL_PERIOD = 100
     # Set index for decay steps
     decay_steps_ind = None
     for i in range(1, len(cfg.SOLVER.STEPS)):
@@ -487,7 +489,7 @@ def main():
             training_stats.LogIterStats(step, lr, backbone_lr)
             
             #if (step+1) % EVAL_PERIOD == 0:
-            if (step+1) % 100 == 0:
+            if (step+1) % EVAL_PERIOD == 0:
                 save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
                 args.output_dir = output_dir
                 args.do_val = True
@@ -495,6 +497,11 @@ def main():
                 args.use_gt_labels = True
                 maskRCNN.eval()
                 all_results = run_eval_inference(maskRCNN, args, ind_range=None, multi_gpu_testing=False, check_expected_results=True)
+
+                csv_path = args.output_dir + 'eval.csv'
+                generate_csv_file_from_det_obj(all_results, maskRCNN.freq_prd, maskRCNN.freq_obj, csv_path)
+                metrics = get_metrics_from_csv(csv_path)
+                print(metrics)
                 # mean_sbj_obj = (obj_acc + sbj_acc) / 2.0
                 # avg_acc = (prd_acc + mean_sbj_obj) / 2.0
             if (step+1) % CHECKPOINT_PERIOD == 0:

@@ -215,11 +215,11 @@ class Generalized_RCNN(nn.Module):
 
         if cfg.MODEL.LOSS == 'weighted_cross_entropy':
             logger.info('loading frequencies')
-            freq_prd = np.load('/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy')
-            freq_obj = np.load('/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy')
+            self.freq_prd = np.load('/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy')
+            self.freq_obj = np.load('/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy')
 
-            freq_prd += 1
-            freq_obj += 1
+            freq_prd = self.freq_prd + 1
+            freq_obj = self.freq_obj + 1
             prd_weights = np.sum(freq_prd) / freq_prd
             obj_weights = np.sum(freq_obj) / freq_obj
 

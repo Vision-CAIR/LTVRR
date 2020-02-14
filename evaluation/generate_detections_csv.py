@@ -16,9 +16,8 @@ from tqdm import tqdm
 # if not os.path.exists(csv_path):
 #     os.mkdir(csv_path)
 
-def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path):
-    detections = pickle.load(open(detections_file, 'rb'))
 
+def generate_csv_file_from_det_obj(detections, pred_freq, obj_freq, csv_path):
     with open(csv_path, 'w', newline='') as csvfile:
         total_test_iters = len(detections)
         spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -38,8 +37,8 @@ def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_pa
                              'obj_rank'])
 
         for i in tqdm(range(0, total_test_iters)):
-            #image_idx = detections[i]['image_idx']
-            #image_id = detections[i]['image_id']
+            # image_idx = detections[i]['image_idx']
+            # image_id = detections[i]['image_id']
             image_id = detections[i]['image'].split('/')[-1].split('.')[0]
 
             det_scores_prd_all = detections[i]['prd_scores'][:, 1:]
@@ -47,7 +46,7 @@ def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_pa
 
             det_scores_sbj_all = detections[i]['sbj_scores_out']
             det_labels_sbj_all = np.argsort(-det_scores_sbj_all, axis=1)
-            
+
             det_scores_obj_all = detections[i]['obj_scores_out']
             det_labels_obj_all = np.argsort(-det_scores_obj_all, axis=1)
 
@@ -61,27 +60,27 @@ def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_pa
                 obj_rank = np.where(det_labels_obj_all[j, :] == gt_labels_obj)[0][0]
                 det_labels_rel = det_labels_rel_all[j, 0]
                 rel_rank = np.where(det_labels_rel_all[j, :] == gt_labels_rel)[0][0]
-                #print('rel_rank', rel_rank)
-                #print('det_labels_rel_all[j, :]', det_labels_rel_all[j, :])
-                #print('gt_labels_rel', gt_labels_rel)
-                #exit()
-                #det_labels_rel = detections[i]['prd_labels'][j]
-                #print(det_labels_rel[:10])
-                #print(gt_labels_rel)
-                #print(np.where(det_labels_rel == gt_labels_rel))
-                #try:
+                # print('rel_rank', rel_rank)
+                # print('det_labels_rel_all[j, :]', det_labels_rel_all[j, :])
+                # print('gt_labels_rel', gt_labels_rel)
+                # exit()
+                # det_labels_rel = detections[i]['prd_labels'][j]
+                # print(det_labels_rel[:10])
+                # print(gt_labels_rel)
+                # print(np.where(det_labels_rel == gt_labels_rel))
+                # try:
                 #    rel_rank = np.where(det_labels_rel == gt_labels_rel)[0][0]
-                #except IndexError as e:
+                # except IndexError as e:
                 #    rel_rank = 251
 
-                #try:
+                # try:
                 #    sbj_rank = np.where(det_labels_sbj == gt_labels_sbj)[0][0]
-                #except IndexError as e:
+                # except IndexError as e:
                 #    sbj_rank = 251
 
-                #try:
+                # try:
                 #    obj_rank = np.where(det_labels_obj == gt_labels_obj)[0][0]
-                #except IndexError as e:
+                # except IndexError as e:
                 #    obj_rank = 251
 
                 # rel_top1 = gt_labels_rel in det_labels_rel[:1]
@@ -110,6 +109,12 @@ def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_pa
                      det_labels_obj,
                      obj_freq[gt_labels_obj],
                      obj_rank])
+
+
+def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path):
+    detections = pickle.load(open(detections_file, 'rb'))
+    generate_csv_file_from_det_obj(detections, pred_freq, obj_freq, csv_path)
+
 
 
 
