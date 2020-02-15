@@ -464,7 +464,7 @@ def main():
     # CHECKPOINT_PERIOD = int(cfg.TRAIN.SNAPSHOT_ITERS / cfg.NUM_GPUS)
     # CHECKPOINT_PERIOD = cfg.SOLVER.MAX_ITER / cfg.TRAIN.SNAPSHOT_FREQ
     CHECKPOINT_PERIOD = 200000
-    EVAL_PERIOD = 40
+    EVAL_PERIOD = cfg.TRAIN.EVAL_PERIOD
     # Set index for decay steps
     decay_steps_ind = None
     for i in range(1, len(cfg.SOLVER.STEPS)):
@@ -541,21 +541,9 @@ def main():
 
             if (step+1) % EVAL_PERIOD == 0:
                 logger.info('Validating model')
-                #save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
                 eval_model = maskRCNN.module
-                eval_model = mynn.DataParallel(eval_model, cpu_keywords=['im_info', 'roidb'],device_ids=[0], minibatch=True)
+                eval_model = mynn.DataParallel(eval_model, cpu_keywords=['im_info', 'roidb'], device_ids=[0], minibatch=True)
                 eval_model.eval()
-                #maskRCNN.eval()
-                #args.test_net_file = 'tools/test_net_rel'
-                #ckpt_dir = os.path.join(output_dir, 'ckpt')
-                #args.load_ckpt = os.path.join(ckpt_dir, 'eval.pth')
-                # manually set args.cuda
-                #args.cuda = True
-                #all_results = run_inference(
-                #        args,
-                #        ind_range=None,
-                #        multi_gpu_testing=True,
-                #        check_expected_results=True) 
                 all_results = run_eval_inference(eval_model,
                                                  val_roidb,
                                                  args,
@@ -566,20 +554,16 @@ def main():
                                                  multi_gpu_testing=False,
                                                  check_expected_results=True)
                 csv_path = os.path.join(output_dir, 'eval.csv')
-                logger.info('generating csv file')
                 all_results = all_results[0]
-                #print('all_results', all_results[0].keys())
                 generate_csv_file_from_det_obj(all_results, freq_prd, freq_obj, csv_path)
-                logger.info('calculating metrics')
                 overall_metrics, per_class_metrics = get_metrics_from_csv(csv_path)
-                logger.info('done')
                 obj_acc = per_class_metrics[(csv_path, 'obj', 'top1')]
                 sbj_acc = per_class_metrics[(csv_path, 'sbj', 'top1')]
                 prd_acc = per_class_metrics[(csv_path, 'rel', 'top1')]
                 avg_obj_sbj = (obj_acc + sbj_acc) / 2.0
                 avg_acc = (prd_acc + avg_obj_sbj) / 2.0
 
-                #best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
+                best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
                 if avg_acc > best['avg_per_class_acc']:
                     print('Found new best validation accuracy at {}%'.format(avg_acc))
                     print('Saving best model..')
@@ -594,8 +578,6 @@ def main():
                     save_best_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
                     json.dump(best, open(os.path.join(ckpt_dir, 'best.json'), 'w'))
 
-                # mean_sbj_obj = (obj_acc + sbj_acc) / 2.0
-                # avg_acc = (prd_acc + mean_sbj_obj) / 2.0
             if (step+1) % CHECKPOINT_PERIOD == 0:
                 print('Saving Checkpoint..')
                 save_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)

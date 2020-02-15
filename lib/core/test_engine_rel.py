@@ -322,7 +322,7 @@ def eval_net(
     num_images = len(roidb)
     all_results = [None for _ in range(num_images)]
     timers = defaultdict(Timer)
-    for i, entry in enumerate(tqdm(roidb)):
+    for i, entry in enumerate(roidb):
         box_proposals = None
             
         im = cv2.imread(entry['image'])
@@ -343,28 +343,7 @@ def eval_net(
         
         all_results[i] = im_results
 
-        #if i % 10 == 0:  # Reduce log file size
-        #    ave_total_time = np.sum([t.average_time for t in timers.values()])
-        #    eta_seconds = ave_total_time * (num_images - i - 1)
-        #    eta = str(datetime.timedelta(seconds=int(eta_seconds)))
-        #    det_time = (timers['im_detect_rels'].average_time)
-            #logger.info((
-            #    'im_detect: range [{:d}, {:d}] of {:d}: '
-            #    '{:d}/{:d} {:.3f}s (eta: {})').format(
-            #    start_ind + 1, end_ind, total_num_images, start_ind + i + 1,
-            #    start_ind + num_images, det_time, eta))
 
-    #cfg_yaml = yaml.dump(cfg)
-    if ind_range is not None:
-        det_name = 'rel_detection_range_%s_%s.pkl' % tuple(ind_range)
-    else:
-        if args.use_gt_boxes:
-            if args.use_gt_labels:
-                det_name = 'rel_detections_gt_boxes_prdcls.pkl'
-            else:
-                det_name = 'rel_detections_gt_boxes_sgcls.pkl'
-        else:
-            det_name = 'rel_detections.pkl'
     return all_results
 
 
