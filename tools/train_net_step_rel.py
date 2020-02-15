@@ -568,7 +568,7 @@ def main():
 
                 best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
                 if avg_acc > best['avg_per_class_acc']:
-                    print('Found new best validation accuracy at {}%'.format(avg_acc))
+                    print('Found new best validation accuracy at {:2.2f}%'.format(avg_acc))
                     print('Saving best model..')
                     best['avg_per_class_acc'] = avg_acc
                     best['iteration'] = step

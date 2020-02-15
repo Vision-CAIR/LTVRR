@@ -318,7 +318,7 @@ def eval_net(
     # roidb, dataset, start_ind, end_ind, total_num_images = get_roidb_and_dataset(
     #     dataset_name, proposal_file, ind_range, args.do_val
     # )
-    roidb = roidb[:100]
+    # roidb = roidb[:100]
     num_images = len(roidb)
     all_results = [None for _ in range(num_images)]
     timers = defaultdict(Timer)
