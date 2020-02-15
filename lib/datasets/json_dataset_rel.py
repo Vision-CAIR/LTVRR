@@ -103,6 +103,10 @@ class JsonDataset(object):
         cache_path = os.path.abspath(os.path.join(cfg.DATA_DIR, 'cache'))
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
+        cache_seed_path = os.path.abspath(os.path.join(cache_path, 'seed{}'.format(cfg.RNG_SEED)))
+        if not os.path.exists(cache_seed_path):
+            os.makedirs(cache_seed_path)
+        cache_path = cache_seed_path
         return cache_path
 
     @property

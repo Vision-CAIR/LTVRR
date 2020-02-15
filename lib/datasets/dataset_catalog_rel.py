@@ -65,31 +65,31 @@ DATASETS = {
         IM_DIR:
             _DATA_DIR + '/vg80k/VG_100K',
         ANN_FN:
-            _DATA_DIR + '/vg80k/detections_train.json',
+            _DATA_DIR + '/vg80k/seed{}/detections_train.json',
         ANN_FN2:
-            _DATA_DIR + '/vg80k/rel_annotations_train.json',
+            _DATA_DIR + '/vg80k/seed{}/rel_annotations_train.json',
         ANN_FN3:
-            _DATA_DIR + '/vg80k/predicates.json',
+            _DATA_DIR + '/vg80k/seed{}/predicates.json',
     },
     'vg80k_val': {
         IM_DIR:
             _DATA_DIR + '/vg80k/VG_100K',
         ANN_FN:
-            _DATA_DIR + '/vg80k/detections_val.json',
+            _DATA_DIR + '/vg80k/seed{}/detections_val.json',
         ANN_FN2:
-            _DATA_DIR + '/vg80k/rel_annotations_val.json',
+            _DATA_DIR + '/vg80k/seed{}/rel_annotations_val.json',
         ANN_FN3:
-            _DATA_DIR + '/vg80k/predicates.json',
+            _DATA_DIR + '/vg80k/seed{}/predicates.json',
     },
     'vg80k_test': {
         IM_DIR:
             _DATA_DIR + '/vg80k/VG_100K',
         ANN_FN:
-            _DATA_DIR + '/vg80k/detections_test.json',
+            _DATA_DIR + '/vg80k/seed{}/detections_test.json',
         ANN_FN2:
-            _DATA_DIR + '/vg80k/rel_annotations_test.json',
+            _DATA_DIR + '/vg80k/seed{}/rel_annotations_test.json',
         ANN_FN3:
-            _DATA_DIR + '/vg80k/predicates.json',
+            _DATA_DIR + '/vg80k/seed{}/predicates.json',
     },
     'gvqa_train': {
         IM_DIR:
@@ -125,61 +125,61 @@ DATASETS = {
         IM_DIR:
             _DATA_DIR + '/gvqa20k/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa20k/detections_train.json',
+            _DATA_DIR + '/gvqa20k/seed{}/detections_train.json',
         ANN_FN2:
-            _DATA_DIR + '/gvqa20k/rel_annotations_train.json',
+            _DATA_DIR + '/gvqa20k/seed{}/rel_annotations_train.json',
         ANN_FN3:
-            _DATA_DIR + '/gvqa20k/predicates.json',
+            _DATA_DIR + '/gvqa20k/seed{}/predicates.json',
     },
     'gvqa20k_val': {
         IM_DIR:
             _DATA_DIR + '/gvqa20k/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa20k/detections_val.json',
+            _DATA_DIR + '/gvqa20k/seed{}/detections_val.json',
         ANN_FN2:
-            _DATA_DIR + '/gvqa20k/rel_annotations_val.json',
+            _DATA_DIR + '/gvqa20k/seed{}/rel_annotations_val.json',
         ANN_FN3:
-            _DATA_DIR + '/gvqa20k/predicates.json',
+            _DATA_DIR + '/gvqa20k/seed{}/predicates.json',
     },
     'gvqa20k_test': {
         IM_DIR:
             _DATA_DIR + '/gvqa20k/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa20k/detections_test.json',
+            _DATA_DIR + '/gvqa20k/seed{}/detections_test.json',
         ANN_FN2:
-            _DATA_DIR + '/gvqa20k/rel_annotations_test.json',
+            _DATA_DIR + '/gvqa20k/seed{}/rel_annotations_test.json',
         ANN_FN3:
-            _DATA_DIR + '/gvqa20k/predicates.json',
+            _DATA_DIR + '/gvqa20k/seed{}/predicates.json',
     },
     'gvqa10k_train': {
         IM_DIR:
             _DATA_DIR + '/gvqa10k/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa10k/detections_train.json',
+            _DATA_DIR + '/gvqa10k/seed{}/detections_train.json',
         ANN_FN2:
-            _DATA_DIR + '/gvqa10k/rel_annotations_train.json',
+            _DATA_DIR + '/gvqa10k/seed{}/rel_annotations_train.json',
         ANN_FN3:
-            _DATA_DIR + '/gvqa10k/predicates.json',
+            _DATA_DIR + '/gvqa10k/seed{}/predicates.json',
     },
     'gvqa10k_val': {
         IM_DIR:
             _DATA_DIR + '/gvqa10k/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa10k/detections_val.json',
+            _DATA_DIR + '/gvqa10k/seed{}/detections_val.json',
         ANN_FN2:
-            _DATA_DIR + '/gvqa10k/rel_annotations_val.json',
+            _DATA_DIR + '/gvqa10k/seed{}/rel_annotations_val.json',
         ANN_FN3:
-            _DATA_DIR + '/gvqa10k/predicates.json',
+            _DATA_DIR + '/gvqa10k/seed{}/predicates.json',
     },
     'gvqa10k_test': {
         IM_DIR:
             _DATA_DIR + '/gvqa10k/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa10k/detections_test.json',
+            _DATA_DIR + '/gvqa10k/seed{}/detections_test.json',
         ANN_FN2:
-            _DATA_DIR + '/gvqa10k/rel_annotations_test.json',
+            _DATA_DIR + '/gvqa10k/seed{}/rel_annotations_test.json',
         ANN_FN3:
-            _DATA_DIR + '/gvqa10k/predicates.json',
+            _DATA_DIR + '/gvqa10k/seed{}/predicates.json',
     },
     # VRD dataset
     'vrd_train': {
