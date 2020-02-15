@@ -179,8 +179,8 @@ def test_net_on_dataset(
     test_timer.toc()
     logger.info('Total inference time: {:.3f}s'.format(test_timer.average_time))
     
-    logger.info('Starting evaluation now...')
-    task_evaluation.eval_rel_results(all_results, output_dir, args.do_val)
+    # logger.info('Starting evaluation now...')
+    # task_evaluation.eval_rel_results(all_results, output_dir, args.do_val)
     
     return all_results
 

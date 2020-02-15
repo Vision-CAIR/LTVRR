@@ -18,6 +18,10 @@ from core.test_engine_rel import run_inference
 import utils.logging
 
 from datasets import task_evaluation_rel as task_evaluation
+from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
+from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
+
+import numpy as np
 
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
 # thread safe and causes unwanted GPU memory allocations.
@@ -141,19 +145,28 @@ if __name__ == '__main__':
     if args.use_gt_boxes:
         if args.use_gt_labels:
             det_file = os.path.join(args.output_dir, 'rel_detections_gt_boxes_prdcls.pkl')
+            csv_file = os.path.join(args.output_dir, 'rel_detections_gt_boxes_prdcls.csv')
         else:
             det_file = os.path.join(args.output_dir, 'rel_detections_gt_boxes_sgcls.pkl')
+            csv_file = os.path.join(args.output_dir, 'rel_detections_gt_boxes_sgcls.csv')
     else:
         det_file = os.path.join(args.output_dir, 'rel_detections.pkl')
+        csv_file = os.path.join(args.output_dir, 'rel_detections.csv')
     if os.path.exists(det_file):
         logger.info('Loading results from {}'.format(det_file))
         with open(det_file, 'rb') as f:
             all_results = pickle.load(f)
-        logger.info('Starting evaluation now...')
-        task_evaluation.eval_rel_results(all_results, args.output_dir, args.do_val)
+        # logger.info('Starting evaluation now...')
+        # task_evaluation.eval_rel_results(all_results, args.output_dir, args.do_val)
     else:
         all_results = run_inference(
                         args,
                         ind_range=args.range,
                         multi_gpu_testing=args.multi_gpu_testing,
                         check_expected_results=True)
+
+    all_results = all_results[0]
+    freq_prd = np.zeros(cfg.MODEL.NUM_PRD_CLASSES)
+    freq_obj = np.zeros(cfg.MODEL.NUM_CLASSES)
+    generate_csv_file_from_det_obj(all_results, freq_prd, freq_obj, csv_file)
+    overall_metrics, per_class_metrics = get_metrics_from_csv(csv_file)
