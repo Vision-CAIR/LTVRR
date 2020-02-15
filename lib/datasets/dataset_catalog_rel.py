@@ -95,31 +95,31 @@ DATASETS = {
         IM_DIR:
             _DATA_DIR + '/gvqa/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa/detections_train.json',
+            _DATA_DIR + '/gvqa/seed{}/detections_train.json'.format(cfg.RNG_SEED),
         ANN_FN2:
-            _DATA_DIR + '/gvqa/rel_annotations_train.json',
+            _DATA_DIR + '/gvqa/seed{}/rel_annotations_train.json'.format(cfg.RNG_SEED),
         ANN_FN3:
-            _DATA_DIR + '/gvqa/predicates.json',
+            _DATA_DIR + '/gvqa/seed{}/predicates.json'.format(cfg.RNG_SEED),
     },
     'gvqa_val': {
         IM_DIR:
             _DATA_DIR + '/gvqa/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa/detections_val.json',
+            _DATA_DIR + '/gvqa/seed{}/detections_val.json'.format(cfg.RNG_SEED),
         ANN_FN2:
-            _DATA_DIR + '/gvqa/rel_annotations_val.json',
+            _DATA_DIR + '/gvqa/seed{}/rel_annotations_val.json'.format(cfg.RNG_SEED),
         ANN_FN3:
-            _DATA_DIR + '/gvqa/predicates.json',
+            _DATA_DIR + '/gvqa/seed{}/predicates.json'.format(cfg.RNG_SEED),
     },
     'gvqa_test': {
         IM_DIR:
             _DATA_DIR + '/gvqa/images',
         ANN_FN:
-            _DATA_DIR + '/gvqa/detections_test.json',
+            _DATA_DIR + '/gvqa/seed{}/detections_test.json'.format(cfg.RNG_SEED),
         ANN_FN2:
-            _DATA_DIR + '/gvqa/rel_annotations_test.json',
+            _DATA_DIR + '/gvqa/seed{}/rel_annotations_test.json'.format(cfg.RNG_SEED),
         ANN_FN3:
-            _DATA_DIR + '/gvqa/predicates.json',
+            _DATA_DIR + '/gvqa/seed{}/predicates.json'.format(cfg.RNG_SEED),
     },
     'gvqa20k_train': {
         IM_DIR:
