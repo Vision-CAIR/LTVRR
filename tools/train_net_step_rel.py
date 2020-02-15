@@ -45,6 +45,9 @@ logging.getLogger('roi_data.loader').setLevel(logging.INFO)
 rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
 resource.setrlimit(resource.RLIMIT_NOFILE, (4096, rlimit[1]))
 
+torch.manual_seed(cfg.RNG_SEED)
+np.random.seed(cfg.RNG_SEED)
+
 def parse_args():
     """Parse input arguments"""
     parser = argparse.ArgumentParser(description='Train a X-RCNN network')
@@ -197,7 +200,7 @@ def main():
     else:
         raise ValueError("Need Cuda device to run !")
 
-    cfg.DATASETS = args.dataset
+    cfg.DATASET = args.dataset
     if args.dataset == "vg80k":
         cfg.TRAIN.DATASETS = ('vg80k_train',)
         cfg.TEST.DATASETS = ('vg80k_val',)
