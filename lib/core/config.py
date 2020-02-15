@@ -115,7 +115,7 @@ __C.TRAIN.ASPECT_HI = 2
 __C.TRAIN.ASPECT_LO = 0.5
 
 # Evaluation period
-__C.TRAIN.EVAL_PERIOD = 2500
+__C.TRAIN.EVAL_PERIOD = 10000
 
 # ---------------------------------------------------------------------------- #
 # RPN training options
