@@ -30,7 +30,7 @@ from utils.detectron_weight_helper import load_detectron_weight
 from utils.logging import setup_logging
 from utils.timer import Timer
 from utils.training_stats_rel import TrainingStats
-from core.test_engine_rel import run_eval_inference
+from core.test_engine_rel import run_eval_inference, run_inference
 from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
 import json
@@ -321,17 +321,6 @@ def main():
         collate_fn=collate_minibatch)
     dataiterator = iter(dataloader)
 
-    args.output_dir = output_dir
-    args.do_val = True
-    args.use_gt_boxes = True
-    args.use_gt_labels = True
-
-    logger.info('Creating val riodb')
-    val_dataset_name, val_proposal_file = get_inference_dataset(0)
-    val_roidb, val_dataset, start_ind, end_ind, total_num_images = get_roidb_and_dataset(
-        val_dataset_name, val_proposal_file, None, args.do_val)
-    logger.info('Done')
-
     ### Model ###
     maskRCNN = Generalized_RCNN()
 
@@ -457,6 +446,18 @@ def main():
             # Set the Tensorboard logger
             tblogger = SummaryWriter(output_dir)
 
+    args.output_dir = output_dir
+    args.do_val = True
+    args.use_gt_boxes = True
+    args.use_gt_labels = True
+
+    logger.info('Creating val roidb')
+    val_dataset_name, val_proposal_file = get_inference_dataset(0)
+    val_roidb, val_dataset, start_ind, end_ind, total_num_images = get_roidb_and_dataset(
+        val_dataset_name, val_proposal_file, None, args.do_val)
+    logger.info('Done')
+
+
     ### Training Loop ###
     maskRCNN.train()
 
@@ -540,9 +541,22 @@ def main():
 
             if (step+1) % EVAL_PERIOD == 0:
                 logger.info('Validating model')
-                # save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
-                maskRCNN.eval()
-                all_results = run_eval_inference(maskRCNN,
+                #save_eval_ckpt(output_dir, args, step, train_size, maskRCNN, optimizer)
+                eval_model = maskRCNN.module
+                eval_model = mynn.DataParallel(eval_model, cpu_keywords=['im_info', 'roidb'],device_ids=[0], minibatch=True)
+                eval_model.eval()
+                #maskRCNN.eval()
+                #args.test_net_file = 'tools/test_net_rel'
+                #ckpt_dir = os.path.join(output_dir, 'ckpt')
+                #args.load_ckpt = os.path.join(ckpt_dir, 'eval.pth')
+                # manually set args.cuda
+                #args.cuda = True
+                #all_results = run_inference(
+                #        args,
+                #        ind_range=None,
+                #        multi_gpu_testing=True,
+                #        check_expected_results=True) 
+                all_results = run_eval_inference(eval_model,
                                                  val_roidb,
                                                  args,
                                                  val_dataset,
