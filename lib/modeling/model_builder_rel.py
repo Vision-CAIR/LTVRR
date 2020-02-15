@@ -225,9 +225,9 @@ class Generalized_RCNN(nn.Module):
                 '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed0/freq_obj.npy')
         elif cfg.DATASET == 'gvqa':
             self.freq_prd = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_prd.npy')
+                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/freq_prd.npy'.format(cfg.RNG_SEED))
             self.freq_obj = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_obj.npy')
+                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/freq_obj.npy'.format(cfg.RNG_SEED))
         elif cfg.DATASET == 'vg80k':
             self.freq_prd = np.load(
                 '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_prd.npy')
