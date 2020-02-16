@@ -66,7 +66,18 @@ def get_metrics_from_csv(csv_file):
             print('simple-average', prediction_type, '{:2.2f}'.format(mu))
 
         collected_simple_means[(csv_file, prediction_type, metric_type)] = mu
+    print()
+    # Overall Mean Rank
+    for prediction_type in all_prediction_types:
+        mu = df[prediction_type + '_rank'].mean() * 100.0 / 250.0
+        # mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
+        # print(mu)
 
+        if verbose:
+            print('overall-mr', prediction_type, '{:2.2f}'.format(mu))
+
+        collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
+    print()
     # Per-class Accuracy
     for prediction_type in all_prediction_types:
         mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean() * 100
@@ -75,6 +86,17 @@ def get_metrics_from_csv(csv_file):
 
         if verbose:
             print('per-class-average', prediction_type, '{:2.2f}'.format(mu))
+
+        collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
+    print()
+    # Per-class Mean Rank
+    for prediction_type in all_prediction_types:
+        mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean().mean() * 100.0 / 250.0
+        # mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_rank'].mean()
+        # print(mu)
+
+        if verbose:
+            print('per-class-mr', prediction_type, '{:2.2f}'.format(mu))
 
         collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
 
