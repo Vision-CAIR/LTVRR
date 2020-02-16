@@ -123,6 +123,10 @@ def parse_args():
         '--use_tfboard', help='Use tensorflow tensorboard to log training info',
         action='store_true')
 
+    parser.add_argument(
+        '--seed', dest='seed',
+        help='Value of seed here will overwrite seed in cfg file',
+        type=int)
     return parser.parse_args()
 
 
@@ -239,6 +243,9 @@ def main():
     cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
+
+    if args.seed:
+        cfg.RNG_SEED = args.seed
 
     logger.info('Training with config:')
     logger.info(pprint.pformat(cfg))

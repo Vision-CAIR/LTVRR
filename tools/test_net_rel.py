@@ -67,6 +67,10 @@ def parse_args():
         '--use_gt_boxes', dest='use_gt_boxes', help='use gt boxes for sgcls/prdcls', action='store_true')
     parser.add_argument(
         '--use_gt_labels', dest='use_gt_labels', help='use gt boxes for sgcls/prdcls', action='store_true')
+    parser.add_argument(
+        '--seed', dest='seed',
+        help='Value of seed here will overwrite seed in cfg file',
+        type=int)
 
     return parser.parse_args()
 
@@ -116,6 +120,8 @@ if __name__ == '__main__':
         cfg.MODEL.NUM_PRD_CLASSES = 310  # exclude background
     else:  # For subprocess call
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
+    if args.seed:
+        cfg.RNG_SEED = args.seed
     assert_and_infer_cfg()
 
     # The import has to happen after setting up the config to avoid loading default cfg values 
