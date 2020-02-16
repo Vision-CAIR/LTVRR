@@ -17,7 +17,7 @@ from tqdm import tqdm
 #     os.mkdir(csv_path)
 
 
-def generate_csv_file_from_det_obj(detections, pred_freq, obj_freq, csv_path):
+def generate_csv_file_from_det_obj(detections, csv_path, obj_categores, prd_categories, obj_freq_dict, prd_freq_dict):
     with open(csv_path, 'w', newline='') as csvfile:
         total_test_iters = len(detections)
         spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -51,15 +51,28 @@ def generate_csv_file_from_det_obj(detections, pred_freq, obj_freq, csv_path):
             det_labels_obj_all = np.argsort(-det_scores_obj_all, axis=1)
 
             for j in range(len(detections[i]['gt_sbj_labels'])):
-                gt_labels_sbj = detections[i]['gt_sbj_labels'][j]
-                gt_labels_obj = detections[i]['gt_obj_labels'][j]
-                gt_labels_rel = detections[i]['gt_prd_labels'][j]
-                det_labels_sbj = det_labels_sbj_all[j, 0]
-                sbj_rank = np.where(det_labels_sbj_all[j, :] == gt_labels_sbj)[0][0]
-                det_labels_obj = det_labels_obj_all[j, 0]
-                obj_rank = np.where(det_labels_obj_all[j, :] == gt_labels_obj)[0][0]
-                det_labels_rel = det_labels_rel_all[j, 0]
-                rel_rank = np.where(det_labels_rel_all[j, :] == gt_labels_rel)[0][0]
+                gt_labels_sbj_idx = detections[i]['gt_sbj_labels'][j]
+                gt_labels_obj_idx = detections[i]['gt_obj_labels'][j]
+                gt_labels_rel_idx = detections[i]['gt_prd_labels'][j]
+
+                gt_labels_sbj = obj_categores[detections[i]['gt_sbj_labels'][j]]
+                gt_labels_obj = obj_categores[detections[i]['gt_obj_labels'][j]]
+                gt_labels_rel = prd_categories[detections[i]['gt_prd_labels'][j]]
+
+                # det_labels_sbj = det_labels_sbj_all[j, 0]
+                det_labels_sbj = obj_categores[det_labels_sbj_all[j, 0]]
+                sbj_rank = np.where(det_labels_sbj_all[j, :] == gt_labels_sbj_idx)[0][0]
+
+                # det_labels_obj = det_labels_obj_all[j, 0]
+                det_labels_obj = obj_categores[det_labels_obj_all[j, 0]]
+                obj_rank = np.where(det_labels_obj_all[j, :] == gt_labels_obj_idx)[0][0]
+
+                det_labels_rel = prd_categories[det_labels_rel_all[j, 0]]
+                rel_rank = np.where(det_labels_rel_all[j, :] == gt_labels_rel_idx)[0][0]
+
+                sbj_freq = obj_freq_dict[det_labels_sbj]
+                obj_freq = obj_freq_dict[det_labels_obj]
+                rel_freq = prd_freq_dict[det_labels_rel]
                 # print('rel_rank', rel_rank)
                 # print('det_labels_rel_all[j, :]', det_labels_rel_all[j, :])
                 # print('gt_labels_rel', gt_labels_rel)
@@ -97,23 +110,26 @@ def generate_csv_file_from_det_obj(detections, pred_freq, obj_freq, csv_path):
 
                 spamwriter.writerow(
                     [image_id,
+
                      gt_labels_rel,
                      det_labels_rel,
-                     pred_freq[gt_labels_rel],
+                     rel_freq,
                      rel_rank,
+
                      gt_labels_sbj,
                      det_labels_sbj,
-                     obj_freq[gt_labels_sbj],
+                     sbj_freq,
                      sbj_rank,
+
                      gt_labels_obj,
                      det_labels_obj,
-                     obj_freq[gt_labels_obj],
+                     obj_freq,
                      obj_rank])
 
 
-def generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path):
+def generate_csv_file_from_det_file(detections_file, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict):
     detections = pickle.load(open(detections_file, 'rb'))
-    generate_csv_file_from_det_obj(detections, pred_freq, obj_freq, csv_path)
+    generate_csv_file_from_det_obj(detections, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
 
 
 

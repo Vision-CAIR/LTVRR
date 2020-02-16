@@ -20,6 +20,7 @@ from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
 
 import numpy as np
+import json
 
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
 # thread safe and causes unwanted GPU memory allocations.
@@ -75,6 +76,51 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_obj_and_prd_categories():
+    from datasets.dataset_catalog_rel import ANN_FN3
+    from datasets.dataset_catalog_rel import DATASETS
+
+    predicates_path = DATASETS[cfg.TEST.DATASETS[0]][ANN_FN3]
+    objects_path = DATASETS[cfg.TEST.DATASETS[0]][ANN_FN3].replace('predicates', 'objects', 1)
+    logger.info('Loading predicates from: ' + predicates_path)
+    logger.info('Loading objects from: ' + objects_path)
+    with open(predicates_path) as f:
+        prd_categories = json.load(f)
+    with open(objects_path) as f:
+        obj_categories = json.load(f)
+    return obj_categories, prd_categories
+
+
+def get_obj_and_prd_frequencies():
+    if cfg.DATASET == 'gvqa10k':
+        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/predicates_freqs.json'.format(
+                cfg.RNG_SEED)
+        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/objects_freqs.json'.format(
+                cfg.RNG_SEED)
+    elif cfg.DATASET == 'gvqa20k':
+        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/predicates_freqs.json'.format(
+                cfg.RNG_SEED)
+        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/objects_freqs.json'.format(
+                cfg.RNG_SEED)
+    elif cfg.DATASET == 'gvqa':
+        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/predicates_freqs.json'.format(
+                cfg.RNG_SEED)
+        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/objects_freqs.json'.format(
+                cfg.RNG_SEED)
+    elif cfg.DATASET == 'vg80k':
+        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/predicates_freqs.json'
+        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/objects_freqs.json'
+    else:
+        raise NotImplementedError
+
+    logger.info('Loading predicates frequencies from: ' + freq_prd_path)
+    logger.info('Loading objects frequencies from: ' + freq_obj_path)
+
+    prd_freq_dict = json.load(open(freq_prd_path))
+    obj_freq_dict = json.load(open(freq_obj_path))
+
+    return obj_freq_dict, prd_freq_dict
+
 if __name__ == '__main__':
 
     if not torch.cuda.is_available():
@@ -126,7 +172,10 @@ if __name__ == '__main__':
 
     # The import has to happen after setting up the config to avoid loading default cfg values 
     from core.test_engine_rel import run_inference
-    
+
+    obj_categories, prd_categories = get_obj_and_prd_categories()
+    obj_freq_dict, prd_freq_dict = get_obj_and_prd_frequencies()
+
     if not cfg.MODEL.RUN_BASELINE:
         assert bool(args.load_ckpt) ^ bool(args.load_detectron), \
             'Exactly one of --load_ckpt and --load_detectron should be specified.'
@@ -176,5 +225,5 @@ if __name__ == '__main__':
     #all_results = all_results[0]
     freq_prd = (np.zeros(cfg.MODEL.NUM_PRD_CLASSES))
     freq_obj = (np.zeros(cfg.MODEL.NUM_CLASSES))
-    generate_csv_file_from_det_obj(all_results, freq_prd, freq_obj, csv_file)
+    generate_csv_file_from_det_obj(all_results, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
     overall_metrics, per_class_metrics = get_metrics_from_csv(csv_file)

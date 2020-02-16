@@ -160,8 +160,14 @@ def get_obj_prd_vecs(dataset_name):
             all_prd_vecs[r] += (raw_vec / la.norm(raw_vec))
         all_prd_vecs[r] /= len(prd_words)
     logger.info('Predicate label vectors loaded.')
-    return all_obj_vecs, all_prd_vecs
+    return all_obj_vecs, all_prd_vecs, obj_cats, prd_cats
 
+
+def get_freq_from_dict(freq_dict, categories):
+    freqs = np.zeros(len(categories))
+    for i, cat in enumerate(categories):
+        freqs[i] = freq_dict[cat]
+    return freqs
 
 class Generalized_RCNN(nn.Module):
     def __init__(self):
@@ -208,7 +214,7 @@ class Generalized_RCNN(nn.Module):
         
         # initialize word vectors
         ds_name = cfg.TRAIN.DATASETS[0] if len(cfg.TRAIN.DATASETS) else cfg.TEST.DATASETS[0]
-        self.obj_vecs, self.prd_vecs = get_obj_prd_vecs(ds_name)
+        self.obj_vecs, self.prd_vecs, obj_categories, prd_categories = get_obj_prd_vecs(ds_name)
         
         # RelPN
         self.RelPN = relpn_heads.generic_relpn_outputs()
@@ -219,26 +225,38 @@ class Generalized_RCNN(nn.Module):
         self.obj_weights = None
 
         if cfg.DATASET == 'gvqa10k':
-            self.freq_prd = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/freq_prd.npy'.format(cfg.RNG_SEED))
-            self.freq_obj = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/freq_obj.npy'.format(cfg.RNG_SEED))
+            freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/predicates_freqs.json'.format(
+                cfg.RNG_SEED)
+            freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/objects_freqs.json'.format(
+                cfg.RNG_SEED)
         elif cfg.DATASET == 'gvqa20k':
-            self.freq_prd = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/freq_prd.npy'.format(cfg.RNG_SEED))
-            self.freq_obj = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/freq_obj.npy'.format(cfg.RNG_SEED))
+            freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/predicates_freqs.json'.format(
+                cfg.RNG_SEED)
+            freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/objects_freqs.json'.format(
+                cfg.RNG_SEED)
         elif cfg.DATASET == 'gvqa':
-            self.freq_prd = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/freq_prd.npy'.format(cfg.RNG_SEED))
-            self.freq_obj = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/freq_obj.npy'.format(cfg.RNG_SEED))
+            freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/predicates_freqs.json'.format(
+                cfg.RNG_SEED)
+            freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/objects_freqs.json'.format(
+                cfg.RNG_SEED)
         elif cfg.DATASET == 'vg80k':
-            self.freq_prd = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_prd.npy')
-            self.freq_obj = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_obj.npy')
+            freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/predicates_freqs.json'
+            freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/objects_freqs.json'
+        else:
+            raise NotImplementedError
 
+        self.prd_freq_dict = json.load(open(freq_prd_path))
+        self.obj_freq_dict = json.load(open(freq_obj_path))
+
+        no_bg_prd_categories = prd_categories[1:]
+
+        assert len(no_bg_prd_categories) == cfg.NUM_PRD_CLASSES
+
+        self.prd_categores = no_bg_prd_categories
+        self.obj_categores = obj_categories
+
+        self.freq_prd = get_freq_from_dict(self.prd_freq_dict, self.prd_categores)
+        self.freq_obj = get_freq_from_dict(self.obj_freq_dict, self.obj_categores)
 
         if cfg.MODEL.LOSS == 'weighted_cross_entropy':
             logger.info('loading frequencies')
@@ -252,6 +270,7 @@ class Generalized_RCNN(nn.Module):
             self.obj_weights = (obj_weights / np.mean(obj_weights)).astype(np.float32)
             temp = np.zeros(shape=self.prd_weights.shape[0] + 1, dtype=np.float32) 
             temp[1:] = self.prd_weights
+            temp[0] = min(self.prd_weights)
             self.prd_weights = temp
         self._init_modules()
 
