@@ -12,11 +12,9 @@ import torch
 
 import _init_paths  # pylint: disable=unused-import
 from core.config import cfg, merge_cfg_from_file, merge_cfg_from_list, assert_and_infer_cfg
-from core.test_engine_rel import run_inference
 #from core.test_engine_rel import run_inference, get_features_for_centroids
 
 import utils.logging
-
 from datasets import task_evaluation_rel as task_evaluation
 from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
@@ -77,7 +75,6 @@ if __name__ == '__main__':
 
     if not torch.cuda.is_available():
         sys.exit("Need a CUDA device to run the code.")
-
     logger = utils.logging.setup_logging(__name__)
     args = parse_args()
     logger.info('Called with args:')
@@ -120,6 +117,9 @@ if __name__ == '__main__':
     else:  # For subprocess call
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
     assert_and_infer_cfg()
+
+    # The import has to happen after setting up the config to avoid loading default cfg values 
+    from core.test_engine_rel import run_inference
     
     if not cfg.MODEL.RUN_BASELINE:
         assert bool(args.load_ckpt) ^ bool(args.load_detectron), \
@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     logger.info('Testing with config:')
     logger.info(pprint.pformat(cfg))
-
+    
     # For test_engine.multi_gpu_test_net_on_dataset
     args.test_net_file, _ = os.path.splitext(__file__)
     # manually set args.cuda
@@ -142,7 +142,6 @@ if __name__ == '__main__':
     #print('Generating Centroids')
     #all_results = get_features_for_centroids(args) 
     #print('Done!')
-    #exit()
     if args.use_gt_boxes:
         if args.use_gt_labels:
             det_file = os.path.join(args.output_dir, 'rel_detections_gt_boxes_prdcls.pkl')
@@ -165,9 +164,11 @@ if __name__ == '__main__':
                         ind_range=args.range,
                         multi_gpu_testing=args.multi_gpu_testing,
                         check_expected_results=True)
-
-    all_results = all_results[0]
-    freq_prd = np.zeros(cfg.MODEL.NUM_PRD_CLASSES)
-    freq_obj = np.zeros(cfg.MODEL.NUM_CLASSES)
+        all_results = all_results[0]
+    print('all_results', len(all_results))
+    print('all_results', all_results[0].keys())
+    #all_results = all_results[0]
+    freq_prd = (np.zeros(cfg.MODEL.NUM_PRD_CLASSES))
+    freq_obj = (np.zeros(cfg.MODEL.NUM_CLASSES))
     generate_csv_file_from_det_obj(all_results, freq_prd, freq_obj, csv_file)
     overall_metrics, per_class_metrics = get_metrics_from_csv(csv_file)
