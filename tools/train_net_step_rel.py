@@ -423,8 +423,12 @@ def main():
 
     lr = optimizer.param_groups[2]['lr']  # lr of non-backbone parameters, for commmand line outputs.
     backbone_lr = optimizer.param_groups[0]['lr']  # lr of backbone parameters, for commmand line outputs.
-    freq_prd = maskRCNN.freq_prd
-    freq_obj = maskRCNN.freq_obj
+
+    prd_categories = maskRCNN.prd_categories
+    obj_categories = maskRCNN.obj_categories
+    prd_freq_dict = maskRCNN.prd_freq_dict
+    obj_freq_dict = maskRCNN.obj_freq_dict
+
     maskRCNN = mynn.DataParallel(maskRCNN, cpu_keywords=['im_info', 'roidb'],
                                  minibatch=True)
 
@@ -569,7 +573,7 @@ def main():
                                                  check_expected_results=True)
                 csv_path = os.path.join(output_dir, 'eval.csv')
                 all_results = all_results[0]
-                generate_csv_file_from_det_obj(all_results, freq_prd, freq_obj, csv_path)
+                generate_csv_file_from_det_obj(all_results, csv_path, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
                 overall_metrics, per_class_metrics = get_metrics_from_csv(csv_path)
                 obj_acc = per_class_metrics[(csv_path, 'obj', 'top1')]
                 sbj_acc = per_class_metrics[(csv_path, 'sbj', 'top1')]
