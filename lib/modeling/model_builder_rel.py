@@ -250,7 +250,7 @@ class Generalized_RCNN(nn.Module):
 
         no_bg_prd_categories = prd_categories[1:]
 
-        assert len(no_bg_prd_categories) == cfg.NUM_PRD_CLASSES
+        assert len(no_bg_prd_categories) == cfg.MODEL.NUM_PRD_CLASSES
 
         self.prd_categores = no_bg_prd_categories
         self.obj_categores = obj_categories
