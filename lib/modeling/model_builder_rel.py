@@ -220,14 +220,14 @@ class Generalized_RCNN(nn.Module):
 
         if cfg.DATASET == 'gvqa10k':
             self.freq_prd = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy')
+                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/freq_prd.npy'.format(cfg.RNG_SEED))
             self.freq_obj = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy')
+                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/freq_obj.npy'.format(cfg.RNG_SEED))
         elif cfg.DATASET == 'gvqa20k':
             self.freq_prd = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed0/freq_prd.npy')
+                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/freq_prd.npy'.format(cfg.RNG_SEED))
             self.freq_obj = np.load(
-                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed0/freq_obj.npy')
+                '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/freq_obj.npy'.format(cfg.RNG_SEED))
         elif cfg.DATASET == 'gvqa':
             self.freq_prd = np.load(
                 '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/freq_prd.npy'.format(cfg.RNG_SEED))

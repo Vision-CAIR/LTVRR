@@ -34,8 +34,9 @@ from core.test_engine_rel import run_eval_inference, run_inference
 from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
 import json
+import pprint
 
-from datasets.json_dataset_rel import JsonDataset
+#from datasets.json_dataset_rel import JsonDataset
 from core.test_engine_rel import get_inference_dataset, get_roidb_and_dataset
 # Set up logging and load config options
 logger = setup_logging(__name__)
@@ -238,6 +239,9 @@ def main():
     cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
+
+    logger.info('Training with config:')
+    logger.info(pprint.pformat(cfg))
 
     ### Adaptively adjust some configs ###
     original_batch_size = cfg.NUM_GPUS * cfg.TRAIN.IMS_PER_BATCH
@@ -568,7 +572,7 @@ def main():
 
                 best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
                 if avg_acc > best['avg_per_class_acc']:
-                    print('Found new best validation accuracy at {:2.2f}%'.format(avg_acc))
+                    print('Found new best validation accuracy at %'.format(avg_acc))
                     print('Saving best model..')
                     best['avg_per_class_acc'] = avg_acc
                     best['iteration'] = step
