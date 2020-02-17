@@ -26,14 +26,17 @@ def generate_csv_file_from_det_obj(detections, csv_path, obj_categores, prd_cate
                              'gt_rel',
                              'det_rel',
                              'rel_freq_gt',
+                             'rel_freq_det',
                              'rel_rank',
                              'gt_sbj',
                              'det_sbj',
                              'sbj_freq_gt',
+                             'sbj_freq_det',
                              'sbj_rank',
                              'gt_obj',
                              'det_obj',
                              'obj_freq_gt',
+                             'obj_freq_det',
                              'obj_rank'])
 
         for i in tqdm(range(0, total_test_iters)):
@@ -70,9 +73,31 @@ def generate_csv_file_from_det_obj(detections, csv_path, obj_categores, prd_cate
                 det_labels_rel = prd_categories[det_labels_rel_all[j, 0]]
                 rel_rank = np.where(det_labels_rel_all[j, :] == gt_labels_rel_idx)[0][0]
 
-                sbj_freq = obj_freq_dict[det_labels_sbj]
-                obj_freq = obj_freq_dict[det_labels_obj]
-                rel_freq = prd_freq_dict[det_labels_rel]
+                if gt_labels_sbj in obj_freq_dict.keys():
+                    gt_sbj_freq = obj_freq_dict[gt_labels_sbj]
+                else:
+                    gt_sbj_freq = 0
+                if gt_labels_obj in obj_freq_dict.keys():
+                    gt_obj_freq = obj_freq_dict[gt_labels_obj]
+                else:
+                    gt_obj_freq = 0
+                if gt_labels_rel in prd_freq_dict.keys():
+                    gt_rel_freq = prd_freq_dict[gt_labels_rel]
+                else:
+                    gt_rel_freq = 0
+
+                if det_labels_sbj in obj_freq_dict.keys():
+                    det_sbj_freq = obj_freq_dict[det_labels_sbj]
+                else:
+                    det_sbj_freq = 0
+                if det_labels_obj in obj_freq_dict.keys():
+                    det_obj_freq = obj_freq_dict[det_labels_obj]
+                else:
+                    det_obj_freq = 0
+                if det_labels_rel in prd_freq_dict.keys():
+                    det_rel_freq = prd_freq_dict[det_labels_rel]
+                else:
+                    det_obj_freq = 0
                 # print('rel_rank', rel_rank)
                 # print('det_labels_rel_all[j, :]', det_labels_rel_all[j, :])
                 # print('gt_labels_rel', gt_labels_rel)
@@ -113,17 +138,20 @@ def generate_csv_file_from_det_obj(detections, csv_path, obj_categores, prd_cate
 
                      gt_labels_rel,
                      det_labels_rel,
-                     rel_freq,
+                     gt_rel_freq,
+                     det_rel_freq,
                      rel_rank,
 
                      gt_labels_sbj,
                      det_labels_sbj,
-                     sbj_freq,
+                     gt_sbj_freq,
+                     det_sbj_freq,
                      sbj_rank,
 
                      gt_labels_obj,
                      det_labels_obj,
-                     obj_freq,
+                     gt_obj_freq,
+                     det_obj_freq,
                      obj_rank])
 
 

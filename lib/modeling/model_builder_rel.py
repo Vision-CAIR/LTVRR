@@ -166,7 +166,10 @@ def get_obj_prd_vecs(dataset_name):
 def get_freq_from_dict(freq_dict, categories):
     freqs = np.zeros(len(categories))
     for i, cat in enumerate(categories):
-        freqs[i] = freq_dict[cat]
+        if cat in freq_dict.keys():
+            freqs[i] = freq_dict[cat]
+        else:
+            freqs[i] = 0
     return freqs
 
 class Generalized_RCNN(nn.Module):
