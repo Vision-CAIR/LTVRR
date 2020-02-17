@@ -162,19 +162,19 @@ def generate_csv_file_from_det_file(detections_file, csv_file, obj_categories, p
 
 
 if __name__ == '__main__':
-    #pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_pred.npy'
-    pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy'
+    pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_prd.npy'
+    #pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy'
     #pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_pred.npy'
 
-    #obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_obj.npy'
-    obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy'
+    obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_obj.npy'
+    #obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_obj.npy'
     #obj_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_obj.npy'
 
     pred_freq = np.load(pred_freq_paths)
     obj_freq = np.load(obj_freq_paths)
 
-    #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline/gvqa/Jan28-08-41-52_gpu211-06_step_with_prd_cls_v3/test/'
-    out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa10k_y_loss_only_baseline/gvqa10k/Feb11-08-27-46_gpu211-06_step_with_prd_cls_v3/test/'
+    out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline/gvqa/Jan28-08-41-52_gpu211-06_step_with_prd_cls_v3/test/'
+    #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa10k_y_loss_only_baseline/gvqa10k/Feb11-08-27-46_gpu211-06_step_with_prd_cls_v3/test/'
     #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline/gvqa/Jan13-05-44-10_gpu208-10_step_with_prd_cls_v3/test/'
     detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
     csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
@@ -183,7 +183,8 @@ if __name__ == '__main__':
     print('Wrote csv detections to:', csv_path)
 
     #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness/gvqa/Jan28-20-32-18_gpu210-10_step_with_prd_cls_v3/test/'
-    out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa10k_y_loss_only_hubness/gvqa10k/Feb11-08-28-32_gpu210-10_step_with_prd_cls_v3/test/'
+    out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness/gvqa/Feb13-01-27-33_gpu213-10_step_with_prd_cls_v3/test/'
+    #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa10k_y_loss_only_hubness/gvqa10k/Feb11-08-28-32_gpu210-10_step_with_prd_cls_v3/test/'
     #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness/gvqa/Jan13-05-44-14_gpu214-02_step_with_prd_cls_v3/test/'
     detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
     csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
@@ -192,13 +193,14 @@ if __name__ == '__main__':
     print('Wrote csv detections to:', csv_path)
 
     #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness10k/gvqa/Jan25-07-12-43_gpu211-02_step_with_prd_cls_v3/test/'
-    out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa10k_y_loss_only_hubness10k/gvqa10k/Feb11-10-07-52_gpu208-18_step_with_prd_cls_v3/test/'
+    out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness10k/gvqa/Feb13-05-19-41_gpu212-18_step_with_prd_cls_v3/test/'
+    #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa10k_y_loss_only_hubness10k/gvqa10k/Feb11-10-07-52_gpu208-18_step_with_prd_cls_v3/test/'
     detections_file = out_dir + 'rel_detections_gt_boxes_prdcls.pkl'
     csv_path = out_dir + 'rel_detections_gt_boxes_prdcls.csv'
 
     generate_csv_file_from_det_file(detections_file, pred_freq, obj_freq, csv_path)
     print('Wrote csv detections to:', csv_path)
-
+    exit()
     #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_focal_025/gvqa/Jan25-02-57-31_gpu208-14_step_with_prd_cls_v3/test/'
     out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa10k_y_loss_only_focal_025/gvqa10k/Feb11-18-15-44_gpu210-10_step_with_prd_cls_v3/test/'
     #out_dir = 'Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_focal_025/gvqa/Jan13-05-44-39_gpu211-06_step_with_prd_cls_v3/test/'
