@@ -483,7 +483,7 @@ def main():
         # if os.path.exists(os.path.join(ckpt_dir, 'best.json')):
         #     best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
         if args.resume and os.path.exists(os.path.join(load_ckpt_dir, 'best.json')):
-            logger.info('Loading best json from :', os.path.join(load_ckpt_dir, 'best.json'))
+            logger.info('Loading best json from :' + os.path.join(load_ckpt_dir, 'best.json'))
             best = json.load(open(os.path.join(load_ckpt_dir, 'best.json')))
             json.dump(best, open(os.path.join(ckpt_dir, 'best.json'), 'w'))
         else:
