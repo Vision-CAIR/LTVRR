@@ -116,6 +116,10 @@ def parse_args():
 
     parser.add_argument(
         '--load_ckpt', help='checkpoint path to load')
+
+    parser.add_argument(
+        '--load_ckpt_dir', help='checkpoint dir to load')
+
     parser.add_argument(
         '--load_detectron', help='path to the detectron weight pickle file')
 
@@ -188,6 +192,24 @@ def save_eval_ckpt(output_dir, args, step, train_size, model, optimizer):
         'model': model.state_dict(),
         'optimizer': optimizer.state_dict()}, save_name)
     logger.info('save model: %s', save_name)
+
+
+def get_checkpoint_resume_file(checkpoint_dir):
+    all_files = os.listdir(checkpoint_dir)
+    all_iters = []
+    for f in all_files:
+        if 'model_step' in f:
+            iter_num = int(f.replace('.pth', '').replace('model_step', ''))
+            all_iters.append(iter_num)
+    if len(all_iters) > 0:
+        all_iters.sort(reverse=True)
+        last_iter = int(all_iters[0])
+        filepath = os.path.join(
+            checkpoint_dir, 'model_step{}.pth'.format(last_iter)
+        )
+        return filepath
+    else:
+        return None
 
 
 def main():
@@ -395,8 +417,12 @@ def main():
         optimizer = torch.optim.Adam(params)
 
     ### Load checkpoint
-    if args.load_ckpt:
+    if args.load_ckpt_dir:
+        load_name = get_checkpoint_resume_file(args.load_ckpt_dir)
+    elif args.load_ckpt:
         load_name = args.load_ckpt
+
+    if args.load_ckpt or args.load_ckpt_dir:
         logging.info("loading checkpoint %s", load_name)
         checkpoint = torch.load(load_name, map_location=lambda storage, loc: storage)
         net_utils.load_ckpt(maskRCNN, checkpoint['model'])
