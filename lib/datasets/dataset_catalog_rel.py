@@ -37,6 +37,8 @@ IM_PREFIX = 'image_prefix'
 DEVKIT_DIR = 'devkit_directory'
 RAW_DIR = 'raw_dir'
 
+
+print('datasets catalogue', 'cfg.RNG_SEED', cfg.RNG_SEED)
 # Available datasets
 DATASETS = {
     # VG dataset
