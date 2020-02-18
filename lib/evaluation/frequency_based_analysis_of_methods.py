@@ -76,7 +76,7 @@ def get_metrics_from_csv(csv_file):
         if verbose:
             print('overall-mr', prediction_type, '{:2.2f}'.format(mu))
 
-        collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
+        # collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
     print()
     # Per-class Accuracy
     for prediction_type in all_prediction_types:
@@ -98,7 +98,7 @@ def get_metrics_from_csv(csv_file):
         if verbose:
             print('per-class-mr', prediction_type, '{:2.2f}'.format(mu))
 
-        collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
+        # collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
 
     return collected_simple_means, collected_per_class_means
 
