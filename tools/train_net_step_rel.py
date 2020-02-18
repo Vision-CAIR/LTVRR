@@ -557,7 +557,7 @@ def main():
 
             training_stats.LogIterStats(step, lr, backbone_lr)
 
-            if (step+1) % EVAL_PERIOD == 0:
+            if (step+1) % EVAL_PERIOD == 0 or (step == cfg.SOLVER.MAX_ITER - 1):
                 logger.info('Validating model')
                 eval_model = maskRCNN.module
                 eval_model = mynn.DataParallel(eval_model, cpu_keywords=['im_info', 'roidb'], device_ids=[0], minibatch=True)
@@ -583,7 +583,7 @@ def main():
 
                 best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
                 if avg_acc > best['avg_per_class_acc']:
-                    print('Found new best validation accuracy at %'.format(avg_acc))
+                    print('Found new best validation accuracy at {:2.2f}%'.format(avg_acc))
                     print('Saving best model..')
                     best['avg_per_class_acc'] = avg_acc
                     best['iteration'] = step
