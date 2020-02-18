@@ -416,11 +416,14 @@ def main():
     elif cfg.SOLVER.TYPE == "Adam":
         optimizer = torch.optim.Adam(params)
 
+    load_ckpt_dir = './'
     ### Load checkpoint
     if args.load_ckpt_dir:
         load_name = get_checkpoint_resume_file(args.load_ckpt_dir)
+        load_ckpt_dir = args.load_ckpt_dir
     elif args.load_ckpt:
         load_name = args.load_ckpt
+        load_ckpt_dir = os.path.dirname(args.load_ckpt)
 
     if args.load_ckpt or args.load_ckpt_dir:
         logging.info("loading checkpoint %s", load_name)
@@ -440,6 +443,7 @@ def main():
             # However it's fixed on master.
             # optimizer.load_state_dict(checkpoint['optimizer'])
             misc_utils.load_optimizer_state_dict(optimizer, checkpoint['optimizer'])
+
         del checkpoint
         torch.cuda.empty_cache()
 
@@ -476,8 +480,12 @@ def main():
         if not os.path.exists(ckpt_dir):
             os.makedirs(ckpt_dir)
 
-        if os.path.exists(os.path.join(ckpt_dir, 'best.json')):
-            best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
+        # if os.path.exists(os.path.join(ckpt_dir, 'best.json')):
+        #     best = json.load(open(os.path.join(ckpt_dir, 'best.json')))
+        if args.resume and os.path.exists(os.path.join(load_ckpt_dir, 'best.json')):
+            logger.info('Loading best json from :', os.path.join(load_ckpt_dir, 'best.json'))
+            best = json.load(open(os.path.join(load_ckpt_dir, 'best.json')))
+            json.dump(best, open(os.path.join(ckpt_dir, 'best.json'), 'w'))
         else:
             best = {}
             best['avg_per_class_acc'] = 0.0
