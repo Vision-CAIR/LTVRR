@@ -227,4 +227,8 @@ if __name__ == '__main__':
     freq_obj = (np.zeros(cfg.MODEL.NUM_CLASSES))
     generate_csv_file_from_det_obj(all_results, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
     logger.info('Saved CSV to: ' + csv_file)
+    if cfg.DATASET.find('gvqa') >= 0:
+        from evaluation.add_word_similarity_to_csv import add_similarity_to_detections
+        logger.info('Adding word similarity to CSV')
+        add_similarity_to_detections(csv_file)
     overall_metrics, per_class_metrics = get_metrics_from_csv(csv_file)
