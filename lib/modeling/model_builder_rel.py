@@ -255,11 +255,11 @@ class Generalized_RCNN(nn.Module):
 
         assert len(no_bg_prd_categories) == cfg.MODEL.NUM_PRD_CLASSES
 
-        self.prd_categores = no_bg_prd_categories
-        self.obj_categores = obj_categories
+        self.prd_categories = no_bg_prd_categories
+        self.obj_categories = obj_categories
 
-        self.freq_prd = get_freq_from_dict(self.prd_freq_dict, self.prd_categores)
-        self.freq_obj = get_freq_from_dict(self.obj_freq_dict, self.obj_categores)
+        self.freq_prd = get_freq_from_dict(self.prd_freq_dict, self.prd_categories)
+        self.freq_obj = get_freq_from_dict(self.obj_freq_dict, self.obj_categories)
 
         if cfg.MODEL.LOSS == 'weighted_cross_entropy':
             logger.info('loading frequencies')
