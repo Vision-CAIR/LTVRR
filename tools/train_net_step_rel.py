@@ -23,21 +23,17 @@ import utils.blob as blob_utils
 import utils.net as net_utils
 import utils.misc as misc_utils
 from core.config import cfg, cfg_from_file, cfg_from_list, assert_and_infer_cfg
-from datasets.roidb_rel import combined_roidb_for_training
 from roi_data.loader_rel import RoiDataLoader, MinibatchSampler, BatchSampler, collate_minibatch
-from modeling.model_builder_rel import Generalized_RCNN
 from utils.detectron_weight_helper import load_detectron_weight
 from utils.logging import setup_logging
 from utils.timer import Timer
 from utils.training_stats_rel import TrainingStats
-from core.test_engine_rel import run_eval_inference, run_inference
 from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv
 import json
 import pprint
 
 #from datasets.json_dataset_rel import JsonDataset
-from core.test_engine_rel import get_inference_dataset, get_roidb_and_dataset
 # Set up logging and load config options
 logger = setup_logging(__name__)
 logging.getLogger('roi_data.loader').setLevel(logging.INFO)
@@ -268,6 +264,12 @@ def main():
 
     if args.seed:
         cfg.RNG_SEED = args.seed
+
+    # Some imports need to be done after loading the config to avoid using default values
+    from datasets.roidb_rel import combined_roidb_for_training
+    from modeling.model_builder_rel import Generalized_RCNN
+    from core.test_engine_rel import run_eval_inference, run_inference
+    from core.test_engine_rel import get_inference_dataset, get_roidb_and_dataset
 
     logger.info('Training with config:')
     logger.info(pprint.pformat(cfg))
