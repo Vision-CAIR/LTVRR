@@ -226,4 +226,5 @@ if __name__ == '__main__':
     freq_prd = (np.zeros(cfg.MODEL.NUM_PRD_CLASSES))
     freq_obj = (np.zeros(cfg.MODEL.NUM_CLASSES))
     generate_csv_file_from_det_obj(all_results, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
+    logger.info('Saved CSV to: ' + csv_file)
     overall_metrics, per_class_metrics = get_metrics_from_csv(csv_file)
