@@ -40,13 +40,62 @@ def keep_only_heavy_tail_observations(dataframe, prediction_type, threshold_of_t
     return df
 
 
+def get_wordsim_metrics_from_csv(csv_file):
+    verbose = True
+    collected_simple_means = dict()
+    collected_per_class_means = dict()
+    print('Reading csv file')
+    df = pd.read_csv(csv_file)
+    print('Done')
+    wordnet_metrics = ['_lch', '_wup', '_res', '_jcn', '_lin', '_path']
+    word2vec_metrics = ['_w2v_gn']
+    gt_prefix = 'gt'
+
+    for prediction_type in ['sbj', 'obj']:
+        for metric_type in wordnet_metrics + word2vec_metrics:
+            mu = df[prediction_type + '_' + metric_type].mean()
+
+            if verbose:
+                print('overall', prediction_type, metric_type, '{:2.2f}'.format(mu))
+
+            collected_simple_means[(csv_file, prediction_type, metric_type)] = mu
+
+    for prediction_type in ['rel']:
+        for metric_type in  word2vec_metrics:
+            mu = df[prediction_type + '_' + metric_type].mean()
+
+            if verbose:
+                print('overall', prediction_type, metric_type, '{:2.2f}'.format(mu))
+
+            collected_simple_means[(csv_file, prediction_type, metric_type)] = mu
+
+    for prediction_type in ['sbj', 'obj']:
+        for metric_type in wordnet_metrics + word2vec_metrics:
+            mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean()
+
+            if verbose:
+                print('per-class', prediction_type, metric_type, '{:2.2f}'.format(mu))
+
+            collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
+
+    for prediction_type in ['rel']:
+        for metric_type in word2vec_metrics:
+            mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean()
+
+            if verbose:
+                print('per-class', prediction_type, metric_type, '{:2.2f}'.format(mu))
+
+            collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
+    return collected_simple_means, collected_per_class_means
+
+
 def get_metrics_from_csv(csv_file, get_mr=False):
     verbose = True
     collected_simple_means = dict()
     collected_per_class_means = dict()
-    print('reading csv file')
+    print('Reading csv file')
     df = pd.read_csv(csv_file)
-    print('done')
+    print('Done')
     # df['rel_top1'] = df['rel_rank'] < 1
     metric_type = 'top1'
     all_prediction_types = ['rel', 'obj', 'sbj']
