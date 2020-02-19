@@ -30,7 +30,7 @@ def add_similarity_to_detections(csv_file):
         df[label + '_w2v_gn'] = prd_w2v.lookup(df['gt_' + label], df['det_' + label])
 
     out_dir = os.path.dirname(csv_file)
-    pd.to_csv(os.path.join(out_dir, 'rel_detections_gt_boxes_prdcls_wrd_sim.csv'))
+    df.to_csv(os.path.join(out_dir, 'rel_detections_gt_boxes_prdcls_wrd_sim.csv'))
 
 
 def parse_args():
