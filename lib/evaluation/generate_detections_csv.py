@@ -15,6 +15,71 @@ from tqdm import tqdm
 #     os.mkdir(report_path)
 # if not os.path.exists(csv_path):
 #     os.mkdir(csv_path)
+def generate_topk_csv_from_det_obj(detections, csv_path, obj_categores, prd_categories, k):
+    with open(csv_path, 'w', newline='') as csvfile:
+        total_test_iters = len(detections)
+        spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+        spamwriter.writerow(['image_id',
+                             'gt_rel',
+                             'det_rel',
+                             'rel_freq_gt',
+                             'rel_freq_det',
+                             'rel_rank',
+                             'gt_sbj',
+                             'det_sbj',
+                             'sbj_freq_gt',
+                             'sbj_freq_det',
+                             'sbj_rank',
+                             'gt_obj',
+                             'det_obj',
+                             'obj_freq_gt',
+                             'obj_freq_det',
+                             'obj_rank'])
+
+        for i in tqdm(range(0, total_test_iters)):
+            # image_idx = detections[i]['image_idx']
+            # image_id = detections[i]['image_id']
+            image_id = detections[i]['image'].split('/')[-1].split('.')[0]
+
+            det_scores_prd_all = detections[i]['prd_scores'][:, 1:]
+            det_labels_rel_all = np.argsort(-det_scores_prd_all, axis=1)
+
+            det_scores_sbj_all = detections[i]['sbj_scores_out']
+            det_labels_sbj_all = np.argsort(-det_scores_sbj_all, axis=1)
+
+            det_scores_obj_all = detections[i]['obj_scores_out']
+            det_labels_obj_all = np.argsort(-det_scores_obj_all, axis=1)
+
+            for j in range(len(detections[i]['gt_sbj_labels'])):
+                gt_labels_sbj_idx = detections[i]['gt_sbj_labels'][j]
+                gt_labels_obj_idx = detections[i]['gt_obj_labels'][j]
+                gt_labels_rel_idx = detections[i]['gt_prd_labels'][j]
+
+                gt_labels_sbj = obj_categores[detections[i]['gt_sbj_labels'][j]]
+                gt_labels_obj = obj_categores[detections[i]['gt_obj_labels'][j]]
+                gt_labels_rel = prd_categories[detections[i]['gt_prd_labels'][j]]
+
+                # det_labels_sbj = det_labels_sbj_all[j, 0]
+                topk_sbj = obj_categores[det_labels_sbj_all[j, :k]]
+
+                # det_labels_obj = det_labels_obj_all[j, 0]
+                topk_obj = obj_categores[det_labels_obj_all[j, :k]]
+
+                topk_rel = prd_categories[det_labels_rel_all[j, :k]]
+
+
+                spamwriter.writerow(
+                    [image_id,
+
+                     gt_labels_rel,
+                     topk_rel,
+
+                     gt_labels_sbj,
+                     topk_sbj,
+
+                     gt_labels_obj,
+                     topk_obj])
 
 
 def generate_csv_file_from_det_obj(detections, csv_path, obj_categores, prd_categories, obj_freq_dict, prd_freq_dict):
