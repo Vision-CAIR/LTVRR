@@ -47,7 +47,8 @@ def get_wordsim_metrics_from_csv(csv_file):
     print('Reading csv file')
     df = pd.read_csv(csv_file)
     print('Done')
-    wordnet_metrics = ['lch', 'wup', 'res', 'jcn', 'lin', 'path']
+    # wordnet_metrics = ['lch', 'wup', 'res', 'jcn', 'lin', 'path']
+    wordnet_metrics = ['lch', 'wup', 'lin', 'path']
     word2vec_metrics = ['w2v_gn']
     gt_prefix = 'gt'
 
