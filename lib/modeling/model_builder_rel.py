@@ -495,7 +495,7 @@ class Generalized_RCNN(nn.Module):
         # so we need to feed the batch twice if it's big
         gn_size = 1000
         if cfg.MODEL.USE_SEM_CONCAT and concat_feat.shape[0] > gn_size:
-            group = int(math.floor(concat_feat.shape[0] / gn_size)) + 1
+            group = int(math.ceil(concat_feat.shape[0] / gn_size))
             prd_cls_scores = None
             sbj_cls_scores = None
             obj_cls_scores = None
