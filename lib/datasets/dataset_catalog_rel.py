@@ -67,31 +67,31 @@ DATASETS = {
         IM_DIR:
             _DATA_DIR + '/vg80k/VG_100K',
         ANN_FN:
-            _DATA_DIR + '/vg80k/seed{}/detections_train.json',
+            _DATA_DIR + '/vg80k/seed{}/detections_train.json'.format(cfg.RNG_SEED),
         ANN_FN2:
-            _DATA_DIR + '/vg80k/seed{}/rel_annotations_train.json',
+            _DATA_DIR + '/vg80k/seed{}/rel_annotations_train.json'.format(cfg.RNG_SEED),
         ANN_FN3:
-            _DATA_DIR + '/vg80k/seed{}/predicates.json',
+            _DATA_DIR + '/vg80k/seed{}/predicates.json'.format(cfg.RNG_SEED),
     },
     'vg80k_val': {
         IM_DIR:
             _DATA_DIR + '/vg80k/VG_100K',
         ANN_FN:
-            _DATA_DIR + '/vg80k/seed{}/detections_val.json',
+            _DATA_DIR + '/vg80k/seed{}/detections_val.json'.format(cfg.RNG_SEED),
         ANN_FN2:
-            _DATA_DIR + '/vg80k/seed{}/rel_annotations_val.json',
+            _DATA_DIR + '/vg80k/seed{}/rel_annotations_val.json'.format(cfg.RNG_SEED),
         ANN_FN3:
-            _DATA_DIR + '/vg80k/seed{}/predicates.json',
+            _DATA_DIR + '/vg80k/seed{}/predicates.json'.format(cfg.RNG_SEED),
     },
     'vg80k_test': {
         IM_DIR:
             _DATA_DIR + '/vg80k/VG_100K',
         ANN_FN:
-            _DATA_DIR + '/vg80k/seed{}/detections_test.json',
+            _DATA_DIR + '/vg80k/seed{}/detections_test.json'.format(cfg.RNG_SEED),
         ANN_FN2:
-            _DATA_DIR + '/vg80k/seed{}/rel_annotations_test.json',
+            _DATA_DIR + '/vg80k/seed{}/rel_annotations_test.json'.format(cfg.RNG_SEED),
         ANN_FN3:
-            _DATA_DIR + '/vg80k/seed{}/predicates.json',
+            _DATA_DIR + '/vg80k/seed{}/predicates.json'.format(cfg.RNG_SEED),
     },
     'gvqa_train': {
         IM_DIR:
