@@ -51,7 +51,7 @@ def get_wordsim_metrics_from_csv(csv_file):
     word2vec_metrics = ['w2v_gn']
     gt_prefix = 'gt'
 
-    for prediction_type in ['sbj', 'obj']:
+    for prediction_type in ['sbj']:
         for metric_type in wordnet_metrics + word2vec_metrics:
             mu = df[prediction_type + '_' + metric_type].mean()
 
