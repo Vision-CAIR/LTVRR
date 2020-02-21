@@ -1,3 +1,4 @@
+import argparse
 import csv
 import os
 # import pickle
@@ -216,9 +217,18 @@ def generate_csv_file_from_det_file(detections_file, csv_file, obj_categories, p
     generate_csv_file_from_det_obj(detections, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
 
 
+def parse_args():
+    """Parse input arguments"""
+    parser = argparse.ArgumentParser(description='Generate csv files')
+    parser.add_argument(
+        '--pkl_file', dest='pkl_file', required=True,
+        help='Detections Pickle file')
+
+    return parser.parse_args()
 
 if __name__ == '__main__':
-
+    args = parse_args()
+    generate_topk_csv_from_det_obj(args.pkl_file)
 
     exit()
     pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_prd.npy'
