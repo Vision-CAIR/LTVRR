@@ -1,3 +1,4 @@
+RNG_SEED: 3
 MODEL:
   TYPE: generalized_rcnn
   SUBTYPE: 3
@@ -9,6 +10,7 @@ MODEL:
   USE_SEPARATE_SO_SCORES: True
   NORM_SCALE: 10.0
   LOSS: focal
+  USE_SEM_CONCAT: True
 NUM_GPUS: 8
 SOLVER:
   WEIGHT_DECAY: 0.0001
