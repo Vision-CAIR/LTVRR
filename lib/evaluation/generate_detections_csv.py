@@ -23,19 +23,10 @@ def generate_topk_csv_from_det_obj(detections, csv_path, obj_categores, prd_cate
         spamwriter.writerow(['image_id',
                              'gt_rel',
                              'det_rel',
-                             'rel_freq_gt',
-                             'rel_freq_det',
-                             'rel_rank',
                              'gt_sbj',
                              'det_sbj',
-                             'sbj_freq_gt',
-                             'sbj_freq_det',
-                             'sbj_rank',
                              'gt_obj',
-                             'det_obj',
-                             'obj_freq_gt',
-                             'obj_freq_det',
-                             'obj_rank'])
+                             'det_obj'])
 
         for i in range(0, total_test_iters):
             # image_idx = detections[i]['image_idx']
@@ -227,6 +218,9 @@ def generate_csv_file_from_det_file(detections_file, csv_file, obj_categories, p
 
 
 if __name__ == '__main__':
+
+
+    exit()
     pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/freq_prd.npy'
     #pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed0/freq_prd.npy'
     #pred_freq_paths = '/ibex/scratch/x_abdelks/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/freq_pred.npy'
