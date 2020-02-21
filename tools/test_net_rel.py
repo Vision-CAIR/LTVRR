@@ -110,6 +110,10 @@ def get_obj_and_prd_frequencies():
     elif cfg.DATASET == 'vg80k':
         freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/predicates_freqs.json'
         freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/objects_freqs.json'
+    elif cfg.DATASET == 'vg8k':
+        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_predicates_freqs.json'
+        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_objects_freqs.json'
+
     else:
         raise NotImplementedError
 
@@ -152,6 +156,10 @@ if __name__ == '__main__':
         cfg.TEST.DATASETS = ('vg80k_val',)
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
+    elif args.dataset == "vg8k":
+        cfg.TEST.DATASETS = ('vg8k_val',)
+        cfg.MODEL.NUM_CLASSES = 5331 # includes background
+        cfg.MODEL.NUM_PRD_CLASSES = 2000  # excludes background
     elif args.dataset == "gvqa20k":
         cfg.TEST.DATASETS = ('gvqa20k_test',)
         cfg.MODEL.NUM_CLASSES = 1704 # includes background

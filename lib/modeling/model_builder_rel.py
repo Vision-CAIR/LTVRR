@@ -119,6 +119,11 @@ def get_obj_prd_vecs(dataset_name):
             obj_cats = json.load(f)
         with open(cfg.DATA_DIR + '/vg80k/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
             prd_cats = json.load(f)
+    elif dataset_name.find('vg8k') >= 0:
+        with open(cfg.DATA_DIR + '/vg8k/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/vg8k/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
+            prd_cats = json.load(f)
     elif dataset_name.find('vg') >= 0:
         with open(cfg.DATA_DIR + '/vg/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
             obj_cats = json.load(f)
@@ -245,6 +250,9 @@ class Generalized_RCNN(nn.Module):
         elif cfg.DATASET == 'vg80k':
             freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/predicates_freqs.json'
             freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/objects_freqs.json'
+        elif cfg.DATASET == 'vg8k':
+            freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_predicates_freqs.json'
+            freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_objects_freqs.json'
         else:
             raise NotImplementedError
 

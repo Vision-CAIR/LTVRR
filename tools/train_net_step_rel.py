@@ -229,6 +229,11 @@ def main():
         cfg.TEST.DATASETS = ('vg80k_val',)
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
+    elif args.dataset == "vg8k":
+        cfg.TRAIN.DATASETS = ('vg8k_train',)
+        cfg.TEST.DATASETS = ('vg8k_val',)
+        cfg.MODEL.NUM_CLASSES = 5331 # includes background
+        cfg.MODEL.NUM_PRD_CLASSES = 2000  # excludes background
     elif args.dataset == "vrd":
         cfg.TRAIN.DATASETS = ('vrd_train',)
         cfg.TEST.DATASETS = ('vrd_val',)
