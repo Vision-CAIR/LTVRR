@@ -111,8 +111,10 @@ def get_obj_and_prd_frequencies():
         freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/predicates_freqs.json'
         freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/objects_freqs.json'
     elif cfg.DATASET == 'vg8k':
-        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_predicates_freqs.json'
-        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_objects_freqs.json'
+        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_predicates_freqs.json'.format(
+                cfg.RNG_SEED)
+        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_objects_freqs.json'.format(
+                cfg.RNG_SEED)
 
     else:
         raise NotImplementedError
