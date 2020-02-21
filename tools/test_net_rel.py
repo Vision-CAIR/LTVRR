@@ -17,7 +17,7 @@ from core.config import cfg, merge_cfg_from_file, merge_cfg_from_list, assert_an
 import utils.logging
 from datasets import task_evaluation_rel as task_evaluation
 from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
-from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv, get_wordsim_metrics_from_csv
+from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv, get_wordsim_metrics_from_csv, generate_topk_csv_from_det_obj
 
 import numpy as np
 import json
@@ -228,7 +228,9 @@ if __name__ == '__main__':
     generate_csv_file_from_det_obj(all_results, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
     logger.info('Saved CSV to: ' + csv_file)
     get_metrics_from_csv(csv_file)
-
+    csv_file_topk = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_topk.csv')
+    generate_topk_csv_from_det_obj(all_results, csv_file_topk, obj_categories, prd_categories, 10)
+    logger.info('Saved topk CSV to: ' + csv_file_topk)
     if cfg.DATASET.find('gvqa') >= 0:
         from evaluation.add_word_similarity_to_csv import add_similarity_to_detections
         logger.info('Adding word similarity to CSV')

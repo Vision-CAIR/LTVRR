@@ -16,7 +16,7 @@ from tqdm import tqdm
 #     os.mkdir(report_path)
 # if not os.path.exists(csv_path):
 #     os.mkdir(csv_path)
-def generate_topk_csv_from_det_obj(detections, csv_path, obj_categores, prd_categories, k):
+def generate_topk_csv_from_det_obj(detections, csv_path, obj_categories, prd_categories, k):
     with open(csv_path, 'w', newline='') as csvfile:
         total_test_iters = len(detections)
         spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -48,15 +48,15 @@ def generate_topk_csv_from_det_obj(detections, csv_path, obj_categores, prd_cate
                 gt_labels_obj_idx = detections[i]['gt_obj_labels'][j]
                 gt_labels_rel_idx = detections[i]['gt_prd_labels'][j]
 
-                gt_labels_sbj = obj_categores[detections[i]['gt_sbj_labels'][j]]
-                gt_labels_obj = obj_categores[detections[i]['gt_obj_labels'][j]]
+                gt_labels_sbj = obj_categories[detections[i]['gt_sbj_labels'][j]]
+                gt_labels_obj = obj_categories[detections[i]['gt_obj_labels'][j]]
                 gt_labels_rel = prd_categories[detections[i]['gt_prd_labels'][j]]
 
                 # det_labels_sbj = det_labels_sbj_all[j, 0]
-                topk_sbj = obj_categores[det_labels_sbj_all[j, :k]]
+                topk_sbj = obj_categories[det_labels_sbj_all[j, :k]]
 
                 # det_labels_obj = det_labels_obj_all[j, 0]
-                topk_obj = obj_categores[det_labels_obj_all[j, :k]]
+                topk_obj = obj_categories[det_labels_obj_all[j, :k]]
 
                 topk_rel = prd_categories[det_labels_rel_all[j, :k]]
 
