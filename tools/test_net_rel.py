@@ -123,14 +123,11 @@ def get_obj_and_prd_frequencies():
 
 if __name__ == '__main__':
 
-    if not torch.cuda.is_available():
-        sys.exit("Need a CUDA device to run the code.")
     logger = utils.logging.setup_logging(__name__)
     args = parse_args()
     logger.info('Called with args:')
     logger.info(args)
 
-    assert (torch.cuda.device_count() == 1) ^ bool(args.multi_gpu_testing)
 
     cfg.VIS = args.vis
 
@@ -214,6 +211,9 @@ if __name__ == '__main__':
         # logger.info('Starting evaluation now...')
         # task_evaluation.eval_rel_results(all_results, args.output_dir, args.do_val)
     else:
+        if not torch.cuda.is_available():
+            sys.exit("Need a CUDA device to run the code.")
+        assert (torch.cuda.device_count() == 1) ^ bool(args.multi_gpu_testing)
         all_results = run_inference(
                         args,
                         ind_range=args.range,
