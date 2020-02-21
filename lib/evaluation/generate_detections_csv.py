@@ -96,7 +96,7 @@ def generate_csv_file_from_det_obj(detections, csv_path, obj_categores, prd_cate
                              'obj_freq_det',
                              'obj_rank'])
 
-        for i in tqdm(range(0, total_test_iters)):
+        for i in range(0, total_test_iters):
             # image_idx = detections[i]['image_idx']
             # image_id = detections[i]['image_id']
             image_id = detections[i]['image'].split('/')[-1].split('.')[0]
