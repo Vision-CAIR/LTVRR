@@ -22,10 +22,15 @@ def generate_topk_csv_from_det_obj(detections, csv_path, obj_categories, prd_cat
         spamwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
         spamwriter.writerow(['image_id',
+                             'box_id',
+                             'detection_id',
+
                              'gt_rel',
                              'det_rel',
+
                              'gt_sbj',
                              'det_sbj',
+
                              'gt_obj',
                              'det_obj'])
 
@@ -44,6 +49,7 @@ def generate_topk_csv_from_det_obj(detections, csv_path, obj_categories, prd_cat
             det_labels_obj_all = np.argsort(-det_scores_obj_all, axis=1)
 
             for j in range(len(detections[i]['gt_sbj_labels'])):
+                box_id = j
                 gt_labels_sbj_idx = detections[i]['gt_sbj_labels'][j]
                 gt_labels_obj_idx = detections[i]['gt_obj_labels'][j]
                 gt_labels_rel_idx = detections[i]['gt_prd_labels'][j]
@@ -60,18 +66,24 @@ def generate_topk_csv_from_det_obj(detections, csv_path, obj_categories, prd_cat
 
                 topk_rel = prd_categories[det_labels_rel_all[j, :k]]
 
+                for m in range(k):
+                    detection_id = m
+                    det_sbj = topk_sbj[m]
+                    det_obj = topk_obj[m]
+                    det_rel = topk_rel[m]
+                    spamwriter.writerow(
+                        [image_id,
+                         box_id,
+                         detection_id,
 
-                spamwriter.writerow(
-                    [image_id,
+                         gt_labels_rel,
+                         det_rel,
 
-                     gt_labels_rel,
-                     topk_rel,
+                         gt_labels_sbj,
+                         det_sbj,
 
-                     gt_labels_sbj,
-                     topk_sbj,
-
-                     gt_labels_obj,
-                     topk_obj])
+                         gt_labels_obj,
+                         det_obj])
 
 
 def generate_csv_file_from_det_obj(detections, csv_path, obj_categores, prd_categories, obj_freq_dict, prd_freq_dict):
