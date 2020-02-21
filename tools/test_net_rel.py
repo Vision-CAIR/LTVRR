@@ -16,8 +16,8 @@ from core.config import cfg, merge_cfg_from_file, merge_cfg_from_list, assert_an
 
 import utils.logging
 from datasets import task_evaluation_rel as task_evaluation
-from evaluation.generate_detections_csv import generate_csv_file_from_det_obj
-from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv, get_wordsim_metrics_from_csv, generate_topk_csv_from_det_obj
+from evaluation.generate_detections_csv import generate_csv_file_from_det_obj, generate_topk_csv_from_det_obj
+from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv, get_wordsim_metrics_from_csv
 
 import numpy as np
 import json
