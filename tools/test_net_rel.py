@@ -229,7 +229,7 @@ if __name__ == '__main__':
     logger.info('Saved CSV to: ' + csv_file)
     get_metrics_from_csv(csv_file)
     csv_file_topk = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_topk.csv')
-    generate_topk_csv_from_det_obj(all_results, csv_file_topk, obj_categories, prd_categories, 10)
+    generate_topk_csv_from_det_obj(all_results, csv_file_topk, obj_categories, prd_categories, 250)
     logger.info('Saved topk CSV to: ' + csv_file_topk)
     if cfg.DATASET.find('gvqa') >= 0:
         from evaluation.add_word_similarity_to_csv import add_similarity_to_detections
