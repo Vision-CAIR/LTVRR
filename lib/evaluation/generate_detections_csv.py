@@ -23,7 +23,7 @@ def generate_topk_csv_from_det_obj(detections, csv_path, obj_categories, prd_cat
 
         spamwriter.writerow(['image_id',
                              'box_id',
-                             'detection_id',
+                             'det_id',
 
                              'gt_rel',
                              'det_rel',
@@ -59,18 +59,18 @@ def generate_topk_csv_from_det_obj(detections, csv_path, obj_categories, prd_cat
                 gt_labels_rel = prd_categories[detections[i]['gt_prd_labels'][j]]
 
                 # det_labels_sbj = det_labels_sbj_all[j, 0]
-                topk_sbj = obj_categories[det_labels_sbj_all[j, :k]]
+                # topk_sbj = obj_categories[det_labels_sbj_all[j, :k]]
 
                 # det_labels_obj = det_labels_obj_all[j, 0]
-                topk_obj = obj_categories[det_labels_obj_all[j, :k]]
+                # topk_obj = obj_categories[det_labels_obj_all[j, :k]]
 
-                topk_rel = prd_categories[det_labels_rel_all[j, :k]]
+                # topk_rel = prd_categories[det_labels_rel_all[j, :k]]
 
                 for m in range(k):
                     detection_id = m
-                    det_sbj = topk_sbj[m]
-                    det_obj = topk_obj[m]
-                    det_rel = topk_rel[m]
+                    det_sbj = obj_categories[det_labels_sbj_all[j, m]]
+                    det_obj = obj_categories[det_labels_obj_all[j, m]]
+                    det_rel = prd_categories[det_labels_rel_all[j, m]]
                     spamwriter.writerow(
                         [image_id,
                          box_id,
