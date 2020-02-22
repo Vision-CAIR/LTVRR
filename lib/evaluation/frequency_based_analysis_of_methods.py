@@ -104,6 +104,8 @@ def get_metrics_from_csv(csv_file, get_mr=False):
     for prediction_type in all_prediction_types:
         df[prediction_type + '_' + metric_type] = df[prediction_type + '_rank'] < int(metric_type[3:])
 
+    df['triplet_top1'] = df['rel_top1'] & df['sbj_top1'] & df['obj_top1']
+
     if verbose:
         print('------', metric_type, '------')
 
@@ -128,7 +130,7 @@ def get_metrics_from_csv(csv_file, get_mr=False):
                 print('overall-mr', prediction_type, '{:2.2f}'.format(mu))
 
             # collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
-        print()
+    print()
     # Per-class Accuracy
     for prediction_type in all_prediction_types:
         mu = df.groupby(gt_prefix + '_' + prediction_type)[prediction_type + '_' + metric_type].mean().mean() * 100
@@ -151,6 +153,18 @@ def get_metrics_from_csv(csv_file, get_mr=False):
                 print('per-class-mr', prediction_type, '{:2.2f}'.format(mu))
 
             # collected_per_class_means[(csv_file, prediction_type, metric_type)] = mu
+    print()
+
+    mu = df['triplet_top1'].mean() * 100.0
+    if verbose:
+        print('simple-average', 'triplet', '{:2.2f}'.format(mu))
+
+    for prediction_type in all_prediction_types:
+        mu = df.groupby(gt_prefix + '_' + prediction_type)['triplet_top1'].mean().mean() * 100
+        if verbose:
+            print('per-class-average', 'triplet_' + prediction_type, '{:2.2f}'.format(mu))
+
+    print()
 
     return collected_simple_means, collected_per_class_means
 
