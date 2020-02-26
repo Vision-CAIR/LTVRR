@@ -9,7 +9,8 @@ MODEL:
   FASTER_RCNN: True
   USE_SEPARATE_SO_SCORES: True
   NORM_SCALE: 10.0
-  # LOSS: focal
+  LOSS: focal
+  GAMMA: 5.0
   USE_SEM_CONCAT: True
 NUM_GPUS: 8
 SOLVER:
