@@ -8,7 +8,6 @@ MODEL:
   FASTER_RCNN: True
   USE_SEPARATE_SO_SCORES: True
   NORM_SCALE: 10.0
-  LOSS: weighted_cross_entropy
 NUM_GPUS: 8
 SOLVER:
   WEIGHT_DECAY: 0.0001
