@@ -381,11 +381,16 @@ def main():
     backbone_nonbias_param_names = []
     prd_branch_nonbias_params = []
     prd_branch_nonbias_param_names = []
+
+    for key, value in dict(maskRCNN.named_parameters()).items():
+        if not 'classifier' in key:
+            value.requires_grad = False
+
     for key, value in dict(maskRCNN.named_parameters()).items():
         if value.requires_grad:
             if 'gn' in key:
                 gn_params.append(value)
-            elif 'Box_Head' in key:
+            elif 'Conv_Body' in key or 'Box_Head' in key or 'Box_Outs' in key or 'RPN' in key:
                 if 'bias' in key:
                     backbone_bias_params.append(value)
                     backbone_bias_param_names.append(key)
