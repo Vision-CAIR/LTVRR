@@ -382,9 +382,10 @@ def main():
     prd_branch_nonbias_params = []
     prd_branch_nonbias_param_names = []
 
-    for key, value in dict(maskRCNN.named_parameters()).items():
-        if not 'classifier' in key:
-            value.requires_grad = False
+    if cfg.MODEL.FREEZE_ALL:
+        for key, value in dict(maskRCNN.named_parameters()).items():
+            if not 'classifier' in key:
+                value.requires_grad = False
 
     for key, value in dict(maskRCNN.named_parameters()).items():
         if value.requires_grad:

@@ -503,6 +503,10 @@ __C.MODEL.LOAD_COCO_PRETRAINED_WEIGHTS = False
 __C.MODEL.LOSS = 'cross_entropy'
 __C.MODEL.ALPHA = 0.25
 __C.MODEL.GAMMA = 2.0
+
+# Whether to freeze all model before classifier
+__C.MODEL.FREEZE_ALL = False
+
 # ---------------------------------------------------------------------------- #
 # Unsupervise Pose
 # ---------------------------------------------------------------------------- #
