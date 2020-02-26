@@ -84,7 +84,7 @@ class reldn_head(nn.Module):
         obj_cls_scores = self.classifier_sbj_obj(obj_vis_embeddings)
 
         prd_vis_embeddings = F.normalize(prd_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
-        prd_cls_scores = self.classifier_sbj_obj(prd_vis_embeddings)
+        prd_cls_scores = self.classifier_prd(prd_vis_embeddings)
 
         if not self.training:
             sbj_cls_scores = F.softmax(sbj_cls_scores, dim=1)
