@@ -97,18 +97,6 @@ def check_inference(net_func):
 
 
 def get_obj_prd_vecs(dataset_name):
-    word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(
-        cfg.DATA_DIR + '/word2vec_model/GoogleNews-vectors-negative300.bin', binary=True)
-    logger.info('Model loaded.')
-    # change everything into lowercase
-    all_keys = list(word2vec_model.vocab.keys())
-    for key in all_keys:
-        new_key = key.lower()
-        word2vec_model.vocab[new_key] = word2vec_model.vocab.pop(key)
-    temp_dict = {x.replace('_', '-'): y for x, y in word2vec_model.vocab.items()}
-    word2vec_model.vocab.update(temp_dict)
-    logger.info('Wiki words converted to lowercase.')
-
     if dataset_name.find('vrd') >= 0:
         with open(cfg.DATA_DIR + '/vrd/objects.json') as f:
             obj_cats = json.load(f)
