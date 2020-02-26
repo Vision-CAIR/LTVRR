@@ -272,7 +272,7 @@ def main():
 
     # Some imports need to be done after loading the config to avoid using default values
     from datasets.roidb_rel import combined_roidb_for_training
-    from modeling.model_builder_rel_fc import Generalized_RCNN
+    from modeling.model_builder_fc import Generalized_RCNN
     from core.test_engine_rel import run_eval_inference, run_inference
     from core.test_engine_rel import get_inference_dataset, get_roidb_and_dataset
 
