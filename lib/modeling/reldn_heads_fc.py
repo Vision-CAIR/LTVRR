@@ -37,7 +37,7 @@ class reldn_head(nn.Module):
         self.so_vis_embeddings = nn.Linear(dim_in // 3, 1024)
 
         self.classifier_prd = nn.Linear(1024, num_prd_classes)
-        self.classifier_sbj_obj = nn.Linear(1024, cfg.MODEL.NUM_CLASSES)
+        self.classifier_sbj_obj = nn.Linear(1024, cfg.MODEL.NUM_CLASSES - 1)
         self._init_weights()
 
         self._init_weights()
