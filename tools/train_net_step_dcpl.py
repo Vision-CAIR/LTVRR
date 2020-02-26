@@ -460,6 +460,11 @@ def main():
         del checkpoint
         torch.cuda.empty_cache()
 
+    logging.info('Modules to be trained:')
+    for key, value in dict(maskRCNN.named_parameters()).items():
+        if value.requires_grad:
+            print(key)
+
     if args.load_detectron:  #TODO resume for detectron weights (load sgd momentum values)
         logging.info("loading Detectron weights %s", args.load_detectron)
         load_detectron_weight(maskRCNN, args.load_detectron)
