@@ -8,7 +8,7 @@ MODEL:
   FASTER_RCNN: True
   USE_SEPARATE_SO_SCORES: True
   NORM_SCALE: 10.0
-  USE_SEM_CONCAT: True
+  USE_SEM_CONCAT: False
   LOSS: weighted_cross_entropy
 NUM_GPUS: 8
 SOLVER:
