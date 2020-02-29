@@ -17,7 +17,8 @@ SOLVER:
   # 1x schedule (note TRAIN.IMS_PER_BATCH: 1)
   BASE_LR: 0.01
   GAMMA: 0.1
-  MAX_ITER: 145160  # 125446 roidbs
+  MAX_ITER: 217740  # 125446 roidbs
+#  MAX_ITER: 145160  # 125446 roidbs
   #  MAX_ITER: 300000  # 125446 roidbs
   STEPS: [0, 96774, 129032]
 VGG16:
