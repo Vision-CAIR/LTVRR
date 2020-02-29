@@ -271,7 +271,7 @@ class Generalized_RCNN(nn.Module):
         self.freq_prd = get_freq_from_dict(self.prd_freq_dict, self.prd_categories)
         self.freq_obj = get_freq_from_dict(self.obj_freq_dict, self.obj_categories)
 
-        if cfg.MODEL.LOSS == 'weighted_cross_entropy':
+        if cfg.MODEL.LOSS == 'weighted_cross_entropy' or cfg.MODEL.LOSS == 'weighted_focal':
             logger.info('loading frequencies')
 
             freq_prd = self.freq_prd + 1
