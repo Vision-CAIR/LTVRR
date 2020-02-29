@@ -185,6 +185,15 @@ def add_cls_loss(cls_scores, labels, weight=None):
         labels_exp = labels.unsqueeze(1)
         labels_exp = labels_exp.unsqueeze(2)
         return focal_loss.focal_loss(cls_scores_exp, labels_exp, alpha=cfg.MODEL.ALPHA, gamma=cfg.MODEL.GAMMA, reduction='mean')
+    elif cfg.MODEL.LOSS == 'weighted_focal':
+        cls_scores_exp = cls_scores.unsqueeze(2)
+        cls_scores_exp = cls_scores_exp.unsqueeze(3)
+        labels_exp = labels.unsqueeze(1)
+        labels_exp = labels_exp.unsqueeze(2)
+        weight = weight.unsqueeze(0)
+        weight = weight.unsqueeze(2)
+        weight = weight.unsqueeze(3)
+        return focal_loss.focal_loss(cls_scores_exp, labels_exp, alpha=cfg.MODEL.ALPHA, gamma=cfg.MODEL.GAMMA, reduction='mean', weight_ce=weight)
     else:
         raise NotImplementedError
 

@@ -62,7 +62,8 @@ class FocalLoss(nn.Module):
     def forward(  # type: ignore
             self,
             input: torch.Tensor,
-            target: torch.Tensor) -> torch.Tensor:
+            target: torch.Tensor,
+            weight_ce=None) -> torch.Tensor:
         if not torch.is_tensor(input):
             raise TypeError("Input type is not a torch.Tensor. Got {}"
                             .format(type(input)))
@@ -88,6 +89,8 @@ class FocalLoss(nn.Module):
         weight = torch.pow(torch.tensor(1.).cuda(device_id) - input_soft,
                            self.gamma.to(input.dtype).cuda(device_id))
         focal = -self.alpha * weight * torch.log(input_soft)
+        if weight_ce is not None:
+            focal = focal * weight_ce
         loss_tmp = torch.sum(target_one_hot * focal, dim=1)
 
         if self.reduction == 'none':
