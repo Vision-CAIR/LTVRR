@@ -151,11 +151,11 @@ if __name__ == '__main__':
         cfg.MODEL.NUM_CLASSES = 151
         cfg.MODEL.NUM_PRD_CLASSES = 50  # exclude background
     elif args.dataset == "vg80k":
-        cfg.TEST.DATASETS = ('vg80k_val',)
+        cfg.TEST.DATASETS = ('vg80k_test',)
         cfg.MODEL.NUM_CLASSES = 53305 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 29086  # excludes background
     elif args.dataset == "vg8k":
-        cfg.TEST.DATASETS = ('vg8k_val',)
+        cfg.TEST.DATASETS = ('vg8k_test',)
         cfg.MODEL.NUM_CLASSES = 5331 # includes background
         cfg.MODEL.NUM_PRD_CLASSES = 2000  # excludes background
     elif args.dataset == "gvqa20k":
