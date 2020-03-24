@@ -13,15 +13,18 @@ We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-t
 ## Benchmarking on GQA
 | Method                         |  Backbone         | many     | medium   | few       | all       |
 | :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
-| Baseline \[1\]                 |  VGG16            | 17.7     | 23.5     | 27.6      | 27.6      |
-| Baseline \[1\] + ViLHub        |  VGG16            | 20.1     | 26.2     | 30.1      | 30.1      |
-| Focal Loss \[2\]               |  VGG16            | 21.4     | 27.2     | 30.3      | 30.3      |
-| Focal Loss \[2\] + ViLHub      |  VGG16            | 19.4	    | 25.0     | 28.5      | 28.5      |
-| WCE \[3\]                      |  VGG16            | 19.4	    | 25.0     | 28.5      | 28.5      |
-| WCE + ViLHub \[3\]             |  VGG16            | 19.4	    | 25.0     | 28.5      | 28.5      |
+| Baseline \[1\]                 |  VGG16            | 70.5     | 36.2     | 3.5       | 51.9      |
+| Baseline \[1\] + ViLHub        |  VGG16            | 69.8     | **42.1** | **9.5**   | **53.9**  |
+| :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
+| Focal Loss \[2\]               |  VGG16            | 69.6     | 38.0     | 4.7       | 52.1      |
+| Focal Loss \[2\] + ViLHub      |  VGG16            | 69.8	    | **41.7** | **8.1**   | **53.7**  |
+| :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
+| WCE \[3\]                      |  VGG16            | 39.3	    | 36.5     | 16.2      | **35.5**  |
+| WCE + ViLHub \[3\]             |  VGG16            | 35.2	    | **39.5** | **18.8**  | 34.2      |
 
 
-\[1\] [Zellers, Rowan, et al. "Neural motifs: Scene graph parsing with global context." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zellers_Neural_Motifs_Scene_CVPR_2018_paper.html)
+
+\[1\] [Zhang et al. "Neural motifs: Scene graph parsing with global context." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zellers_Neural_Motifs_Scene_CVPR_2018_paper.html)
 
 \[2\] [Yang, Jianwei, et al. "Graph r-cnn for scene graph generation." Proceedings of the European Conference on Computer Vision (ECCV). 2018.](http://openaccess.thecvf.com/content_ECCV_2018/html/Jianwei_Yang_Graph_R-CNN_for_ECCV_2018_paper.html)
 
