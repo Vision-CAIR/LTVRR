@@ -1,7 +1,7 @@
 # Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss (LTVRR)
 
-![alt text](./examples/example1.png)
 ![alt text](./examples/example2.png)
+![alt text](./examples/example1.png)
 <p align="center">Example results from the GQA dataset.</p>
 
 This is a PyTorch implementation for [Long-tail Visual Relationship Recognition]().
