@@ -1,6 +1,7 @@
-# Large-Scale-VRD.pytorch
+# Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss (LTVRR)
 
-![alt text](https://github.com/jz462/Large-Scale-VRD.pytorch/blob/master/Examples.PNG)
+![alt text](./examples/example1.png)
+![alt text](./examples/example2.png)
 <p align="center">Example results from the GQA dataset.</p>
 
 This is a PyTorch implementation for [Long-tail Visual Relationship Recognition]().
