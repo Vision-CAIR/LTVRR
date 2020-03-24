@@ -40,7 +40,7 @@ def keep_only_heavy_tail_observations(dataframe, prediction_type, threshold_of_t
     return df
 
 def get_many_medium_few_scores(csv_path, cutoffs, syn):
-    df = pd.read_csv(csv_path + 'rel_detections_gt_boxes_prdcls.csv')
+    df = pd.read_csv(csv_path)
     # df = df.groupby(['gt_sbj', 'gt_rel', 'gt_obj']).mea)
     df['box_id'] = df.groupby('image_id').cumcount()
     metric_type = 'top1'
