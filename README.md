@@ -1,5 +1,6 @@
 # Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss (LTVRR)
-
+Watch our video below:
+[<img src="https://img.youtube.com/vi/_3pYM3xEhV0/maxresdefault.jpg" width="50%">](https://youtu.be/_3pYM3xEhV0)
 ![alt text](./examples/example2.png)
 ![alt text](./examples/example1.png)
 <p align="center">Example results from the GQA dataset.</p>
