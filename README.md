@@ -194,18 +194,6 @@ python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_
 ```
 
 
-## (Optional) Training Object Detection Models
-This repo provides code for training object detectors for Visual Genome using a ResNeXt-101-64x4d-FPN backbone.
-
-First download weights of ResNeXt-101-64x4d-FPN trained on COCO [here](https://drive.google.com/open?id=1HvznYV86YJp6wfNj7ksFw1okvRz8ZuwN). Unzip it under the `data` directory and you should see a `detectron_model` folder.
-
-To train the object detector, run
-```
-python ./tools/train_net_step.py --dataset vg --cfg configs/e2e_faster_rcnn_X-101-64x4d-FPN_1x_vg.yaml --nw 8 --use_tfboard
-```
-
-The training results (models and logs) should be in `$ROOT/Outputs/e2e_faster_rcnn_X-101-64x4d-FPN_1x_vg/`.
-
 ## Acknowledgements
 This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code from Zhang Ji, as well as
 This repository uses code based on the [Neural-Motifs](https://github.com/rowanz/neural-motifs) source code from Rowan Zellers, as well as
@@ -214,10 +202,5 @@ code from the [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytor
 ## Citing
 If you use this code in your research, please use the following BibTeX entry.
 ```
-@conference{zhang2018large,
-  title={Large-Scale Visual Relationship Understanding},
-  author={Zhang, Ji and Kalantidis, Yannis and Rohrbach, Marcus and Paluri, Manohar and Elgammal, Ahmed and Elhoseiny, Mohamed},
-  booktitle={AAAI},
-  year={2019}
-}
+
 ```
