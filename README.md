@@ -181,16 +181,26 @@ With the following command lines, the training results (models and logs) should 
 
 
 ### GQA
-To train our relationship network using a VGG16 backbone, run
+To train our relationship network using a VGG16 backbone with the ViL-Hubless loss, run
 ```
-python tools/train_net_step_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only.yaml --nw 8 --use_tfboard
+python tools/train_net_step_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness100k.yaml --nw 8 --use_tfboard --seed 0
+```
+
+To train our relationship network using a VGG16 backbone without the ViL-Hubless loss, run
+```
+python tools/train_net_step_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline.yaml --nw 8 --use_tfboard --seed 0
 ```
 
 
 ### Visual Genome
-To train our relationship network using a VGG16 backbone, run
+To train our relationship network using a VGG16 backbone with the ViL-Hubless loss, run
 ```
-python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg_y_loss_only.yaml --nw 8 --use_tfboard
+python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_hubness100k.yaml --nw 8 --use_tfboard --seed 3
+```
+
+To train our relationship network using a VGG16 backbone without the ViL-Hubless loss, run
+```
+python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_baseline.yaml --nw 8 --use_tfboard --seed 3
 ```
 
 
