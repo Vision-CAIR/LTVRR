@@ -43,19 +43,19 @@ class reldn_head(nn.Module):
             nn.Linear(1024, 1024))
         if not cfg.MODEL.USE_SEM_CONCAT:
             self.prd_sem_embeddings = nn.Sequential(
-                nn.Linear(300, 1024),
+                nn.Linear(cfg.MODEL.INPUT_LANG_EMBEDDING_DIM, 1024),
                 nn.LeakyReLU(0.1),
                 nn.Linear(1024, 1024))
         else:
             self.prd_sem_hidden = nn.Sequential(
-                nn.Linear(300, 1024),
+                nn.Linear(cfg.MODEL.INPUT_LANG_EMBEDDING_DIM, 1024),
                 nn.LeakyReLU(0.1),
                 nn.Linear(1024, 1024))
             self.prd_sem_embeddings = nn.Linear(3 * 1024, 1024)
         
         self.so_vis_embeddings = nn.Linear(dim_in // 3, 1024)
         self.so_sem_embeddings = nn.Sequential(
-            nn.Linear(300, 1024),
+            nn.Linear(cfg.MODEL.INPUT_LANG_EMBEDDING_DIM, 1024),
             nn.LeakyReLU(0.1),
             nn.Linear(1024, 1024))
             
@@ -130,7 +130,7 @@ class reldn_head(nn.Module):
             ds_prd_vecs = Variable(torch.from_numpy(ds_prd_vecs.astype('float32'))).cuda(device_id)
             prd_sem_hidden = self.prd_sem_hidden(ds_prd_vecs)  # (#prd, 1024)
             # get sbj vis embeddings and expand to (#bs, #prd, 1024)
-            sbj_vecs = self.obj_vecs[sbj_labels]  # (#bs, 300)
+            sbj_vecs = self.obj_vecs[sbj_labels]  # (#bs, cfg.MODEL.INPUT_LANG_EMBEDDING_DIM)
             sbj_vecs = Variable(torch.from_numpy(sbj_vecs.astype('float32'))).cuda(device_id)
             if len(list(sbj_vecs.size())) == 1:  # sbj_vecs should be 2d
                 sbj_vecs.unsqueeze_(0)
@@ -138,7 +138,7 @@ class reldn_head(nn.Module):
             sbj_sem_embeddings = sbj_sem_embeddings.unsqueeze(1).expand(
                 sbj_vecs.shape[0], ds_prd_vecs.shape[0], 1024)  # (#bs, 1024) --> # (#bs, 1, 1024) --> # (#bs, #prd, 1024)
             # get obj vis embeddings and expand to (#bs, #prd, 1024)
-            obj_vecs = self.obj_vecs[obj_labels]  # (#bs, 300)
+            obj_vecs = self.obj_vecs[obj_labels]  # (#bs, cfg.MODEL.INPUT_LANG_EMBEDDING_DIM)
             obj_vecs = Variable(torch.from_numpy(obj_vecs.astype('float32'))).cuda(device_id)
             if len(list(obj_vecs.size())) == 1:  # obj_vecs should be 2d
                 obj_vecs.unsqueeze_(0)
