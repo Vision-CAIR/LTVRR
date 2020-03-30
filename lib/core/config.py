@@ -514,6 +514,9 @@ __C.MODEL.FREEZE_ALL = False
 __C.MODEL.UNSUPERVISED_POSE = False
 
 
+# Language Network
+__C.MODEL.INPUT_LANG_EMBEDDING_DIM = 300
+
 # ---------------------------------------------------------------------------- #
 # RetinaNet options
 # ---------------------------------------------------------------------------- #
