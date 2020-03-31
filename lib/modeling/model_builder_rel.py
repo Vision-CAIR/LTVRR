@@ -96,6 +96,134 @@ def check_inference(net_func):
     return wrapper
 
 
+def get_obj_prd_gn_relco_vecs(dataset_name):
+    gn_word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(
+        cfg.DATA_DIR + '/word2vec_model/GoogleNews-vectors-negative300.bin', binary=True)
+    logger.info('Model loaded.')
+    # change everything into lowercase
+    all_keys = list(gn_word2vec_model.vocab.keys())
+    for key in all_keys:
+        new_key = key.lower()
+        gn_word2vec_model.vocab[new_key] = gn_word2vec_model.vocab.pop(key)
+    temp_dict = {x.replace('_', '-'): y for x, y in gn_word2vec_model.vocab.items()}
+    gn_word2vec_model.vocab.update(temp_dict)
+    logger.info('Wiki words converted to lowercase.')
+
+    relco_word2vec_model = gensim.models.Word2Vec.load(
+            cfg.DATA_DIR + '/word2vec_model/vg_300d_skipgram_rel')
+    print('Model loaded.')
+    relco_vec_mean = relco_word2vec_model.wv.syn0.mean(axis=0)
+    # change everything into lowercase
+    for key in relco_word2vec_model.wv.vocab.keys():
+        new_key = key.lower()
+        relco_word2vec_model.wv.vocab[new_key] = relco_word2vec_model.wv.vocab.pop(key)
+    temp_dict = {x.replace('_', '-'): y for x, y in relco_word2vec_model.wv.vocab.items()}
+    relco_word2vec_model.wv.vocab.update(temp_dict)
+
+    print('Relco words converted to lowercase.')
+
+    if dataset_name.find('vrd') >= 0:
+        with open(cfg.DATA_DIR + '/vrd/objects.json') as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/vrd/predicates.json') as f:
+            prd_cats = json.load(f)
+    elif dataset_name.find('vg80k') >= 0:
+        with open(cfg.DATA_DIR + '/vg80k/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/vg80k/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
+            prd_cats = json.load(f)
+    elif dataset_name.find('vg8k') >= 0:
+        with open(cfg.DATA_DIR + '/vg8k/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/vg8k/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
+            prd_cats = json.load(f)
+    elif dataset_name.find('vg') >= 0:
+        with open(cfg.DATA_DIR + '/vg/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/vg/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
+            prd_cats = json.load(f)
+    elif dataset_name.find('gvqa20k') >= 0:
+        with open(cfg.DATA_DIR + '/gvqa20k/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/gvqa20k/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
+            prd_cats = json.load(f)
+    elif dataset_name.find('gvqa10k') >= 0:
+        with open(cfg.DATA_DIR + '/gvqa10k/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/gvqa10k/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
+            prd_cats = json.load(f)
+    elif dataset_name.find('gvqa') >= 0:
+        with open(cfg.DATA_DIR + '/gvqa/seed{}/objects.json'.format(cfg.RNG_SEED)) as f:
+            obj_cats = json.load(f)
+        with open(cfg.DATA_DIR + '/gvqa/seed{}/predicates.json'.format(cfg.RNG_SEED)) as f:
+            prd_cats = json.load(f)
+    else:
+        raise NotImplementedError
+    # represent background with the word 'unknown'
+    # obj_cats.insert(0, 'unknown')
+    prd_cats.insert(0, 'unknown')
+    all_obj_vecs = np.zeros((len(obj_cats), 600), dtype=np.float32)
+
+    for r, obj_cat in enumerate(obj_cats):
+        obj_vecs_gn = np.zeros(300, dtype=np.float32)
+        obj_words = obj_cat.split()
+        for word in obj_words:
+            raw_vec = gn_word2vec_model[word]
+            obj_vecs_gn += (raw_vec / la.norm(raw_vec))
+        obj_vecs_gn /= len(obj_words)
+        # obj_vecs_gn /= la.norm(obj_vecs_gn)
+
+        all_obj_vecs[r][:300] = obj_vecs_gn
+
+    for r, obj_cat in enumerate(obj_cats):
+        obj_vecs_relco = np.zeros(300, dtype=np.float32)
+        obj_words = obj_cat.split()
+        for word in obj_words:
+            if word in relco_word2vec_model.wv.vocab:
+                raw_word = relco_word2vec_model[word]
+                obj_vecs_relco += (raw_word / la.norm(raw_word))
+            else:
+                obj_vecs_relco += \
+                    (relco_vec_mean / la.norm(relco_vec_mean))
+        obj_vecs_relco /= len(obj_words)
+        # obj_vecs_relco /= la.norm(obj_vecs_relco)
+
+        all_obj_vecs[r][300:] = obj_vecs_relco
+
+    logger.info('Object label vectors loaded.')
+
+    all_prd_vecs = np.zeros((len(prd_cats), 600), dtype=np.float32)
+
+    for r, prd_cat in enumerate(prd_cats):
+        prd_vecs_gn = np.zeros(300, dtype=np.float32)
+        prd_words = prd_cat.split()
+        for word in prd_words:
+            raw_vec = gn_word2vec_model[word]
+            prd_vecs_gn += (raw_vec / la.norm(raw_vec))
+        prd_vecs_gn /= len(prd_words)
+        # prd_vecs_gn /= la.norm(prd_vecs_gn)
+
+        all_prd_vecs[r][:300] = prd_vecs_gn
+
+    for r, prd_cat in enumerate(prd_cats):
+        prd_vecs_relco = np.zeros(300, dtype=np.float32)
+        prd_words = prd_cat.split()
+        for word in prd_words:
+            if word in relco_word2vec_model.wv.vocab:
+                raw_word = relco_word2vec_model[word]
+                prd_vecs_relco += (raw_word / la.norm(raw_word))
+            else:
+                prd_vecs_relco += \
+                    (relco_vec_mean / la.norm(relco_vec_mean))
+        prd_vecs_relco /= len(prd_words)
+        # prd_vecs_relco /= la.norm(prd_vecs_relco)
+
+        all_prd_vecs[r][300:] = prd_vecs_relco
+
+    logger.info('Predicate label vectors loaded.')
+    return all_obj_vecs, all_prd_vecs, obj_cats, prd_cats
+
+
 def get_obj_prd_vecs(dataset_name):
     word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(
         cfg.DATA_DIR + '/word2vec_model/GoogleNews-vectors-negative300.bin', binary=True)
@@ -168,6 +296,7 @@ def get_obj_prd_vecs(dataset_name):
     return all_obj_vecs, all_prd_vecs, obj_cats, prd_cats
 
 
+
 def get_freq_from_dict(freq_dict, categories):
     freqs = np.zeros(len(categories))
     for i, cat in enumerate(categories):
@@ -222,8 +351,14 @@ class Generalized_RCNN(nn.Module):
         
         # initialize word vectors
         ds_name = cfg.TRAIN.DATASETS[0] if len(cfg.TRAIN.DATASETS) else cfg.TEST.DATASETS[0]
-        self.obj_vecs, self.prd_vecs, obj_categories, prd_categories = get_obj_prd_vecs(ds_name)
-        
+
+        if cfg.MODEL.INPUT_LANG_EMBEDDING_DIM == 300:
+            self.obj_vecs, self.prd_vecs, obj_categories, prd_categories = get_obj_prd_vecs(ds_name)
+        elif cfg.MODEL.INPUT_LANG_EMBEDDING_DIM == 600:
+            self.obj_vecs, self.prd_vecs, obj_categories, prd_categories = get_obj_prd_gn_relco_vecs(ds_name)
+        else:
+            raise NotImplementedError
+
         # RelPN
         self.RelPN = relpn_heads.generic_relpn_outputs()
         # RelDN
