@@ -18,18 +18,15 @@ We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-t
 | :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
 | Baseline \[1\]                 |  VGG16            | 70.5     | 36.2     | 3.5       | 51.9      |
 | Baseline \[1\] + ViLHub        |  VGG16            | 69.8     | **42.1** | **9.5**   | **53.9**  |
-| :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
 | Focal Loss \[2\]               |  VGG16            | 69.6     | 38.0     | 4.7       | 52.1      |
 | Focal Loss \[2\] + ViLHub      |  VGG16            | 69.8	    | **41.7** | **8.1**   | **53.7**  |
-| :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
-| WCE \[3\]                      |  VGG16            | 39.3	    | 36.5     | 16.2      | **35.5**  |
-| WCE + ViLHub \[3\]             |  VGG16            | 35.2	    | **39.5** | **18.8**  | 34.2      |
+| WCE \[2\]                      |  VGG16            | 39.3	    | 36.5     | 16.2      | **35.5**  |
+| WCE + ViLHub \[2\]             |  VGG16            | 35.2	    | **39.5** | **18.8**  | 34.2      |
 
 
+\[1\] [Zhang et al. "Large-scale visual relationship understanding." Proceedings of the AAAI Conference on Artificial Intelligence. 2019.](https://wvvw.aaai.org/ojs/index.php/AAAI/article/view/4953)
 
-\[1\] [Zhang et al. "Neural motifs: Scene graph parsing with global context." Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2018.](http://openaccess.thecvf.com/content_cvpr_2018/html/Zellers_Neural_Motifs_Scene_CVPR_2018_paper.html)
-
-\[2\] [Yang, Jianwei, et al. "Graph r-cnn for scene graph generation." Proceedings of the European Conference on Computer Vision (ECCV). 2018.](http://openaccess.thecvf.com/content_ECCV_2018/html/Jianwei_Yang_Graph_R-CNN_for_ECCV_2018_paper.html)
+\[2\] [Lin et al. "Focal loss for dense object detection." Proceedings of the IEEE international conference on computer vision. 2017.](http://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf)
 
 ## Requirements
 * Python 3
@@ -191,6 +188,8 @@ To train our relationship network using a VGG16 backbone without the ViL-Hubless
 python tools/train_net_step_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline.yaml --nw 8 --use_tfboard --seed 0
 ```
 
+To run models with different ViL-Hubless scales create a new config file under `configs/gvqa/` (by copying the file `configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness.yaml`) and change the variable `TRAIN.HUBNESS_SCALE` to the desired value.
+Also confirm the ViL-Hubless loss is activated by making sure the variable `TRAIN.HUBNESS` is set to `True`
 
 ### Visual Genome
 To train our relationship network using a VGG16 backbone with the ViL-Hubless loss, run
