@@ -219,7 +219,7 @@ def add_hubness_loss(cls_scores):
 def reldn_losses(prd_cls_scores, prd_labels_int32, fg_only=False, weight=None):
     device_id = prd_cls_scores.get_device()
     prd_labels = Variable(torch.from_numpy(prd_labels_int32.astype('int64'))).cuda(device_id)
-    if cfg.MODEL.LOSS == 'weighted_cross_entropy':
+    if cfg.MODEL.LOSS == 'weighted_cross_entropy' or cfg.MODEL.LOSS == 'weighted_focal':
         weight = Variable(torch.from_numpy(weight)).cuda(device_id)
     loss_cls_prd = add_cls_loss(prd_cls_scores, prd_labels, weight=weight)
     # class accuracy
