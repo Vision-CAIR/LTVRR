@@ -208,12 +208,18 @@ python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_
 
 
 ## Acknowledgements
-This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code from Zhang Ji, as well as
-This repository uses code based on the [Neural-Motifs](https://github.com/rowanz/neural-motifs) source code from Rowan Zellers, as well as
-code from the [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) repository by Roy Tseng.
+This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code from Zhang Ji, 
+as well as code from the [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) repository by Roy Tseng.
 
 ## Citing
 If you use this code in your research, please use the following BibTeX entry.
 ```
-
+@misc{abdelkarim2020longtail,
+    title={Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss},
+    author={Sherif Abdelkarim and Panos Achlioptas and Jiaji Huang and Boyang Li and Kenneth Church and Mohamed Elhoseiny},
+    year={2020},
+    eprint={2004.00436},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+}
 ```
