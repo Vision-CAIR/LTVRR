@@ -7,7 +7,7 @@ Watch our video below:
 ![alt text](./examples/example1.png)
 <p align="center">Example results from the GQA dataset.</p>
 
-This is a PyTorch implementation for [Long-tail Visual Relationship Recognition]().
+This is a PyTorch implementation for [Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss](https://arxiv.org/abs/2004.00436).
 
 This code is for the GQA and VG8K datasets. 
 
@@ -32,6 +32,7 @@ We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-t
 * Python 3
 * Python packages
   * pytorch 0.4.0 or 0.4.1.post2 (not guaranteed to work on newer versions)
+  * torchvision 0.1.8
   * cython
   * matplotlib
   * numpy
@@ -46,6 +47,9 @@ We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-t
   * scikit-image
   * gensim
 * An NVIDIA GPU and CUDA 8.0 or higher. Some operations only have gpu implementation.
+
+To make it easier we provided the environment file created by running the command `conda env export -f environment.yml`.
+To clone the environmentt you can simply run `conda env create -f environment.yml` from the project root directory.
 
 An easy installation if you already have Python 3 and CUDA 9.0:
 ```
