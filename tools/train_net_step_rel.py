@@ -381,6 +381,12 @@ def main():
     backbone_nonbias_param_names = []
     prd_branch_nonbias_params = []
     prd_branch_nonbias_param_names = []
+    
+    if cfg.MODEL.DECOUPLE:
+        for key, value in dict(maskRCNN.named_parameters()).items():
+            if not 'so_sem_embeddings.2' in key:
+                value.requires_grad = False
+                
     for key, value in dict(maskRCNN.named_parameters()).items():
         if value.requires_grad:
             if 'gn' in key:
@@ -435,6 +441,13 @@ def main():
     if args.load_ckpt or args.load_ckpt_dir:
         logging.info("loading checkpoint %s", load_name)
         checkpoint = torch.load(load_name, map_location=lambda storage, loc: storage)
+
+        if cfg.MODEL.DECOUPLE:
+            del checkpoint['model']['RelDN.so_sem_embeddings.2.weight']
+            del checkpoint['model']['RelDN.so_sem_embeddings.2.bias']
+            del checkpoint['model']['RelDN.prd_sem_embeddings.2.weight']
+            del checkpoint['model']['RelDN.prd_sem_embeddings.2.bias']
+
         net_utils.load_ckpt(maskRCNN, checkpoint['model'])
         if args.resume:
             args.start_step = checkpoint['step'] + 1
