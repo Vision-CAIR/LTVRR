@@ -72,7 +72,7 @@ mkdir data
 Download it [here](https://drive.google.com/open?id=1kTNiqsLcxfpVysZrzNETAFiPmPrsxBrB). Unzip it under the data folder. You should see a `gvqa` folder unzipped there. It contains seed folder called `seed0` that contains .json annotations that suit the dataloader used in this repo.
 
 ### Visual Genome
-Download it [here](https://drive.google.com/open?id=1YJrTcOvYt-ebCilIshBb_hCrEQ6u9m1M). Unzip it under the data folder. You should see a `vg` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
+Download it [here](https://drive.google.com/open?id=1YJrTcOvYt-ebCilIshBb_hCrEQ6u9m1M). Unzip it under the data folder. You should see a `vg8k` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
 
 
 ### Word2Vec Vocabulary
@@ -81,6 +81,7 @@ Create a folder named `word2vec_model` under `data`. Download the Google word2ve
 ## Images
 
 ### GQA
+Create a folder for all images:
 ```
 # ROOT=path/to/cloned/repository
 cd $ROOT/data/gvqa
@@ -92,7 +93,7 @@ Download GQA images from the [here](https://cs.stanford.edu/people/dorarad/gqa/d
 Create a folder for all images:
 ```
 # ROOT=path/to/cloned/repository
-cd $ROOT/data/vg
+cd $ROOT/data/vg8k
 mkdir VG_100K
 ```
 Download Visual Genome images from the [official page](https://visualgenome.org/api/v0/api_home.html). Unzip all images (part 1 and part 2) into `VG_100K/`. There should be a total of 108249 files.
@@ -123,10 +124,10 @@ The final directories for data and detection models should look like:
 |   |   |-- GoogleNews-vectors-negative300.bin
 |-- trained_models
 |   |-- e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only
-|       |-- gvqa
-|           |-- Mar02-02-16-02_gpu214-10_step_with_prd_cls_v3
-|               |-- ckpt
-|                   |-- best.pth
+|   |   |-- gvqa
+|   |       |-- Mar02-02-16-02_gpu214-10_step_with_prd_cls_v3
+|   |           |-- ckpt
+|   |               |-- best.pth
 |   |-- ...
 ```
 ## Evaluating Pre-trained Relationship Detection models
@@ -141,7 +142,7 @@ We use three evaluation metrics:
 1. Per-class accuracy (sbj, obj, rel)
 1. Overall accuracy (sbj, obj, rel)
 1. Overall triplet accuracy
-1. Accuracy over frequency bands (many, medium, few, and all)
+1. Accuracy over frequency bands (many, medium, few, and all) using exact matching
 1. Accuracy over frequency bands (many, medium, few, and all) using synset matching
 1. Average word similarity between GT and detection for \[word2vec_gn, word2vec_vg, lch, wup, lin, path, res, jcn] similarities
 
@@ -153,10 +154,10 @@ python tools/test_net_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_
 **NOTE:** May require at least 64GB RAM to evaluate on the Visual Genome test set
 
 We use three evaluation metrics:
-1. Per-class accuracy (sbj, obj, rel): predict all the three labels and two boxes
-1. Overall accuracy (sbj, obj, rel): predict subject, object and predicate labels given ground truth subject and object boxes
-1. Overall triplet accuracy: predict predicate labels given ground truth subject and object boxes and labels
-1. Accuracy over frequency bands (many, medium, few, and all): predict predicate labels given ground truth subject and object boxes and labels
+1. Per-class accuracy (sbj, obj, rel)
+1. Overall accuracy (sbj, obj, rel)
+1. Overall triplet accuracy
+1. Accuracy over frequency bands (many, medium, few, and all) using exact matching
 
 ```
 python tools/test_net_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_hubness.yaml --do_val --load_ckpt Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness/vg8k/Mar11-07-01-07_gpu210-18_step_with_prd_cls_v3/ckpt/best.pth  --use_gt_boxes --use_gt_labels --seed 0
@@ -166,7 +167,7 @@ python tools/test_net_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_
 
 The section provides the command-line arguments to train our relationship detection models given the pre-trained object detection models described above.
 
-DO NOT CHANGE anything in the provided config files(configs/xx/xxxx.yaml) even if you want to train with less or more than 8 GPUs. Use the environment variable `CUDA_VISIBLE_DEVICES` to control how many and which GPUs to use.
+DO NOT CHANGE variable `NUM_GPUS` in the provided config files(configs/xx/xxxx.yaml) even if you want to train with less or more than 8 GPUs. Use the environment variable `CUDA_VISIBLE_DEVICES` to control how many and which GPUs to use.
 
 With the following command lines, the training results (models and logs) should be in `$ROOT/Outputs/xxx/` where `xxx` is the .yaml file name used in the command without the ".yaml" extension. If you want to test with your trained models, simply run the test commands described above by setting `--load_ckpt` as the path of your trained models.
 
@@ -195,6 +196,9 @@ To train our relationship network using a VGG16 backbone without the ViL-Hubless
 ```
 python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_baseline.yaml --nw 8 --use_tfboard --seed 3
 ```
+
+To run models with different ViL-Hubless scales create a new config file under `configs/vg8k/` (by copying the file `configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_hubness.yaml`) and change the variable `TRAIN.HUBNESS_SCALE` to the desired value.
+Also confirm the ViL-Hubless loss is activated by making sure the variable `TRAIN.HUBNESS` is set to `True`
 
 
 ## Acknowledgements
