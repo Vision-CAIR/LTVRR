@@ -48,16 +48,9 @@ We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-t
   * gensim
 * An NVIDIA GPU and CUDA 8.0 or higher. Some operations only have gpu implementation.
 
-To make it easier we provided the environment file created by running the command `conda env export -f environment.yml`.
+To make things easier we provided the environment file `environment.yml` created by running the command `conda env export -f environment.yml`.
 To clone the environmentt you can simply run `conda env create -f environment.yml` from the project root directory.
 
-An easy installation if you already have Python 3 and CUDA 9.0:
-```
-conda install pytorch=0.4.1
-pip install cython
-pip install matplotlib numpy scipy pyyaml packaging pycocotools tensorboardX tqdm pillow scikit-image gensim
-conda install opencv
-```
 
 ## Compilation
 Compile the CUDA code in the Detectron submodule and in the repo:
@@ -129,16 +122,13 @@ The final directories for data and detection models should look like:
 |   |-- word2vec_model
 |   |   |-- GoogleNews-vectors-negative300.bin
 |-- trained_models
-|   |-- e2e_relcnn_VGG16_8_epochs_vg_y_loss_only
-|   |   |-- model_step125445.pth
-|   |-- e2e_relcnn_X-101-64x4d-FPN_8_epochs_vg_y_loss_only
-|   |   |-- model_step125445.pth
-|   |-- e2e_relcnn_VGG16_8_epochs_vrd_y_loss_only
-|   |   |-- model_step7559.pth
-|   |-- e2e_relcnn_VGG16_8_epochs_vrd_y_loss_only_w_freq_bias
-|   |   |-- model_step7559.pth
+|   |-- e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only
+|       |-- gvqa
+|           |-- Mar02-02-16-02_gpu214-10_step_with_prd_cls_v3
+|               |-- ckpt
+|                   |-- best.pth
+|   |-- ...
 ```
-
 ## Evaluating Pre-trained Relationship Detection models
 
 DO NOT CHANGE anything in the provided config files(configs/xx/xxxx.yaml) even if you want to test with less or more than 8 GPUs. Use the environment variable `CUDA_VISIBLE_DEVICES` to control how many and which GPUs to use. Remove the
