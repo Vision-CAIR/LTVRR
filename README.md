@@ -5,6 +5,7 @@ Watch our video below:
 
 ![alt text](./examples/example2.png)
 ![alt text](./examples/example1.png)
+
 <p align="center">Example results from the GQA dataset.</p>
 
 This is a PyTorch implementation for [Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss](https://arxiv.org/abs/2004.00436).
@@ -202,7 +203,7 @@ Also confirm the ViL-Hubless loss is activated by making sure the variable `TRAI
 
 
 ## Acknowledgements
-This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code from Zhang Ji, 
+This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code by Zhang Ji, 
 as well as code from the [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) repository by Roy Tseng.
 
 ## Citing
