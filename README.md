@@ -16,11 +16,11 @@ We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-t
 ## Benchmarking on GQA
 | Method                         |  Backbone         | many     | medium   | few       | all       |
 | :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
-| Baseline \[1\]                 |  VGG16            | 70.5     | 36.2     | 3.5       | 51.9      |
+| Baseline \[1\]                 |  VGG16            | **70.5** | 36.2     | 3.5       | 51.9      |
 | Baseline \[1\] + ViLHub        |  VGG16            | 69.8     | **42.1** | **9.5**   | **53.9**  |
 | Focal Loss \[2\]               |  VGG16            | 69.6     | 38.0     | 4.7       | 52.1      |
-| Focal Loss \[2\] + ViLHub      |  VGG16            | 69.8	    | **41.7** | **8.1**   | **53.7**  |
-| WCE \[2\]                      |  VGG16            | 39.3	    | 36.5     | 16.2      | **35.5**  |
+| Focal Loss \[2\] + ViLHub      |  VGG16            | **69.8**	| **41.7** | **8.1**   | **53.7**  |
+| WCE \[2\]                      |  VGG16            | **39.3**	| 36.5     | 16.2      | **35.5**  |
 | WCE + ViLHub \[2\]             |  VGG16            | 35.2	    | **39.5** | **18.8**  | 34.2      |
 
 
