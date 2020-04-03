@@ -1,3 +1,5 @@
+# modified by Sherif Abdelkarim on Jan 2020
+
 import numpy as np
 from numpy import linalg as la
 import math
