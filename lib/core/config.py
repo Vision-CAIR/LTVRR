@@ -507,6 +507,9 @@ __C.MODEL.GAMMA = 2.0
 # Whether to freeze all model before classifier
 __C.MODEL.FREEZE_ALL = False
 
+# Whether to use decoupling
+__C.MODEL.DECOUPLE = False
+
 # ---------------------------------------------------------------------------- #
 # Unsupervise Pose
 # ---------------------------------------------------------------------------- #
