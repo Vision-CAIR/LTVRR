@@ -3,15 +3,15 @@ import pandas as pd
 import os
 
 sim_path = '/home/x_abdelks/c2044/Large_Scale_VRD_pytorch/data/gvqa/similarity_matrices/'
-lch = pd.read_pickle(sim_path + 'obj_sim_lch.pkl')
-wup = pd.read_pickle(sim_path + 'obj_sim_wup.pkl')
+lch = pd.read_pickle(sim_path + 'obj_sim_lch_norm.pkl')
+wup = pd.read_pickle(sim_path + 'obj_sim_wup_norm.pkl')
 res = pd.read_pickle(sim_path + 'obj_sim_res.pkl')
 jcn = pd.read_pickle(sim_path + 'obj_sim_jcn.pkl')
-lin = pd.read_pickle(sim_path + 'obj_sim_lin.pkl')
-path = pd.read_pickle(sim_path + 'obj_sim_path.pkl')
+lin = pd.read_pickle(sim_path + 'obj_sim_lin_norm.pkl')
+path = pd.read_pickle(sim_path + 'obj_sim_path_norm.pkl')
 
-obj_w2v = pd.read_pickle(sim_path + 'obj_sim_w2v_gn.pkl')
-prd_w2v = pd.read_pickle(sim_path + 'prd_sim_w2v_gn.pkl')
+obj_w2v = pd.read_pickle(sim_path + 'obj_sim_w2v_gn_norm.pkl')
+prd_w2v = pd.read_pickle(sim_path + 'prd_sim_w2v_gn_norm.pkl')
 
 
 def add_similarity_to_detections(csv_file):
