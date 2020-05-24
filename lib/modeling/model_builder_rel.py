@@ -1,3 +1,5 @@
+# modified by Sherif Abdelkarim on Jan 2020
+
 from functools import wraps
 import importlib
 import logging
@@ -704,12 +706,16 @@ class Generalized_RCNN(nn.Module):
                 return_dict['metrics']['accuracy_cls_obj'] = accuracy_cls_obj
 
             if cfg.TRAIN.HUBNESS:
-                loss_hubness_prd = reldn_heads.add_hubness_loss(prd_cls_scores)
-                loss_hubness_sbj = reldn_heads.add_hubness_loss(sbj_cls_scores)
-                loss_hubness_obj = reldn_heads.add_hubness_loss(obj_cls_scores)
-                return_dict['losses']['loss_hubness_prd'] = loss_hubness_prd
-                return_dict['losses']['loss_hubness_sbj'] = loss_hubness_sbj
-                return_dict['losses']['loss_hubness_obj'] = loss_hubness_obj
+                if cfg.TRAIN.HUB_REL_ONLY:
+                    loss_hubness_prd = reldn_heads.add_hubness_loss(prd_cls_scores)
+                    return_dict['losses']['loss_hubness_prd'] = loss_hubness_prd
+                else:
+                    loss_hubness_prd = reldn_heads.add_hubness_loss(prd_cls_scores)
+                    loss_hubness_sbj = reldn_heads.add_hubness_loss(sbj_cls_scores)
+                    loss_hubness_obj = reldn_heads.add_hubness_loss(obj_cls_scores)
+                    return_dict['losses']['loss_hubness_prd'] = loss_hubness_prd
+                    return_dict['losses']['loss_hubness_sbj'] = loss_hubness_sbj
+                    return_dict['losses']['loss_hubness_obj'] = loss_hubness_obj
 
             # pytorch0.4 bug on gathering scalar(0-dim) tensors
             for k, v in return_dict['losses'].items():
