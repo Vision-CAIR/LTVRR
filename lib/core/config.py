@@ -174,6 +174,7 @@ __C.TRAIN.FREEZE_PRD_BOX_HEAD = False
 # Hubness loss
 __C.TRAIN.HUBNESS = False
 __C.TRAIN.HUBNESS_SCALE = 1.0
+__C.TRAIN.HUB_REL_ONLY = False
 
 # Use GT boxes
 __C.TRAIN.USE_GT_BOXES = False
