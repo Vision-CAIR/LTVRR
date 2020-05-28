@@ -8,7 +8,7 @@ Watch our video below:
 
 <p align="center">Example results from the GQA dataset.</p>
 
-This is a PyTorch implementation for [Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss](https://arxiv.org/abs/2004.00436).
+This is a PyTorch implementation for Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss.
 
 This code is for the GQA and VG8K datasets. 
 
