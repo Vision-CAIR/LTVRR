@@ -203,15 +203,3 @@ Also confirm the ViL-Hubless loss is activated by making sure the variable `TRAI
 This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code by Zhang Ji, 
 as well as code from the [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) repository by Roy Tseng.
 
-## Citing
-If you use this code in your research, please use the following BibTeX entry.
-```
-@misc{abdelkarim2020longtail,
-    title={Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss},
-    author={Sherif Abdelkarim and Panos Achlioptas and Jiaji Huang and Boyang Li and Kenneth Church and Mohamed Elhoseiny},
-    year={2020},
-    eprint={2004.00436},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV}
-}
-```
