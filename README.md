@@ -70,10 +70,10 @@ mkdir data
 ```
 
 ### GQA
-Download it [here](https://drive.google.com/file/d/1vGg0seRhqB9toLHt15TGfU2CD5yvtfTv/view?usp=sharing). Unzip it under the data folder. You should see a `gvqa` folder unzipped there. It contains seed folder called `seed0` that contains .json annotations that suit the dataloader used in this repo.
+Download it [here](https://drive.google.com/file/d/1sPCXQWN_YOE-4eNaCM3zn7UN_S_QZEVe/view?usp=sharing). Unzip it under the data folder. You should see a `gvqa` folder unzipped there. It contains seed folder called `seed0` that contains .json annotations that suit the dataloader used in this repo.
 
 ### Visual Genome
-Download it [here](https://drive.google.com/file/d/1cRtb0o5qidlu4-S5a4A-yqJormys-xtP/view?usp=sharing). Unzip it under the data folder. You should see a `vg8k` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
+Download it [here](https://drive.google.com/file/d/1PIJPSphmRZlNnmaVdC0zn3eWy4GEb7VY/view?usp=sharing). Unzip it under the data folder. You should see a `vg8k` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
 
 
 ### Word2Vec Vocabulary
