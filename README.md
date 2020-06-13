@@ -1,11 +1,14 @@
 # Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss (LTVRR)
+Watch our video below:
+
+[<img src="./examples/preview.png" width="50%">](https://youtu.be/ceEuCXr8Ow8)
 
 ![alt text](./examples/example2.png)
 ![alt text](./examples/example1.png)
 
 <p align="center">Example results from the GQA dataset.</p>
 
-This is a PyTorch implementation for Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss.
+This is a PyTorch implementation for [Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss](https://arxiv.org/abs/2004.00436).
 
 This code is for the GQA and VG8K datasets.
 
@@ -67,10 +70,10 @@ mkdir data
 ```
 
 ### GQA
-Download it [here](https://drive.google.com/open?id=1kTNiqsLcxfpVysZrzNETAFiPmPrsxBrB). Unzip it under the data folder. You should see a `gvqa` folder unzipped there. It contains seed folder called `seed0` that contains .json annotations that suit the dataloader used in this repo.
+Download it [here](https://drive.google.com/file/d/1vGg0seRhqB9toLHt15TGfU2CD5yvtfTv/view?usp=sharing). Unzip it under the data folder. You should see a `gvqa` folder unzipped there. It contains seed folder called `seed0` that contains .json annotations that suit the dataloader used in this repo.
 
 ### Visual Genome
-Download it [here](https://drive.google.com/open?id=1YJrTcOvYt-ebCilIshBb_hCrEQ6u9m1M). Unzip it under the data folder. You should see a `vg8k` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
+Download it [here](https://drive.google.com/file/d/1cRtb0o5qidlu4-S5a4A-yqJormys-xtP/view?usp=sharing). Unzip it under the data folder. You should see a `vg8k` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
 
 
 ### Word2Vec Vocabulary
@@ -203,3 +206,15 @@ Also confirm the ViL-Hubless loss is activated by making sure the variable `TRAI
 This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code by Zhang Ji, 
 as well as code from the [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) repository by Roy Tseng.
 
+## Citing
+If you use this code in your research, please use the following BibTeX entry.
+```
+@misc{abdelkarim2020longtail,
+    title={Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss},
+    author={Sherif Abdelkarim and Panos Achlioptas and Jiaji Huang and Boyang Li and Kenneth Church and Mohamed Elhoseiny},
+    year={2020},
+    eprint={2004.00436},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+}
+```
