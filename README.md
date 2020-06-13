@@ -10,7 +10,7 @@ Watch our video below:
 
 This is a PyTorch implementation for [Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss](https://arxiv.org/abs/2004.00436).
 
-This code is for the GQA and VG8K datasets. 
+This code is for the GQA and VG8K datasets.
 
 We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) and [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) for this project, so there are a lot overlaps between these two and ours.
 
