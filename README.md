@@ -10,7 +10,7 @@ Watch our video below:
 
 This is a PyTorch implementation for [Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss](https://arxiv.org/abs/2004.00436).
 
-This code is for the GQA and VG8K datasets. 
+This code is for the GQA and VG8K datasets.
 
 We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) and [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) for this project, so there are a lot overlaps between these two and ours.
 
@@ -70,10 +70,10 @@ mkdir data
 ```
 
 ### GQA
-Download it [here](https://drive.google.com/open?id=1kTNiqsLcxfpVysZrzNETAFiPmPrsxBrB). Unzip it under the data folder. You should see a `gvqa` folder unzipped there. It contains seed folder called `seed0` that contains .json annotations that suit the dataloader used in this repo.
+Download it [here](https://drive.google.com/file/d/1sPCXQWN_YOE-4eNaCM3zn7UN_S_QZEVe/view?usp=sharing). Unzip it under the data folder. You should see a `gvqa` folder unzipped there. It contains seed folder called `seed0` that contains .json annotations that suit the dataloader used in this repo.
 
 ### Visual Genome
-Download it [here](https://drive.google.com/open?id=1YJrTcOvYt-ebCilIshBb_hCrEQ6u9m1M). Unzip it under the data folder. You should see a `vg8k` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
+Download it [here](https://drive.google.com/file/d/1PIJPSphmRZlNnmaVdC0zn3eWy4GEb7VY/view?usp=sharing). Unzip it under the data folder. You should see a `vg8k` folder unzipped there. It contains seed folder called `seed3` that contains .json annotations that suit the dataloader used in this repo.
 
 
 ### Word2Vec Vocabulary

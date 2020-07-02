@@ -3,10 +3,11 @@
 import argparse
 import pandas as pd
 import os
+from core.config import cfg
 
-sim_path = '/home/x_abdelks/c2044/Large_Scale_VRD_pytorch/data/gvqa/similarity_matrices/'
-lch = pd.read_pickle(sim_path + 'obj_sim_lch_norm.pkl')
-wup = pd.read_pickle(sim_path + 'obj_sim_wup_norm.pkl')
+sim_path = cfg.DATA_DIR + 'gvqa/similarity_matrices/'
+lch = pd.read_pickle(sim_path + 'obj_sim_lch.pkl')
+wup = pd.read_pickle(sim_path + 'obj_sim_wup.pkl')
 res = pd.read_pickle(sim_path + 'obj_sim_res.pkl')
 jcn = pd.read_pickle(sim_path + 'obj_sim_jcn.pkl')
 lin = pd.read_pickle(sim_path + 'obj_sim_lin_norm.pkl')

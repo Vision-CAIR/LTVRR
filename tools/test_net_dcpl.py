@@ -93,28 +93,28 @@ def get_obj_and_prd_categories():
 
 def get_obj_and_prd_frequencies():
     if cfg.DATASET == 'gvqa10k':
-        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/predicates_freqs.json'.format(
-                cfg.RNG_SEED)
-        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/10k/seed{}/objects_freqs.json'.format(
-                cfg.RNG_SEED)
+        freq_prd_path = cfg.DATA_DIR + '/gvqa/reduced_data/10k/seed{}/predicates_freqs.json'.format(
+            cfg.RNG_SEED)
+        freq_obj_path = cfg.DATA_DIR + '/gvqa/reduced_data/10k/seed{}/objects_freqs.json'.format(
+            cfg.RNG_SEED)
     elif cfg.DATASET == 'gvqa20k':
-        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/predicates_freqs.json'.format(
-                cfg.RNG_SEED)
-        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/reduced_data/20k/seed{}/objects_freqs.json'.format(
-                cfg.RNG_SEED)
+        freq_prd_path = cfg.DATA_DIR + '/gvqa/reduced_data/20k/seed{}/predicates_freqs.json'.format(
+            cfg.RNG_SEED)
+        freq_obj_path = cfg.DATA_DIR + '/gvqa/reduced_data/20k/seed{}/objects_freqs.json'.format(
+            cfg.RNG_SEED)
     elif cfg.DATASET == 'gvqa':
-        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/predicates_freqs.json'.format(
-                cfg.RNG_SEED)
-        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/GVQA/random_splits/seed{}/objects_freqs.json'.format(
-                cfg.RNG_SEED)
+        freq_prd_path = cfg.DATA_DIR + '/gvqa/seed{}/predicates_freqs.json'.format(
+            cfg.RNG_SEED)
+        freq_obj_path = cfg.DATA_DIR + '/gvqa/seed{}/objects_freqs.json'.format(
+            cfg.RNG_SEED)
     elif cfg.DATASET == 'vg80k':
-        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/predicates_freqs.json'
-        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/Visual_Genome/objects_freqs.json'
+        freq_prd_path = cfg.DATA_DIR + '/vg/predicates_freqs.json'
+        freq_obj_path = cfg.DATA_DIR + '/vg/objects_freqs.json'
     elif cfg.DATASET == 'vg8k':
-        freq_prd_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_predicates_freqs.json'.format(
-                cfg.RNG_SEED)
-        freq_obj_path = '/home/x_abdelks/scratch/Large-Scale-VRD/datasets/large_scale_VRD/VG8K/random_splits/seed{}/train_objects_freqs.json'.format(
-                cfg.RNG_SEED)
+        freq_prd_path = cfg.DATA_DIR + '/vg8k/seed{}/train_predicates_freqs.json'.format(
+            cfg.RNG_SEED)
+        freq_obj_path = cfg.DATA_DIR + '/vg8k/seed{}/train_objects_freqs.json'.format(
+            cfg.RNG_SEED)
 
     else:
         raise NotImplementedError
