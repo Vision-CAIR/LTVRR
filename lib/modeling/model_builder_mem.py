@@ -155,6 +155,8 @@ class Generalized_RCNN(nn.Module):
         model_args = list(classifier_params['params'].values())
         model_args.append(not self.training)
 
+        # depending on whether we are training stage 1 or 2 we set the classifier. For stage 1 we simply set the classifier to
+        # a dot product classifier, and for stage 2 we set it to meta_embedding_classifier, which includes the memory module.
         if cfg.MODEL.MEMORY_MODULE_STAGE == 1:
             self.classifier = dot_product_classifier.create_model(*model_args)
         elif cfg.MODEL.MEMORY_MODULE_STAGE == 2:
