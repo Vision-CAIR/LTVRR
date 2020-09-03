@@ -1,3 +1,4 @@
+RNG_SEED: 3
 MODEL:
   TYPE: generalized_rcnn
   SUBTYPE: 3

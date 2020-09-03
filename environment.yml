@@ -103,5 +103,5 @@ dependencies:
     - torchvision==0.1.8
     - tqdm==4.40.0
     - urllib3==1.25.7
-prefix: /home/x_abdelks/scratch/pytorchenv3_oltr
+prefix: pytorchenv3_oltr
 
