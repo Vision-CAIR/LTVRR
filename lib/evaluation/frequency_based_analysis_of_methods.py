@@ -148,10 +148,10 @@ def get_many_medium_few_scores(csv_path, cutoffs, data, data_dir, ann_dir, syn=T
 
     print('Many, Medium, Few accuracy scores using {}:'.format(tables_title))
 
-    print('rel many:', df_many_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
-    print('rel med:', df_medium_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
-    print('rel few:', df_few_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
-    print('rel all:', df.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
+    print('rel many:', '{:2.2f}'.format(df_many_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
+    print('rel med:', '{:2.2f}'.format(df_medium_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
+    print('rel few:', '{:2.2f}'.format(df_few_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
+    print('rel all:', '{:2.2f}'.format(df.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
     print()
 
     sbj_many = df_many_sbj.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
@@ -164,10 +164,10 @@ def get_many_medium_few_scores(csv_path, cutoffs, data, data_dir, ann_dir, syn=T
     obj_few = df_few_obj.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
     obj_all = df.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
 
-    print('sbj/obj many:', (sbj_many + obj_many) / 2.)
-    print('sbj/obj med:', (sbj_med + obj_med) / 2.)
-    print('sbj/obj few:', (sbj_few + obj_few) / 2.)
-    print('sbj/obj all:', (sbj_all + obj_all) / 2.)
+    print('sbj/obj many:', '{:2.2f}'.format((sbj_many + obj_many) / 2.))
+    print('sbj/obj med:', '{:2.2f}'.format((sbj_med + obj_med) / 2.))
+    print('sbj/obj few:', '{:2.2f}'.format((sbj_few + obj_few) / 2.))
+    print('sbj/obj all:', '{:2.2f}'.format((sbj_all + obj_all) / 2.))
     print('=========================================================')
     print()
     # print('triplet accuracy few:', df_few_rel['triplet_top1'].mean() * 100.)
@@ -209,31 +209,31 @@ def get_many_medium_few_scores(csv_path, cutoffs, data, data_dir, ann_dir, syn=T
 
     print('Triplet scores grouped by subject/object using {}:'.format(tables_title))
 
-    print('triplet so many:', trip_so_scores_many)
-    print('triplet so med:', trip_so_scores_medium)
-    print('triplet so few:', trip_so_scores_few)
-    print('triplet so all:', trip_so_scores_all)
+    print('triplet so many:', '{:2.2f}'.format(trip_so_scores_many))
+    print('triplet so med:', '{:2.2f}'.format(trip_so_scores_medium))
+    print('triplet so few:', '{:2.2f}'.format(trip_so_scores_few))
+    print('triplet so all:', '{:2.2f}'.format(trip_so_scores_all))
     print()
     print('Triplet scores grouped by subject/relation using {}:'.format(tables_title))
 
-    print('triplet sr many:', trip_sr_scores_many)
-    print('triplet sr med:', trip_sr_scores_medium)
-    print('triplet sr few:', trip_sr_scores_few)
-    print('triplet sr all:', trip_sr_scores_all)
+    print('triplet sr many:', '{:2.2f}'.format(trip_sr_scores_many))
+    print('triplet sr med:', '{:2.2f}'.format(trip_sr_scores_medium))
+    print('triplet sr few:', '{:2.2f}'.format(trip_sr_scores_few))
+    print('triplet sr all:', '{:2.2f}'.format(trip_sr_scores_all))
     print()
     print('Triplet scores grouped by object/relation using {}:'.format(tables_title))
 
-    print('triplet or many:', trip_or_scores_many)
-    print('triplet or med:', trip_or_scores_medium)
-    print('triplet or few:', trip_or_scores_few)
-    print('triplet or all:', trip_or_scores_all)
+    print('triplet or many:', '{:2.2f}'.format(trip_or_scores_many))
+    print('triplet or med:', '{:2.2f}'.format(trip_or_scores_medium))
+    print('triplet or few:', '{:2.2f}'.format(trip_or_scores_few))
+    print('triplet or all:', '{:2.2f}'.format(trip_or_scores_all))
     print()
     print('Triplet scores grouped by subject/relation/object using {}:'.format(tables_title))
 
-    print('triplet sro many:', trip_scores_many)
-    print('triplet sro med:', trip_scores_medium)
-    print('triplet sro few:', trip_scores_few)
-    print('triplet sro all:', trip_scores_all)
+    print('triplet sro many:', '{:2.2f}'.format(trip_scores_many))
+    print('triplet sro med:', '{:2.2f}'.format(trip_scores_medium))
+    print('triplet sro few:', '{:2.2f}'.format(trip_scores_few))
+    print('triplet sro all:', '{:2.2f}'.format(trip_scores_all))
     print('=========================================================')
     print()
 
