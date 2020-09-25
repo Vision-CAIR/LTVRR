@@ -146,6 +146,9 @@ def get_many_medium_few_scores(csv_path, cutoffs, data, data_dir, ann_dir, syn=T
     else:
         tables_title = 'exact matching'
 
+    print('=========================================================')
+    print()
+
     print('Many, Medium, Few accuracy scores using {}:'.format(tables_title))
 
     print('rel many:', '{:2.2f}'.format(df_many_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
