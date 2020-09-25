@@ -185,7 +185,8 @@ def get_many_medium_few_scores(csv_path, cutoffs, data, data_dir, ann_dir, syn=T
     ann_path = ann_dir + 'rel_annotations_train.csv'
 
     def get_triplets_scores(groupby, ann_path, syn_key, count_suffix):
-        triplets_freqs = get_group_counts(groupby, ann_path)
+        groupby_ann = ['_'.join(s.split('_')[::-1]) for s in groupby]
+        triplets_freqs = get_group_counts(groupby_ann, ann_path)
         triplets_freqs = triplets_freqs.reindex(df[groupby].to_records(index=False).tolist()).fillna(0)
         df['count' + count_suffix] = triplets_freqs.to_list()
         df_triplets = df.groupby(groupby).mean()[['triplet_top1' + syn_key, 'count' + count_suffix]]
