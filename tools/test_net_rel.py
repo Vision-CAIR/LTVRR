@@ -183,7 +183,9 @@ if __name__ == '__main__':
         cfg.RNG_SEED = args.seed
     assert_and_infer_cfg()
 
-    # The import has to happen after setting up the config to avoid loading default cfg values 
+    data_dir = '{}/{}/'.format(cfg.DATA_DIR, cfg.DATASET)
+    ann_dir = '{}seed{}/'.format(data_dir, cfg.RNG_SEED)
+    # The import has to happen after setting up the config to avoid loading default cfg values
     from core.test_engine_rel import run_inference
 
     obj_categories, prd_categories = get_obj_and_prd_categories()
@@ -246,7 +248,7 @@ if __name__ == '__main__':
     get_metrics_from_csv(csv_file, get_mr=True)
 
     cutoffs = [args.cutoff_medium, args.cutoff_many]
-    get_many_medium_few_scores(csv_file, cutoffs, syn=cfg.DATASET.find('gvqa') >= 0)
+    get_many_medium_few_scores(csv_file, cutoffs, cfg.DATASET, data_dir, ann_dir, syn=True)
 
     csv_file_topk = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_topk.csv')
     generate_topk_csv_from_det_obj(all_results, csv_file_topk, obj_categories, prd_categories, 250)

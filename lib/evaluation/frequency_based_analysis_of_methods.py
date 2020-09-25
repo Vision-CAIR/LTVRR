@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import json
 import os.path as osp
 # import seaborn as sns # not critical.
 import matplotlib.pylab as plt
@@ -34,64 +35,83 @@ def keep_only_heavy_tail_observations(dataframe, prediction_type, threshold_of_t
     df = df[df[gt_prefix + '_' + prediction_type].isin(valid)]
     return df
 
-def get_many_medium_few_scores(csv_path, cutoffs, syn):
+
+def get_group_counts(keys, ann_path):
+    temp = pd.read_csv(ann_path).groupby(keys).size().reset_index(name='counts').sort_values('counts')
+    temp = temp[keys + ['counts']]
+    temp.index = pd.MultiIndex.from_arrays(temp[keys].values.T)
+    return temp['counts']
+
+
+def get_many_medium_few_scores(csv_path, cutoffs, data, data_dir, ann_dir, syn=True):
     df = pd.read_csv(csv_path)
-    # df = df.groupby(['gt_sbj', 'gt_rel', 'gt_obj']).mea)
     df['box_id'] = df.groupby('image_id').cumcount()
     metric_type = 'top1'
     all_prediction_types = ['rel', 'obj', 'sbj']
     if syn:
-        syn_obj = pd.read_csv('./data/gvqa/objects_synsets.csv')
-        syn_obj = syn_obj[['object_name', 'synset']]
-        syn_obj.set_index('object_name', inplace=True)
+        if data == 'gvqa':
+            syn_obj = pd.read_csv(data_dir + 'objects_synsets.csv')
+            syn_obj = syn_obj[['object_name', 'synset']]
+            syn_obj.set_index('object_name', inplace=True)
 
-        syn_prd = pd.read_csv('./data/gvqa/predicates_synsets.csv')
-        syn_prd = syn_prd[['predicate_name', 'synset']]
-        syn_prd.set_index('predicate_name', inplace=True)
+            syn_prd = pd.read_csv(data_dir + 'predicates_synsets.csv')
+            syn_prd = syn_prd[['predicate_name', 'synset']]
+            syn_prd.set_index('predicate_name', inplace=True)
+        if data == 'vg8k':
+            synsets = json.load(open(data_dir + 'words_synsets.json'))
+            syn_obj = pd.DataFrame.from_dict(synsets['nouns'], orient='index', columns=['synset'])
+            syn_prd = pd.DataFrame.from_dict(synsets['verbs'], orient='index', columns=['synset'])
 
     for prediction_type in all_prediction_types:
         df[prediction_type + '_' + metric_type] = df[prediction_type + '_rank'] < int(metric_type[3:])
 
     if syn:
-        for prediction_type in ['sbj', 'obj']:
-            df['gt_' + prediction_type + '_syn'] = syn_obj.loc[df['gt_' + prediction_type], 'synset'].to_list()
-            df['det_' + prediction_type + '_syn'] = syn_obj.loc[df['det_' + prediction_type], 'synset'].to_list()
-            df[prediction_type + '_top1_syn'] = df['gt_' + prediction_type + '_syn'] == df['det_' + prediction_type + '_syn']
+        if data == 'gvqa':
+            for prediction_type in ['sbj', 'obj']:
+                df['gt_' + prediction_type + '_syn'] = syn_obj.loc[df['gt_' + prediction_type], 'synset'].to_list()
+                df['det_' + prediction_type + '_syn'] = syn_obj.loc[df['det_' + prediction_type], 'synset'].to_list()
+                df[prediction_type + '_top1_syn'] = df['gt_' + prediction_type + '_syn'] == df['det_' + prediction_type + '_syn']
 
-        for prediction_type in ['rel']:
-            df['gt_' + prediction_type + '_syn'] = syn_prd.loc[df['gt_' + prediction_type], 'synset'].to_list()
-            df['det_' + prediction_type + '_syn'] = syn_prd.loc[df['det_' + prediction_type], 'synset'].to_list()
-            df[prediction_type + '_top1_syn'] = df['gt_' + prediction_type + '_syn'] == df['det_' + prediction_type + '_syn']
+            for prediction_type in ['rel']:
+                df['gt_' + prediction_type + '_syn'] = syn_prd.loc[df['gt_' + prediction_type], 'synset'].to_list()
+                df['det_' + prediction_type + '_syn'] = syn_prd.loc[df['det_' + prediction_type], 'synset'].to_list()
+                df[prediction_type + '_top1_syn'] = df['gt_' + prediction_type + '_syn'] == df['det_' + prediction_type + '_syn']
+        if data == 'vg8k':
+            for prediction_type in ['sbj', 'obj']:
+                df['gt_' + prediction_type + '_syn'] = syn_obj.reindex(df['gt_' + prediction_type])['synset'].to_list()
+                df['det_' + prediction_type + '_syn'] = syn_obj.reindex(df['det_' + prediction_type])['synset'].to_list()
+                df[prediction_type + '_top1_syn'] = df['gt_' + prediction_type + '_syn'] == df['det_' + prediction_type + '_syn']
 
-    df['triplet_top1'] = df['rel_top1'] & df['sbj_top1'] & df['obj_top1']
+            for prediction_type in ['rel']:
+                df['gt_' + prediction_type + '_syn'] = syn_prd.reindex(df['gt_' + prediction_type])['synset'].to_list()
+                df['det_' + prediction_type + '_syn'] = syn_prd.reindex(df['det_' + prediction_type])['synset'].to_list()
+                df[prediction_type + '_top1_syn'] = df['gt_' + prediction_type + '_syn'] == df['det_' + prediction_type + '_syn']
+
+    syn_key = ''
     if syn:
-        df['triplet_top1_syn'] = df['rel_top1_syn'] & df['sbj_top1_syn'] & df['obj_top1_syn']
+        syn_key = '_syn'
+
+    df['triplet_top1' + syn_key] = df['rel_top1' + syn_key] & df['sbj_top1' + syn_key] & df['obj_top1' + syn_key]
 
     cutoff, cutoff_medium = cutoffs
 
     a = df.groupby('gt_rel').mean()
     classes_rel = (list(a.sort_values('rel_freq_gt').index))
-    freqs_rel = (list(a.sort_values('rel_freq_gt')['rel_freq_gt']))
     classes_rel_few = classes_rel[:int(len(classes_rel)*cutoff)]
     classes_rel_medium = classes_rel[int(len(classes_rel)*cutoff):int(len(classes_rel)*cutoff_medium)]
     classes_rel_many = classes_rel[int(len(classes_rel)*cutoff_medium):]
-    # freqs_rel = freqs_rel[:int(len(classes_rel)*cutoff)]
 
     a = df.groupby('gt_sbj').mean()
     classes_sbj = (list(a.sort_values('sbj_freq_gt').index))
-    freqs_sbj = (list(a.sort_values('sbj_freq_gt')['sbj_freq_gt']))
     classes_sbj_few = classes_sbj[:int(len(classes_sbj)*cutoff)]
     classes_sbj_medium = classes_sbj[int(len(classes_sbj)*cutoff):int(len(classes_sbj)*cutoff_medium)]
     classes_sbj_many = classes_sbj[int(len(classes_sbj)*cutoff_medium):]
-    # freqs_sbj = freqs_sbj[:int(len(classes_sbj)*cutoff)]
 
     a = df.groupby('gt_obj').mean()
     classes_obj = (list(a.sort_values('obj_freq_gt').index))
-    freqs_obj = (list(a.sort_values('obj_freq_gt')['obj_freq_gt']))
     classes_obj_few = classes_obj[:int(len(classes_obj)*cutoff)]
     classes_obj_medium = classes_obj[int(len(classes_obj)*cutoff):int(len(classes_obj)*cutoff_medium)]
     classes_obj_many = classes_obj[int(len(classes_obj)*cutoff_medium):]
-    # freqs_obj = freqs_obj[:int(len(classes_obj)*cutoff)]
 
     df_few_rel = df[df['gt_rel'].isin(classes_rel_few)]
     df_medium_rel = df[df['gt_rel'].isin(classes_rel_medium)]
@@ -121,51 +141,100 @@ def get_many_medium_few_scores(csv_path, cutoffs, syn):
     # print('obj many:', len(df_many_obj))
     # print('all:', len(df))
     # print()
-    print('Many, Medium, Few accuracy scores using exact matching:')
+    if syn:
+        tables_title = 'synsets matching'
+    else:
+        tables_title = 'exact matching'
 
-    print('rel many:', df_many_rel['rel_top1'].mean() * 100.)
-    print('rel med:', df_medium_rel['rel_top1'].mean() * 100.)
-    print('rel few:', df_few_rel['rel_top1'].mean() * 100.)
-    print('rel all:', df['rel_top1'].mean() * 100.)
+    print('Many, Medium, Few accuracy scores using {}:'.format(tables_title))
+
+    print('rel many:', df_many_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
+    print('rel med:', df_medium_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
+    print('rel few:', df_few_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
+    print('rel all:', df.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.)
     print()
-    print('sbj many:', df_many_sbj['sbj_top1'].mean() * 100.)
-    print('sbj med:', df_medium_sbj['sbj_top1'].mean() * 100.)
-    print('sbj few:', df_few_sbj['sbj_top1'].mean() * 100.)
-    print('sbj all:', df['sbj_top1'].mean() * 100.)
-    print()
-    print('obj man:', df_many_obj['obj_top1'].mean() * 100.)
-    print('obj med:', df_medium_obj['obj_top1'].mean() * 100.)
-    print('obj few:', df_few_obj['obj_top1'].mean() * 100.)
-    print('obj all:', df['obj_top1'].mean() * 100.)
+
+    sbj_many = df_many_sbj.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
+    sbj_med = df_medium_sbj.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
+    sbj_few = df_few_sbj.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
+    sbj_all = df.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
+
+    obj_many = df_many_obj.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
+    obj_med = df_medium_obj.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
+    obj_few = df_few_obj.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
+    obj_all = df.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
+
+    print('sbj/obj many:', (sbj_many + obj_many) / 2.)
+    print('sbj/obj med:', (sbj_med + obj_med) / 2.)
+    print('sbj/obj few:', (sbj_few + obj_few) / 2.)
+    print('sbj/obj all:', (sbj_all + obj_all) / 2.)
+    print('=========================================================')
     print()
     # print('triplet accuracy few:', df_few_rel['triplet_top1'].mean() * 100.)
     # print('triplet accuracy med:', df_medium_rel['triplet_top1'].mean() * 100.)
     # print('triplet accuracy man:', df_many_rel['triplet_top1'].mean() * 100.)
     # print('triplet accuracy all:', df['triplet_top1'].mean() * 100.)
     # print('=========================================================')
-    if syn:
-        print('Many, Medium, Few accuracy scores using synset matching:')
-        print('rel syn many:', df_many_rel['rel_top1_syn'].mean() * 100.)
-        print('rel syn med:', df_medium_rel['rel_top1_syn'].mean() * 100.)
-        print('rel syn few:', df_few_rel['rel_top1_syn'].mean() * 100.)
-        print('rel syn all:', df['rel_top1_syn'].mean() * 100.)
-        print()
-        print('sbj syn many:', df_many_sbj['sbj_top1_syn'].mean() * 100.)
-        print('sbj syn med:', df_medium_sbj['sbj_top1_syn'].mean() * 100.)
-        print('sbj syn few:', df_few_sbj['sbj_top1_syn'].mean() * 100.)
-        print('sbj syn all:', df['sbj_top1_syn'].mean() * 100.)
-        print()
-        print('obj syn many:', df_many_obj['obj_top1_syn'].mean() * 100.)
-        print('obj syn med:', df_medium_obj['obj_top1_syn'].mean() * 100.)
-        print('obj syn few:', df_few_obj['obj_top1_syn'].mean() * 100.)
-        print('obj syn all:', df['obj_top1_syn'].mean() * 100.)
-        print()
 
     # print('triplet accuracy few:', df_few_rel['triplet_top1_syn'].mean() * 100.)
     # print('triplet accuracy med:', df_medium_rel['triplet_top1_syn'].mean() * 100.)
     # print('triplet accuracy man:', df_many_rel['triplet_top1_syn'].mean() * 100.)
     # print('triplet accuracy all:', df['triplet_top1_syn'].mean() * 100.)
     # print('=========================================================')
+
+    ann_path = ann_dir + 'rel_annotations_train.csv'
+
+    def get_triplets_scores(groupby, ann_path, syn_key, count_suffix):
+        triplets_freqs = get_group_counts(groupby, ann_path)
+        triplets_freqs = triplets_freqs.reindex(df[groupby].to_records(index=False).tolist()).fillna(0)
+        df['count' + count_suffix] = triplets_freqs.to_list()
+        df_triplets = df.groupby(groupby).mean()[['triplet_top1' + syn_key, 'count' + count_suffix]]
+        df_triplets = df_triplets.reset_index().sort_values(['count' + count_suffix], ascending=True)
+
+        df_triplets_few = df_triplets.iloc[:int(cutoff * len(df_triplets))]
+        df_triplets_medium = df_triplets.iloc[int(cutoff * len(df_triplets)):int(cutoff_medium * len(df_triplets))]
+        df_triplets_many = df_triplets.iloc[int(cutoff_medium * len(df_triplets)):]
+
+        triplet_score_few = df_triplets_few['triplet_top1' + syn_key].mean() * 100.
+        triplet_score_medium = df_triplets_medium['triplet_top1' + syn_key].mean() * 100.
+        triplet_score_many = df_triplets_many['triplet_top1' + syn_key].mean() * 100.
+        triplet_score_all = df_triplets['triplet_top1' + syn_key].mean() * 100.
+        return triplet_score_many, triplet_score_medium, triplet_score_few, triplet_score_all
+
+    trip_so_scores_many, trip_so_scores_medium, trip_so_scores_few, trip_so_scores_all = get_triplets_scores(['gt_sbj', 'gt_obj'], ann_path, syn_key, '_so')
+    trip_sr_scores_many, trip_sr_scores_medium, trip_sr_scores_few, trip_sr_scores_all = get_triplets_scores(['gt_sbj', 'gt_rel'], ann_path, syn_key, '_sr')
+    trip_or_scores_many, trip_or_scores_medium, trip_or_scores_few, trip_or_scores_all = get_triplets_scores(['gt_obj', 'gt_rel'], ann_path, syn_key, '_or')
+    trip_scores_many, trip_scores_medium, trip_scores_few, trip_scores_all = get_triplets_scores(['gt_sbj', 'gt_obj', 'gt_rel'], ann_path, syn_key, '')
+
+    print('Triplet scores grouped by subject/object using {}:'.format(tables_title))
+
+    print('triplet so many:', trip_so_scores_many)
+    print('triplet so med:', trip_so_scores_medium)
+    print('triplet so few:', trip_so_scores_few)
+    print('triplet so all:', trip_so_scores_all)
+    print()
+    print('Triplet scores grouped by subject/relation using {}:'.format(tables_title))
+
+    print('triplet sr many:', trip_sr_scores_many)
+    print('triplet sr med:', trip_sr_scores_medium)
+    print('triplet sr few:', trip_sr_scores_few)
+    print('triplet sr all:', trip_sr_scores_all)
+    print()
+    print('Triplet scores grouped by object/relation using {}:'.format(tables_title))
+
+    print('triplet or many:', trip_or_scores_many)
+    print('triplet or med:', trip_or_scores_medium)
+    print('triplet or few:', trip_or_scores_few)
+    print('triplet or all:', trip_or_scores_all)
+    print()
+    print('Triplet scores grouped by subject/relation/object using {}:'.format(tables_title))
+
+    print('triplet sro many:', trip_scores_many)
+    print('triplet sro med:', trip_scores_medium)
+    print('triplet sro few:', trip_scores_few)
+    print('triplet sro all:', trip_scores_all)
+    print('=========================================================')
+    print()
 
 def get_wordsim_metrics_from_csv(csv_file):
     verbose = True
