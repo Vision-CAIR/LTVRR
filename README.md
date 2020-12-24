@@ -1,4 +1,4 @@
-# Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss (LTVRR)
+# Long Tail Visual Relationship Recognition with Hubless Regularized Relmix
 Watch our video below:
 
 [<img src="./examples/preview.png" width="50%">](https://youtu.be/ceEuCXr8Ow8)
