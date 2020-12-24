@@ -184,6 +184,11 @@ To train our relationship network using a VGG16 backbone without the ViL-Hubless
 python tools/train_net_step_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline.yaml --nw 8 --use_tfboard --seed 0
 ```
 
+To train our relationship network using a VGG16 backbone with the RelMix augmentation, run
+```
+python tools/train_net_step_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_baseline_relmix.yaml --nw 8 --use_tfboard --seed 0
+```
+
 To run models with different ViL-Hubless scales create a new config file under `configs/gvqa/` (by copying the file `configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness.yaml`) and change the variable `TRAIN.HUBNESS_SCALE` to the desired value.
 Also confirm the ViL-Hubless loss is activated by making sure the variable `TRAIN.HUBNESS` is set to `True`
 
@@ -196,6 +201,11 @@ python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_
 To train our relationship network using a VGG16 backbone without the ViL-Hubless loss, run
 ```
 python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_baseline.yaml --nw 8 --use_tfboard --seed 3
+```
+
+To train our relationship network using a VGG16 backbone with the RelMix augmentation, run
+```
+python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_baseline_relmix.yaml --nw 8 --use_tfboard --seed 3
 ```
 
 To run models with different ViL-Hubless scales create a new config file under `configs/vg8k/` (by copying the file `configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_hubness.yaml`) and change the variable `TRAIN.HUBNESS_SCALE` to the desired value.
