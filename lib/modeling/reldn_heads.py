@@ -12,6 +12,7 @@ from torch.nn import init
 import torch.nn.functional as F
 from torch.autograd import Variable
 import nn as mynn
+import random
 
 from core.config import cfg
 import utils.net as net_utils
@@ -19,6 +20,66 @@ from modeling.sparse_targets_rel import FrequencyBias
 from utils import focal_loss
 
 logger = logging.getLogger(__name__)
+
+RG = np.random.default_rng()
+
+def create_one_hot(y, classes, device_id):
+    y_onehot = torch.FloatTensor(y.size(0), classes).cuda(device_id)
+    y_onehot.zero_()
+    y_onehot.scatter_(1, y.view(-1, 1), 1)
+    return y_onehot
+
+
+def cumix(sbj_vis_embeddings, sbj_labels, obj_vis_embeddings, obj_labels, prd_vis_embeddings, prd_labels, indices_1, indices_2, indices_3, device_id):
+    
+    if cfg.random_lamda:
+        lamda = torch.from_numpy(RG.beta(0.8, 0.8, [indices_1.shape[0], 1])).float()
+    else:
+        lamda = 0.65
+
+    alpha1 = torch.randint(0, 2, [indices_1.shape[0], 1]).cuda(device_id)
+    # alpha2 = torch.randint(0, 2, [indices_1.shape[0]]).cuda(device_id)
+    # alpha3 = torch.randint(0, 2, [indices_1.shape[0]]).cuda(device_id)
+
+    # print('!! Index 1 shape: !! ',sbj_vis_embeddings[indices_1].shape)
+    # print('!! Index 2 shape: !! ',sbj_vis_embeddings[indices_2].shape)
+
+    if cfg.mixup:
+        mixed_sbj_embeddings = lamda * sbj_vis_embeddings[indices_1] + (1 - lamda)*(sbj_vis_embeddings[indices_2])
+        mixed_obj_embeddings = lamda * obj_vis_embeddings[indices_1] + (1 - lamda)*(obj_vis_embeddings[indices_2])
+        mixed_prd_embeddings = lamda * prd_vis_embeddings[indices_1] + (1 - lamda)*(prd_vis_embeddings[indices_2])
+
+        sbj_one_hot_labels = create_one_hot(sbj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+        prd_one_hot_labels = create_one_hot(prd_labels, cfg.MODEL.NUM_PRD_CLASSES +1, device_id)
+        obj_one_hot_labels = create_one_hot(obj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+
+        mixed_sbj_labels = lamda * sbj_one_hot_labels[indices_1] + (1 - lamda)*(sbj_one_hot_labels[indices_2])
+        mixed_obj_labels = lamda * obj_one_hot_labels[indices_1] + (1 - lamda)*(obj_one_hot_labels[indices_2])
+        mixed_prd_labels = lamda * prd_one_hot_labels[indices_1] + (1 - lamda)*(prd_one_hot_labels[indices_2])
+
+    else:
+        mixed_sbj_embeddings = lamda * sbj_vis_embeddings[indices_1] + (1 - lamda)*(alpha1 * sbj_vis_embeddings[indices_2] + \
+               (1 - alpha1) * sbj_vis_embeddings[indices_3])
+        mixed_obj_embeddings = lamda * obj_vis_embeddings[indices_1] + (1 - lamda)*(alpha1 * obj_vis_embeddings[indices_2] + \
+               (1 - alpha1) * obj_vis_embeddings[indices_3])
+        mixed_prd_embeddings = lamda * prd_vis_embeddings[indices_1] + (1 - lamda)*(alpha1 * prd_vis_embeddings[indices_2] + \
+               (1 - alpha1) * prd_vis_embeddings[indices_3])
+
+        sbj_one_hot_labels = create_one_hot(sbj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+        prd_one_hot_labels = create_one_hot(prd_labels, cfg.MODEL.NUM_PRD_CLASSES +1, device_id)
+        obj_one_hot_labels = create_one_hot(obj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+
+        mixed_sbj_labels = lamda * sbj_one_hot_labels[indices_1] + (1 - lamda)*(alpha1 * sbj_one_hot_labels[indices_2] + \
+                (1 - alpha1) * sbj_one_hot_labels[indices_3])
+        mixed_obj_labels = lamda * obj_one_hot_labels[indices_1] + (1 - lamda)*(alpha1 * obj_one_hot_labels[indices_2] + \
+                (1 - alpha1) * obj_one_hot_labels[indices_3])
+        mixed_prd_labels = lamda * prd_one_hot_labels[indices_1] + (1 - lamda)*(alpha1 * prd_one_hot_labels[indices_2] + \
+                (1 - alpha1) * prd_one_hot_labels[indices_3])
+
+    return mixed_sbj_embeddings, mixed_sbj_labels, mixed_obj_embeddings, mixed_obj_labels, mixed_prd_embeddings, mixed_prd_labels
+
+
+
 
 
 class reldn_head(nn.Module):
@@ -81,13 +142,15 @@ class reldn_head(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     # spo_feat is concatenation of SPO
-    def forward(self, spo_feat, sbj_labels=None, obj_labels=None, sbj_feat=None, obj_feat=None):
+    def forward(self, spo_feat, prd_weights, sbj_labels=None, obj_labels=None, sbj_feat=None, obj_feat=None, prd_labels=None):
 
         device_id = spo_feat.get_device()
         if sbj_labels is not None:
             sbj_labels = Variable(torch.from_numpy(sbj_labels.astype('int64'))).cuda(device_id)
         if obj_labels is not None:
             obj_labels = Variable(torch.from_numpy(obj_labels.astype('int64'))).cuda(device_id)
+        if prd_labels is not None:
+            prd_labels = Variable(torch.from_numpy(prd_labels.astype('int64'))).cuda(device_id)
             
         if cfg.MODEL.RUN_BASELINE:
             assert sbj_labels is not None and obj_labels is not None
@@ -97,6 +160,10 @@ class reldn_head(nn.Module):
         
         if spo_feat.dim() == 4:
             spo_feat = spo_feat.squeeze(3).squeeze(2)
+
+        # prd_labels = rel_ret['all_prd_labels_int32']
+        # sbj_labels = rel_ret['all_sbj_labels_int32']
+        # obj_labels = rel_ret['all_obj_labels_int32']
         
         sbj_vis_embeddings = self.so_vis_embeddings(sbj_feat)
         obj_vis_embeddings = self.so_vis_embeddings(obj_feat)
@@ -111,12 +178,14 @@ class reldn_head(nn.Module):
         so_sem_embeddings = F.normalize(so_sem_embeddings, p=2, dim=1)  # (#prd, 1024)
         so_sem_embeddings.t_()
 
-        sbj_vis_embeddings = F.normalize(sbj_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
-        sbj_sim_matrix = torch.mm(sbj_vis_embeddings, so_sem_embeddings)  # (#bs, #prd)
+        sbj_vis_embeddings_n = F.normalize(sbj_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
+        # print('!! SBJ_VIS_EMBEDDINGS: !! ', sbj_vis_embeddings.shape)
+        sbj_sim_matrix = torch.mm(sbj_vis_embeddings_n, so_sem_embeddings)  # (#bs, #prd)
+        # print('!! SBJ_SIM_MATRIX: !! ', sbj_sim_matrix.shape)
         sbj_cls_scores = cfg.MODEL.NORM_SCALE * sbj_sim_matrix
         
-        obj_vis_embeddings = F.normalize(obj_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
-        obj_sim_matrix = torch.mm(obj_vis_embeddings, so_sem_embeddings)  # (#bs, #prd)
+        obj_vis_embeddings_n = F.normalize(obj_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
+        obj_sim_matrix = torch.mm(obj_vis_embeddings_n, so_sem_embeddings)  # (#bs, #prd)
         obj_cls_scores = cfg.MODEL.NORM_SCALE * obj_sim_matrix
         
         if not cfg.MODEL.USE_SEM_CONCAT:
@@ -124,8 +193,8 @@ class reldn_head(nn.Module):
             ds_prd_vecs = Variable(torch.from_numpy(ds_prd_vecs.astype('float32'))).cuda(device_id)
             prd_sem_embeddings = self.prd_sem_embeddings(ds_prd_vecs)
             prd_sem_embeddings = F.normalize(prd_sem_embeddings, p=2, dim=1)  # (#prd, 1024)
-            prd_vis_embeddings = F.normalize(prd_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
-            prd_sim_matrix = torch.mm(prd_vis_embeddings, prd_sem_embeddings.t_())  # (#bs, #prd)
+            prd_vis_embeddings_n = F.normalize(prd_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
+            prd_sim_matrix = torch.mm(prd_vis_embeddings_n, prd_sem_embeddings.t_())  # (#bs, #prd)
             prd_cls_scores = cfg.MODEL.NORM_SCALE * prd_sim_matrix
         else:
             ds_prd_vecs = self.prd_vecs
@@ -163,7 +232,60 @@ class reldn_head(nn.Module):
             prd_vis_embeddings = prd_vis_embeddings.unsqueeze(-1)  # (#bs, 1024) --> (#bs, 1024, 1)
             prd_sim_matrix = torch.bmm(prd_sem_embeddings, prd_vis_embeddings).squeeze(-1)  # bmm((#bs, #prd, 1024), (#bs, 1024, 1)) = (#bs, #prd, 1) --> (#bs, #prd)
             prd_cls_scores = cfg.MODEL.NORM_SCALE * prd_sim_matrix
-            
+        
+        mixed_sbj_cls_scores = None
+        mixed_obj_cls_scores = None
+        mixed_prd_cls_scores = None
+        mixed_sbj_labels = None
+        mixed_obj_labels = None
+        mixed_prd_labels = None
+
+        if cfg.cumix and self.training:
+            bs = sbj_vis_embeddings.shape[0]
+            probs = prd_weights[prd_labels]
+            indices = np.argsort(-probs, kind='quicksort')     ### in decreasing order, means tail classes are ahead
+
+            if cfg.aug_percent == 50:
+                partition_num = bs // 2
+                indices_1 = indices[0:partition_num]
+                indices_2 = np.random.permutation(indices_1)
+                indices_3 = indices[partition_num: partition_num*2]
+            elif cfg.aug_percent == 70:
+                partition_num = int(bs * 0.7)
+                indices_1 = indices[0:partition_num]
+                indices_2 = np.random.permutation(indices_1)
+                indices_3 = np.random.permutation(indices_1)
+            elif cfg.aug_percent == 60:
+                partition_num = int(bs * 0.6)
+                indices_1 = indices[0:partition_num]
+                indices_2 = np.random.permutation(indices_1)
+                indices_3 = np.random.permutation(indices_1)
+            else:
+                partition_num = bs // 3
+                indices_1 = indices[0:partition_num]
+                indices_2 = indices[partition_num : partition_num*2]
+                indices_3 = indices[partition_num*2 : partition_num*3]
+
+            mixed_sbj_embeddings, mixed_sbj_labels, mixed_obj_embeddings, mixed_obj_labels, mixed_prd_embeddings, mixed_prd_labels  = \
+                cumix(sbj_vis_embeddings, sbj_labels, obj_vis_embeddings, obj_labels, prd_vis_embeddings, prd_labels, indices_1, indices_2, indices_3, device_id)
+
+            # mixed_obj_labels = mixed_obj_labels.cuda(device_id)
+            # mixed_sbj_labels = mixed_sbj_labels.cuda(device_id)
+            # mixed_prd_labels = mixed_prd_labels.cuda(device_id)
+
+            mixed_sbj_vis_embeddings = F.normalize(mixed_sbj_embeddings, p=2, dim=1)  # (#bs, 1024)
+            mixed_sbj_sim_matrix = torch.mm(mixed_sbj_vis_embeddings, so_sem_embeddings)  # (#bs, #prd)
+            mixed_sbj_cls_scores = cfg.MODEL.NORM_SCALE * mixed_sbj_sim_matrix
+
+            mixed_obj_vis_embeddings = F.normalize(mixed_obj_embeddings, p=2, dim=1)  # (#bs, 1024)
+            mixed_obj_sim_matrix = torch.mm(mixed_obj_vis_embeddings, so_sem_embeddings)  # (#bs, #prd)
+            mixed_obj_cls_scores = cfg.MODEL.NORM_SCALE * mixed_obj_sim_matrix
+
+            mixed_prd_vis_embeddings = F.normalize(mixed_prd_embeddings, p=2, dim=1)  # (#bs, 1024)
+            mixed_prd_sim_matrix = torch.mm(mixed_prd_vis_embeddings, prd_sem_embeddings)  # (#bs, #prd)
+            mixed_prd_cls_scores = cfg.MODEL.NORM_SCALE * mixed_prd_sim_matrix
+
+
         if cfg.MODEL.USE_FREQ_BIAS:
             assert sbj_labels is not None and obj_labels is not None
             prd_cls_scores = prd_cls_scores + self.freq_bias.rel_index_with_labels(torch.stack((sbj_labels, obj_labels), 1))
@@ -173,7 +295,68 @@ class reldn_head(nn.Module):
             obj_cls_scores = F.softmax(obj_cls_scores, dim=1)
             prd_cls_scores = F.softmax(prd_cls_scores, dim=1)
         
-        return prd_cls_scores, sbj_cls_scores, obj_cls_scores
+        return prd_cls_scores, sbj_cls_scores, obj_cls_scores, mixed_sbj_cls_scores, mixed_obj_cls_scores, mixed_prd_cls_scores, \
+                mixed_sbj_labels, mixed_obj_labels, mixed_prd_labels
+
+
+def manual_CE(predictions, labels):
+    loss = -torch.mean(torch.sum(labels * torch.log_softmax(predictions,dim=1),dim=1))
+    return loss
+
+def manual_log_softmax(pred, weight):
+    e_x = torch.exp(pred - torch.max(pred))
+    # print('!! e_x shape !! ', e_x.shape)
+    # print('!! weight shape !! ', weight.shape)
+    return e_x / torch.sum(weight * e_x, 1).unsqueeze(1)
+
+def eql_loss_so(sbj_cls_scores, sbj_labels_int32, obj_weight):
+    device_id = sbj_cls_scores.get_device()
+    sbj_labels = Variable(torch.from_numpy(sbj_labels_int32.astype('int64'))).cuda(device_id)
+
+    weight = Variable(torch.from_numpy(obj_weight)).cuda(device_id)
+    one_hot_labels = create_one_hot(sbj_labels, cfg.MODEL.NUM_CLASSES - 1, device_id)
+
+    probs = weight[sbj_labels]
+    threshold = torch.FloatTensor([1 if a_ > 4.3e-04 else 0 for a_ in probs]).cuda(device_id)
+    threshold = threshold.unsqueeze(1)
+
+    beta = torch.empty((sbj_labels.shape[0], 1)).fill_(0.9)
+    beta = torch.bernoulli(beta).cuda(device_id)
+
+    w_k = 1. - beta * threshold * (1. - one_hot_labels)
+
+    softmax_output = manual_log_softmax(sbj_cls_scores, w_k)
+    loss = -torch.mean(torch.sum(one_hot_labels * softmax_output,dim=1))
+
+    prd_cls_preds = sbj_cls_scores.max(dim=1)[1].type_as(sbj_labels)
+    accuracy_cls_prd = prd_cls_preds.eq(sbj_labels).float().mean(dim=0)
+
+    return loss, accuracy_cls_prd
+
+
+def eql_loss_prd(prd_cls_scores, prd_labels_int32, prd_weight):
+    device_id = prd_cls_scores.get_device()
+    prd_labels = Variable(torch.from_numpy(prd_labels_int32.astype('int64'))).cuda(device_id)
+
+    weight = Variable(torch.from_numpy(prd_weight)).cuda(device_id)
+    one_hot_labels = create_one_hot(prd_labels, cfg.MODEL.NUM_PRD_CLASSES + 1, device_id)
+
+    probs = weight[prd_labels]
+    threshold = torch.FloatTensor([1 if a_ > 4.3e-04 else 0 for a_ in probs]).cuda(device_id)
+    threshold = threshold.unsqueeze(1)
+
+    beta = torch.empty((prd_labels.shape[0], 1)).fill_(0.9)
+    beta = torch.bernoulli(beta).cuda(device_id)
+
+    w_k = 1. - beta * threshold * (1. - one_hot_labels)
+
+    softmax_output = manual_log_softmax(prd_cls_scores, w_k)
+    loss = -torch.mean(torch.sum(one_hot_labels * softmax_output,dim=1))
+
+    prd_cls_preds = prd_cls_scores.max(dim=1)[1].type_as(prd_labels)
+    accuracy_cls_prd = prd_cls_preds.eq(prd_labels).float().mean(dim=0)
+
+    return loss, accuracy_cls_prd
 
 
 def add_cls_loss(cls_scores, labels, weight=None):

@@ -9,6 +9,7 @@ from numpy import linalg as la
 import copy
 import gensim
 import json
+import os
 
 import torch
 import torch.nn as nn
@@ -29,6 +30,13 @@ import utils.net as net_utils
 import utils.resnet_weights_helper as resnet_utils
 import utils.fpn as fpn_utils
 from utils.memory_utils import *
+import cv2
+from torchvision.utils import save_image
+import torchvision
+from torchvision import transforms
+import random
+import pandas as pd
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -308,6 +316,137 @@ def get_freq_from_dict(freq_dict, categories):
             freqs[i] = 0
     return freqs
 
+def add_augmentations(im_data, dataset_name, roidb, im_info, device_id):
+    # print('!!! DATASET: !!! ', dataset_name, '  :  ', type(dataset_name))
+    # print('GVQA ones: ', dataset_name.find('gvqa'))
+    # print('VG8k ones: ', dataset_name.find('vg8k'))
+    if dataset_name.find('gvqa') >= 0:
+        sub_obj_freq = pd.read_csv(cfg.DATA_DIR + '/gvqa/seed0/gqa_subjects_objects_pair_freq.csv')
+        obj_distances = np.load(cfg.DATA_DIR + '/gvqa/seed0/obj_distances.npy')
+        obj_prd_distances = np.load(cfg.DATA_DIR + '/gvqa/seed0/obj_prd_distances.npy')
+        obj_cat = json.load(open(cfg.DATA_DIR + '/gvqa/seed0/objects.json'))
+    elif dataset_name.find('vg8k') >= 0:
+        sub_obj_freq = pd.read_csv(cfg.DATA_DIR + '/vg8k/seed3/vg_subjects_objects_pair_freq.csv')
+        obj_distances = np.load(cfg.DATA_DIR + '/vg8k/seed3/obj_distances.npy')
+        obj_prd_distances = np.load(cfg.DATA_DIR + '/vg8k/seed3/obj_prd_distances.npy')
+        obj_cat = json.load(open(cfg.DATA_DIR + '/vg8k/seed3/objects.json'))
+
+    num_gts = len(roidb[0]['sbj_gt_classes'])
+    # print('!! Num_gts: !! ', num_gts)
+
+    for i in range(num_gts):
+        gt_sub = roidb[0]['sbj_gt_classes'][i]
+        gt_obj = roidb[0]['obj_gt_classes'][i]
+        gt_prd = roidb[0]['prd_gt_classes'][i]
+        
+        if dataset_name.find('gvqa') >= 0:
+            prob = sub_obj_freq.loc[(sub_obj_freq['subject'] == obj_cat[gt_sub]) & (sub_obj_freq['object'] == obj_cat[gt_obj]), 'counts'].values[0]
+            prob /= 60000
+        elif dataset_name.find('vg8k') >= 0:
+            prob = sub_obj_freq.loc[(sub_obj_freq['subject'] == obj_cat[gt_sub]) & (sub_obj_freq['object'] == obj_cat[gt_obj]), 'counts'].values[0]
+            prob /= 26000
+
+        ### So as to augment only the highy occuring pairs
+        if random.uniform(0, 1) < prob:
+            if random.uniform(0,1) < 0.5:
+                ### Then we will augment the subject
+                obj_dist = obj_distances[gt_sub, :]
+                prd_dist = obj_prd_distances[:, gt_prd]
+                distance = obj_dist + prd_dist
+                if cfg.ablation == 1:
+                    index = random.choice(np.arange(0, distance.shape[0]))
+                elif cfg.ablation == 2:
+                    temp = np.concatenate([obj_dist[:gt_sub], [1000000],  obj_dist[(gt_sub+1):]])
+                    index = np.where(temp == np.amin(temp))[0][0]
+                elif cfg.ablation == 3:
+                    temp = np.concatenate([prd_dist[:gt_sub], [1000000],  prd_dist[(gt_sub+1):]])
+                    index = np.where(temp == np.amin(temp))[0][0]
+                else:
+                    temp = np.concatenate([distance[:gt_sub], [1000000],  distance[(gt_sub+1):]])
+                    index = np.where(temp == np.amin(temp))[0][0]
+
+                if dataset_name.find('gvqa') >= 0:
+                    while True:
+                        sample = random.choice(os.listdir(cfg.DATA_DIR + '/gvqa/bbox_3/'+ str(index)))
+                        try:
+                            img = Image.open(cfg.DATA_DIR + '/gvqa/bbox_3/' + str(index) + '/' + sample)
+                            break
+                        except:
+                            continue
+                elif dataset_name.find('vg8k') >= 0:
+                    while True:
+                        sample = random.choice(os.listdir(cfg.DATA_DIR + '/vg8k/bbox_3/'+ str(index)))
+                        try:
+                            img = Image.open(cfg.DATA_DIR + '/vg8k/bbox_3/' + str(index) + '/' + sample)
+                            break
+                        except:
+                            continue
+
+                box = roidb[0]['sbj_gt_boxes'][i]
+                box_width = box[2] - box[0]
+                box_height = box[3] - box[1]
+
+                img = img.resize((box_width, box_height))
+                transform = transforms.Compose([transforms.ToTensor()])
+                ### Can once be normalized once checked
+                img = transform(img)
+                img = img.cuda(device_id)
+                # print('img shape: ', img.shape)
+                # print('im_data shape: ', im_data.shape)
+                # print('cropped im_data shape: ', im_data[:, :, int(box[1]):int(box[3]), int(box[0]):int(box[2])].shape)
+                im_data[:, :, int(box[1]):int(box[3]), int(box[0]):int(box[2])] = img.unsqueeze(0)
+                ## I have to also save some of the images here do remember
+                #torchvision.utils.save_image(im_data.squeeze(0), cfg.DATA_DIR + '/examples/' + str(random.choice(np.arange(0, 100))) + '.jpg')
+                roidb[0]['sbj_gt_classes'][i] = index
+
+            else:
+                ### Then we will augment the object
+                obj_dist = obj_distances[gt_obj, :]
+                prd_dist = obj_prd_distances[:, gt_prd]
+                distance = obj_dist + prd_dist
+                if cfg.ablation == 1:
+                    index = random.choice(np.arange(0, distance.shape[0]))
+                elif cfg.ablation == 2:
+                    temp = np.concatenate([obj_dist[:gt_obj], [1000000],  obj_dist[(gt_obj+1):]])
+                    index = np.where(temp == np.amin(temp))[0][0]
+                elif cfg.ablation == 3:
+                    temp = np.concatenate([prd_dist[:gt_obj], [1000000],  prd_dist[(gt_obj+1):]])
+                    index = np.where(temp == np.amin(temp))[0][0]
+                else:
+                    temp = np.concatenate([distance[:gt_obj], [1000000],  distance[(gt_obj+1):]])
+                    index = np.where(temp == np.amin(temp))[0][0]
+
+                if dataset_name.find('gvqa') >= 0:
+                    while True:
+                        sample = random.choice(os.listdir(cfg.DATA_DIR + '/gvqa/bbox_3/'+ str(index)))
+                        try:
+                            img = Image.open(cfg.DATA_DIR + '/gvqa/bbox_3/' + str(index) + '/' + sample)
+                            break
+                        except:
+                            continue
+                elif dataset_name.find('vg8k') >= 0:
+                    while True:
+                        sample = random.choice(os.listdir(cfg.DATA_DIR + '/vg8k/bbox_3/'+ str(index)))
+                        try:
+                            img = Image.open(cfg.DATA_DIR + '/vg8k/bbox_3/' + str(index) + '/' + sample)
+                            break
+                        except:
+                            continue
+
+                box = roidb[0]['obj_gt_boxes'][i]
+                box_width = box[2] - box[0]
+                box_height = box[3] - box[1]
+                img = img.resize((box_width, box_height))
+                transform = transforms.Compose([transforms.ToTensor()])
+                img = transform(img)
+                img = img.cuda(device_id)
+                im_data[:, :, int(box[1]):int(box[3]), int(box[0]):int(box[2])] = img.unsqueeze(0)
+                #torchvision.utils.save_image(im_data.squeeze(0), cfg.DATA_DIR + '/examples/' + str(random.choice(np.arange(0, 100))) + '.jpg')
+                roidb[0]['obj_gt_classes'][i] = index
+        
+    return im_data, roidb
+
+
 class Generalized_RCNN(nn.Module):
     def __init__(self):
         super().__init__()
@@ -408,20 +547,22 @@ class Generalized_RCNN(nn.Module):
         self.freq_prd = get_freq_from_dict(self.prd_freq_dict, self.prd_categories)
         self.freq_obj = get_freq_from_dict(self.obj_freq_dict, self.obj_categories)
 
-        if cfg.MODEL.LOSS == 'weighted_cross_entropy' or cfg.MODEL.LOSS == 'weighted_focal':
-            logger.info('loading frequencies')
+        # if cfg.MODEL.LOSS == 'weighted_cross_entropy' or cfg.MODEL.LOSS == 'weighted_focal':
+        logger.info('loading frequencies')
 
-            freq_prd = self.freq_prd + 1
-            freq_obj = self.freq_obj + 1
-            prd_weights = np.sum(freq_prd) / freq_prd
-            obj_weights = np.sum(freq_obj) / freq_obj
+        freq_prd = self.freq_prd + 1
+        freq_obj = self.freq_obj + 1
+        prd_weights = np.sum(freq_prd) / freq_prd
+        obj_weights = np.sum(freq_obj) / freq_obj
+        ## More weight given to the classes belonging to few classes spectrum
 
-            self.prd_weights = (prd_weights / np.mean(prd_weights)).astype(np.float32)
-            self.obj_weights = (obj_weights / np.mean(obj_weights)).astype(np.float32)
-            temp = np.zeros(shape=self.prd_weights.shape[0] + 1, dtype=np.float32) 
-            temp[1:] = self.prd_weights
-            temp[0] = min(self.prd_weights)
-            self.prd_weights = temp
+        self.prd_weights = (prd_weights / np.mean(prd_weights)).astype(np.float32)
+        self.obj_weights = (obj_weights / np.mean(obj_weights)).astype(np.float32)
+        temp = np.zeros(shape=self.prd_weights.shape[0] + 1, dtype=np.float32) 
+        temp[1:] = self.prd_weights
+        temp[0] = min(self.prd_weights)
+        self.prd_weights = temp
+
         self._init_modules()
 
     def _init_modules(self):
@@ -503,19 +644,41 @@ class Generalized_RCNN(nn.Module):
 
     def _forward(self, data, im_info, dataset_name=None, roidb=None, use_gt_labels=False, include_feat=False,  **rpn_kwargs):
         im_data = data
+        # print('!!! IM DATA: !!!', im_data.shape)
+        # im_data = im_data.squeeze()
+        # im_data = im_data.permute(1,2,0)
+        # im_data = im_data.cpu().numpy()
+        # cv2.imwrite('demo_1.jpg', im_data)
+        # # save_image(im_data, 'demo.jpg')
+        # im = cv2.imread('demo_1.jpg')
+        # im = torch.from_numpy(im)
+        # print('!!! IM SHAPE: !!!', im.shape)
+        # save_image(im, 'demo_2.jpg')
         if self.training:
             roidb = list(map(lambda x: blob_utils.deserialize(x)[0], roidb))
         if dataset_name is not None:
             dataset_name = blob_utils.deserialize(dataset_name)
         else:
             dataset_name = cfg.TRAIN.DATASETS[0] if self.training else cfg.TEST.DATASETS[0]  # assuming only one dataset per run
+            
+        # print('!!! DATASET NAME: !!!', dataset_name)
+        # print('!!!!!! THIS IS ROIDB !!!!!!!', roidb)
 
         device_id = im_data.get_device()
 
         return_dict = {}  # A dict to collect return variables
 
+        ### Here the augmentations are added
+        # if random.uniform(0, 1) < 0.5:
+        #     im_data, roidb = add_augmentations(im_data, dataset_name, roidb, im_info, device_id)
+
+
         blob_conv = self.Conv_Body(im_data)
+        # print('!! Blob_conv shape: !! ', blob_conv.shape, '\n')
         blob_conv_prd = self.Prd_RCNN.Conv_Body(im_data)
+        # print('!! blob_conv_prd shape: !! ', blob_conv_prd.shape, '\n')
+
+        # print('!! End !! \n')
 
         if cfg.FPN.FPN_ON:
             # Retain only the blobs that will be used for RoI heads. `blob_conv` may include
@@ -538,11 +701,16 @@ class Generalized_RCNN(nn.Module):
             if cfg.TRAIN.USE_GT_BOXES:
                 # we always feed one image per batch during training
                 assert len(roidb) == 1
+                # print('!!! IM INFO: !!!', im_info)
                 im_scale = im_info.data.numpy()[:, 2][0]
+                # print('!!! IM SCALE: !!!', im_scale)
                 im_w = im_info.data.numpy()[:, 1][0]
                 im_h = im_info.data.numpy()[:, 0][0]
+                # print('!!! IM_W !!!', im_w)
+                # print('!!! IM_H !!!', im_h)
                 sbj_boxes = roidb[0]['sbj_gt_boxes']
                 obj_boxes = roidb[0]['obj_gt_boxes']
+                #print('!!! SBJ BOXES !!!', sbj_boxes)
                 sbj_all_boxes = _augment_gt_boxes_by_perturbation(sbj_boxes, im_w, im_h)
                 obj_all_boxes = _augment_gt_boxes_by_perturbation(obj_boxes, im_w, im_h)
                 det_all_boxes = np.vstack((sbj_all_boxes, obj_all_boxes))
@@ -551,6 +719,7 @@ class Generalized_RCNN(nn.Module):
                 repeated_batch_idx = 0 * blob_utils.ones((det_all_rois.shape[0], 1))
                 det_all_rois = np.hstack((repeated_batch_idx, det_all_rois))
                 rel_ret = self.RelPN(det_all_rois, None, None, im_info, dataset_name, roidb)
+                # print('!! Rel_Ret shape: !! ', rel_ret.shape)
             else:
                 fg_inds = np.where(rpn_ret['labels_int32'] > 0)[0]
                 det_rois = rpn_ret['rois'][fg_inds]
@@ -558,6 +727,7 @@ class Generalized_RCNN(nn.Module):
                 det_scores = F.softmax(cls_score[fg_inds], dim=1)
                 rel_ret = self.RelPN(det_rois, det_labels, det_scores, im_info, dataset_name, roidb)
             sbj_feat = self.Box_Head(blob_conv, rel_ret, rois_name='sbj_rois', use_relu=use_relu)
+            # print('!! SBJ_FEAT SHAPE: !! ', sbj_feat.shape)    #### (_, 4096)
             obj_feat = self.Box_Head(blob_conv, rel_ret, rois_name='obj_rois', use_relu=use_relu)
         else:
             if roidb is not None:
@@ -630,6 +800,7 @@ class Generalized_RCNN(nn.Module):
         rel_feat = self.Prd_RCNN.Box_Head(blob_conv_prd, rel_ret, rois_name='rel_rois', use_relu=use_relu)
 
         concat_feat = torch.cat((sbj_feat, rel_feat, obj_feat), dim=1)
+        # print('!! Concat feat shape: !! ', concat_feat.shape)
 
         if cfg.MODEL.USE_FREQ_BIAS or cfg.MODEL.RUN_BASELINE or cfg.MODEL.USE_SEM_CONCAT:
             sbj_labels = rel_ret['all_sbj_labels_int32']
@@ -651,6 +822,7 @@ class Generalized_RCNN(nn.Module):
                 concat_feat_i = concat_feat[i * gn_size : end]
                 sbj_labels_i = sbj_labels[i * gn_size : end] if sbj_labels is not None else None
                 obj_labels_i = obj_labels[i * gn_size : end] if obj_labels is not None else None
+                
                 sbj_feat_i = sbj_feat[i * gn_size : end]
                 obj_feat_i = obj_feat[i * gn_size : end]
                 prd_cls_scores_i, sbj_cls_scores_i, obj_cls_scores_i = \
@@ -664,8 +836,19 @@ class Generalized_RCNN(nn.Module):
                     sbj_cls_scores = torch.cat((sbj_cls_scores, sbj_cls_scores_i)) if sbj_cls_scores_i is not None else sbj_cls_scores
                     obj_cls_scores = torch.cat((obj_cls_scores, obj_cls_scores_i)) if obj_cls_scores_i is not None else obj_cls_scores
         else:
-            prd_cls_scores, sbj_cls_scores, obj_cls_scores = \
-                    self.RelDN(concat_feat, sbj_labels, obj_labels, sbj_feat, obj_feat)
+            # print('!! Rel_ret prd labels shape: !! ', rel_ret['all_prd_labels_int32'].shape)
+            # np.save('rel_ret_prd_labels', rel_ret['all_prd_labels_int32'])
+            # print('!! Rel_ret sbj labels shape: !! ', rel_ret['all_sbj_labels_int32'].shape)
+            # np.save('rel_ret_sbj_labels', rel_ret['all_sbj_labels_int32'])
+            # np.save('prd_weights', self.prd_weights)
+            # print('!! Prd_weights shape: !! ', self.prd_weights.shape)
+            # print('!! Obj_weights shape: !! ', self.obj_weights.shape)
+            if self.training:
+                prd_cls_scores, sbj_cls_scores, obj_cls_scores, mixed_sbj_cls_scores, mixed_obj_cls_scores, mixed_prd_cls_scores, mixed_sbj_labels, mixed_obj_labels, mixed_prd_labels = \
+                        self.RelDN(concat_feat, self.prd_weights, rel_ret['all_sbj_labels_int32'], rel_ret['all_obj_labels_int32'], sbj_feat, obj_feat, rel_ret['all_prd_labels_int32'])
+            else:
+                prd_cls_scores, sbj_cls_scores, obj_cls_scores, mixed_sbj_cls_scores, mixed_obj_cls_scores, mixed_prd_cls_scores, mixed_sbj_labels, mixed_obj_labels, mixed_prd_labels = \
+                        self.RelDN(concat_feat, self.prd_weights, rel_ret['all_sbj_labels_int32'], rel_ret['all_obj_labels_int32'], sbj_feat, obj_feat)
 
         if self.training:
             return_dict['losses'] = {}
@@ -691,19 +874,41 @@ class Generalized_RCNN(nn.Module):
                 return_dict['losses']['loss_cls'] = loss_cls
                 return_dict['losses']['loss_bbox'] = loss_bbox
                 return_dict['metrics']['accuracy_cls'] = accuracy_cls
-            loss_cls_prd, accuracy_cls_prd = reldn_heads.reldn_losses(
-                prd_cls_scores, rel_ret['all_prd_labels_int32'], weight=self.prd_weights)
+
+            if cfg.MODEL.LOSS == 'eql':
+                loss_cls_prd, accuracy_cls_prd = reldn_heads.eql_loss_prd(
+                    prd_cls_scores, rel_ret['all_prd_labels_int32'], self.prd_weights)
+            else:
+                loss_cls_prd, accuracy_cls_prd = reldn_heads.reldn_losses(
+                    prd_cls_scores, rel_ret['all_prd_labels_int32'], weight=self.prd_weights)
             return_dict['losses']['loss_cls_prd'] = loss_cls_prd
             return_dict['metrics']['accuracy_cls_prd'] = accuracy_cls_prd
+
+            if cfg.cumix:
+                return_dict['losses']['loss_cls_prd'] += reldn_heads.manual_CE(mixed_prd_cls_scores, mixed_prd_labels)
+
             if cfg.MODEL.USE_SEPARATE_SO_SCORES:
-                loss_cls_sbj, accuracy_cls_sbj = reldn_heads.reldn_losses(
-                    sbj_cls_scores, rel_ret['all_sbj_labels_int32'], weight=self.obj_weights)
+                if cfg.MODEL.LOSS == 'eql':
+                    loss_cls_sbj, accuracy_cls_sbj = reldn_heads.eql_loss_so(
+                        sbj_cls_scores, rel_ret['all_sbj_labels_int32'], self.obj_weights)
+                else:
+                    loss_cls_sbj, accuracy_cls_sbj = reldn_heads.reldn_losses(
+                        sbj_cls_scores, rel_ret['all_sbj_labels_int32'], weight=self.obj_weights)
                 return_dict['losses']['loss_cls_sbj'] = loss_cls_sbj
                 return_dict['metrics']['accuracy_cls_sbj'] = accuracy_cls_sbj
-                loss_cls_obj, accuracy_cls_obj = reldn_heads.reldn_losses(
-                    obj_cls_scores, rel_ret['all_obj_labels_int32'], weight=self.obj_weights)
+
+                if cfg.MODEL.LOSS == 'eql':
+                    loss_cls_obj, accuracy_cls_obj = reldn_heads.eql_loss_so(
+                        obj_cls_scores, rel_ret['all_obj_labels_int32'], self.obj_weights)
+                else:
+                    loss_cls_obj, accuracy_cls_obj = reldn_heads.reldn_losses(
+                        obj_cls_scores, rel_ret['all_obj_labels_int32'], weight=self.obj_weights)
                 return_dict['losses']['loss_cls_obj'] = loss_cls_obj
                 return_dict['metrics']['accuracy_cls_obj'] = accuracy_cls_obj
+
+                if cfg.cumix:
+                    return_dict['losses']['loss_cls_sbj'] += reldn_heads.manual_CE(mixed_sbj_cls_scores, mixed_sbj_labels)
+                    return_dict['losses']['loss_cls_obj'] += reldn_heads.manual_CE(mixed_obj_cls_scores, mixed_obj_labels)
 
             if cfg.TRAIN.HUBNESS:
                 if cfg.TRAIN.HUB_REL_ONLY:
@@ -716,6 +921,13 @@ class Generalized_RCNN(nn.Module):
                     return_dict['losses']['loss_hubness_prd'] = loss_hubness_prd
                     return_dict['losses']['loss_hubness_sbj'] = loss_hubness_sbj
                     return_dict['losses']['loss_hubness_obj'] = loss_hubness_obj
+
+                    if cfg.cumix:
+                        return_dict['losses']['loss_hubness_prd'] += reldn_heads.add_hubness_loss(mixed_prd_cls_scores)
+                        return_dict['losses']['loss_hubness_sbj'] += reldn_heads.add_hubness_loss(mixed_sbj_cls_scores)
+                        return_dict['losses']['loss_hubness_obj'] += reldn_heads.add_hubness_loss(mixed_obj_cls_scores)
+
+
 
             # pytorch0.4 bug on gathering scalar(0-dim) tensors
             for k, v in return_dict['losses'].items():

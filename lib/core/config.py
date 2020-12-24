@@ -1027,6 +1027,13 @@ __C.PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
 
 # For reproducibility
 __C.RNG_SEED = 0
+__C.ablation = 0
+
+# Cumix
+__C.cumix = False
+__C.mixup = False
+__C.random_lamda = False
+__C.aug_percent = 30
 
 # A small number that's used many times
 __C.EPS = 1e-14
