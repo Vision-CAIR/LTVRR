@@ -154,23 +154,28 @@ def get_many_medium_few_scores(csv_path, cutoffs, data, data_dir, ann_dir, syn=T
     print('rel many:', '{:2.2f}'.format(df_many_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
     print('rel med:', '{:2.2f}'.format(df_medium_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
     print('rel few:', '{:2.2f}'.format(df_few_rel.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
-    print('rel all:', '{:2.2f}'.format(df.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
+    print('rel all (per-class):', '{:2.2f}'.format(df.groupby('gt_rel')['rel_top1' + syn_key].mean().mean() * 100.))
+    print('rel all (per-example):', '{:2.2f}'.format(df['rel_top1' + syn_key].mean() * 100.))
     print()
 
     sbj_many = df_many_sbj.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
     sbj_med = df_medium_sbj.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
     sbj_few = df_few_sbj.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
     sbj_all = df.groupby('gt_sbj')['sbj_top1' + syn_key].mean().mean() * 100.
+    sbj_all_o = df['sbj_top1'].mean() * 100.
 
     obj_many = df_many_obj.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
     obj_med = df_medium_obj.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
     obj_few = df_few_obj.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
     obj_all = df.groupby('gt_obj')['obj_top1' + syn_key].mean().mean() * 100.
+    obj_all_o = df['obj_top1'].mean() * 100.
 
     print('sbj/obj many:', '{:2.2f}'.format((sbj_many + obj_many) / 2.))
     print('sbj/obj med:', '{:2.2f}'.format((sbj_med + obj_med) / 2.))
     print('sbj/obj few:', '{:2.2f}'.format((sbj_few + obj_few) / 2.))
-    print('sbj/obj all:', '{:2.2f}'.format((sbj_all + obj_all) / 2.))
+    print('sbj/obj all (per-class):', '{:2.2f}'.format((sbj_all + obj_all) / 2.))
+    print('sbj/obj all (per-example):', '{:2.2f}'.format((sbj_all_o + obj_all_o) / 2.))
+
     print('=========================================================')
     print()
     # print('triplet accuracy few:', df_few_rel['triplet_top1'].mean() * 100.)
