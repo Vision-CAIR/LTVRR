@@ -499,8 +499,12 @@ class Generalized_RCNN(nn.Module):
                     sbj_cls_scores = torch.cat((sbj_cls_scores, sbj_cls_scores_i)) if sbj_cls_scores_i is not None else sbj_cls_scores
                     obj_cls_scores = torch.cat((obj_cls_scores, obj_cls_scores_i)) if obj_cls_scores_i is not None else obj_cls_scores
         else:
-            prd_cls_scores, sbj_cls_scores, obj_cls_scores = \
-                    self.RelDN(concat_feat, sbj_labels, obj_labels, sbj_feat, obj_feat)
+	    if self.training:
+	        prd_cls_scores, sbj_cls_scores, obj_cls_scores, mixed_sbj_cls_scores, mixed_obj_cls_scores, mixed_prd_cls_scores, mixed_sbj_labels, mixed_obj_labels, mixed_prd_labels = \
+		            self.RelDN(concat_feat, self.prd_weights, sbj_labels, obj_labels, sbj_feat, obj_feat, rel_ret['all_prd_labels_int32'])
+	    else:
+	    	prd_cls_scores, sbj_cls_scores, obj_cls_scores, mixed_sbj_cls_scores, mixed_obj_cls_scores, mixed_prd_cls_scores, mixed_sbj_labels, mixed_obj_labels, mixed_prd_labels = \
+		            self.RelDN(concat_feat, self.prd_weights, sbj_labels, obj_labels, sbj_feat, obj_feat)
 
         if self.training:
             return_dict['losses'] = {}
@@ -530,6 +534,10 @@ class Generalized_RCNN(nn.Module):
                 prd_cls_scores, rel_ret['all_prd_labels_int32'], weight=self.prd_weights)
             return_dict['losses']['loss_cls_prd'] = loss_cls_prd
             return_dict['metrics']['accuracy_cls_prd'] = accuracy_cls_prd
+            
+            if cfg.cumix:
+                return_dict['losses']['loss_cls_prd'] += reldn_heads.manual_CE(mixed_prd_cls_scores, mixed_prd_labels)
+                
             if cfg.MODEL.USE_SEPARATE_SO_SCORES:
                 loss_cls_sbj, accuracy_cls_sbj = reldn_heads.reldn_losses(
                     sbj_cls_scores, rel_ret['all_sbj_labels_int32'], weight=self.obj_weights)
@@ -539,6 +547,10 @@ class Generalized_RCNN(nn.Module):
                     obj_cls_scores, rel_ret['all_obj_labels_int32'], weight=self.obj_weights)
                 return_dict['losses']['loss_cls_obj'] = loss_cls_obj
                 return_dict['metrics']['accuracy_cls_obj'] = accuracy_cls_obj
+                
+                if cfg.cumix:
+                    return_dict['losses']['loss_cls_sbj'] += reldn_heads.manual_CE(mixed_sbj_cls_scores, mixed_sbj_labels)
+                    return_dict['losses']['loss_cls_obj'] += reldn_heads.manual_CE(mixed_obj_cls_scores, mixed_obj_labels)
 
             if cfg.TRAIN.HUBNESS:
                 loss_hubness_prd = reldn_heads.add_hubness_loss(prd_cls_scores)
@@ -547,6 +559,11 @@ class Generalized_RCNN(nn.Module):
                 return_dict['losses']['loss_hubness_prd'] = loss_hubness_prd
                 return_dict['losses']['loss_hubness_sbj'] = loss_hubness_sbj
                 return_dict['losses']['loss_hubness_obj'] = loss_hubness_obj
+                
+                if cfg.cumix:
+	            return_dict['losses']['loss_hubness_prd'] += reldn_heads.add_hubness_loss(mixed_prd_cls_scores)
+	            return_dict['losses']['loss_hubness_sbj'] += reldn_heads.add_hubness_loss(mixed_sbj_cls_scores)
+	            return_dict['losses']['loss_hubness_obj'] += reldn_heads.add_hubness_loss(mixed_obj_cls_scores)
 
             # pytorch0.4 bug on gathering scalar(0-dim) tensors
             for k, v in return_dict['losses'].items():

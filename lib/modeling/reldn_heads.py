@@ -41,9 +41,6 @@ def cumix(sbj_vis_embeddings, sbj_labels, obj_vis_embeddings, obj_labels, prd_vi
     # alpha2 = torch.randint(0, 2, [indices_1.shape[0]]).cuda(device_id)
     # alpha3 = torch.randint(0, 2, [indices_1.shape[0]]).cuda(device_id)
 
-    # print('!! Index 1 shape: !! ',sbj_vis_embeddings[indices_1].shape)
-    # print('!! Index 2 shape: !! ',sbj_vis_embeddings[indices_2].shape)
-
     if cfg.mixup:
         mixed_sbj_embeddings = lamda * sbj_vis_embeddings[indices_1] + (1 - lamda)*(sbj_vis_embeddings[indices_2])
         mixed_obj_embeddings = lamda * obj_vis_embeddings[indices_1] + (1 - lamda)*(obj_vis_embeddings[indices_2])
@@ -77,8 +74,6 @@ def cumix(sbj_vis_embeddings, sbj_labels, obj_vis_embeddings, obj_labels, prd_vi
                 (1 - alpha1) * prd_one_hot_labels[indices_3])
 
     return mixed_sbj_embeddings, mixed_sbj_labels, mixed_obj_embeddings, mixed_obj_labels, mixed_prd_embeddings, mixed_prd_labels
-
-
 
 
 

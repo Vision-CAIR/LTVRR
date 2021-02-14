@@ -20,6 +20,60 @@ from utils import focal_loss
 
 logger = logging.getLogger(__name__)
 
+RG = np.random.default_rng()
+
+def create_one_hot(y, classes, device_id):
+    y_onehot = torch.FloatTensor(y.size(0), classes).cuda(device_id)
+    y_onehot.zero_()
+    y_onehot.scatter_(1, y.view(-1, 1), 1)
+    return y_onehot
+    
+def cumix(sbj_vis_embeddings, sbj_labels, obj_vis_embeddings, obj_labels, prd_vis_embeddings, prd_labels, indices_1, indices_2, indices_3, device_id):
+    
+    if cfg.random_lamda:
+        lamda = torch.from_numpy(RG.beta(0.8, 0.8, [indices_1.shape[0], 1])).float()
+    else:
+        lamda = 0.65
+
+    alpha1 = torch.randint(0, 2, [indices_1.shape[0], 1]).cuda(device_id)
+    # alpha2 = torch.randint(0, 2, [indices_1.shape[0]]).cuda(device_id)
+    # alpha3 = torch.randint(0, 2, [indices_1.shape[0]]).cuda(device_id)
+
+    if cfg.mixup:
+        mixed_sbj_embeddings = lamda * sbj_vis_embeddings[indices_1] + (1 - lamda)*(sbj_vis_embeddings[indices_2])
+        mixed_obj_embeddings = lamda * obj_vis_embeddings[indices_1] + (1 - lamda)*(obj_vis_embeddings[indices_2])
+        mixed_prd_embeddings = lamda * prd_vis_embeddings[indices_1] + (1 - lamda)*(prd_vis_embeddings[indices_2])
+
+        sbj_one_hot_labels = create_one_hot(sbj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+        prd_one_hot_labels = create_one_hot(prd_labels, cfg.MODEL.NUM_PRD_CLASSES +1, device_id)
+        obj_one_hot_labels = create_one_hot(obj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+
+        mixed_sbj_labels = lamda * sbj_one_hot_labels[indices_1] + (1 - lamda)*(sbj_one_hot_labels[indices_2])
+        mixed_obj_labels = lamda * obj_one_hot_labels[indices_1] + (1 - lamda)*(obj_one_hot_labels[indices_2])
+        mixed_prd_labels = lamda * prd_one_hot_labels[indices_1] + (1 - lamda)*(prd_one_hot_labels[indices_2])
+
+    else:
+        mixed_sbj_embeddings = lamda * sbj_vis_embeddings[indices_1] + (1 - lamda)*(alpha1 * sbj_vis_embeddings[indices_2] + \
+               (1 - alpha1) * sbj_vis_embeddings[indices_3])
+        mixed_obj_embeddings = lamda * obj_vis_embeddings[indices_1] + (1 - lamda)*(alpha1 * obj_vis_embeddings[indices_2] + \
+               (1 - alpha1) * obj_vis_embeddings[indices_3])
+        mixed_prd_embeddings = lamda * prd_vis_embeddings[indices_1] + (1 - lamda)*(alpha1 * prd_vis_embeddings[indices_2] + \
+               (1 - alpha1) * prd_vis_embeddings[indices_3])
+
+        sbj_one_hot_labels = create_one_hot(sbj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+        prd_one_hot_labels = create_one_hot(prd_labels, cfg.MODEL.NUM_PRD_CLASSES +1, device_id)
+        obj_one_hot_labels = create_one_hot(obj_labels, cfg.MODEL.NUM_CLASSES -1, device_id)
+
+        mixed_sbj_labels = lamda * sbj_one_hot_labels[indices_1] + (1 - lamda)*(alpha1 * sbj_one_hot_labels[indices_2] + \
+                (1 - alpha1) * sbj_one_hot_labels[indices_3])
+        mixed_obj_labels = lamda * obj_one_hot_labels[indices_1] + (1 - lamda)*(alpha1 * obj_one_hot_labels[indices_2] + \
+                (1 - alpha1) * obj_one_hot_labels[indices_3])
+        mixed_prd_labels = lamda * prd_one_hot_labels[indices_1] + (1 - lamda)*(alpha1 * prd_one_hot_labels[indices_2] + \
+                (1 - alpha1) * prd_one_hot_labels[indices_3])
+
+    return mixed_sbj_embeddings, mixed_sbj_labels, mixed_obj_embeddings, mixed_obj_labels, mixed_prd_embeddings, mixed_prd_labels
+
+
 
 class reldn_head(nn.Module):
     def __init__(self, dim_in):
@@ -55,13 +109,15 @@ class reldn_head(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     # spo_feat is concatenation of SPO
-    def forward(self, spo_feat, sbj_labels=None, obj_labels=None, sbj_feat=None, obj_feat=None):
+    def forward(self, spo_feat, prd_weights, sbj_labels=None, obj_labels=None, sbj_feat=None, obj_feat=None, prd_labels=None):
 
         device_id = spo_feat.get_device()
         if sbj_labels is not None:
             sbj_labels = Variable(torch.from_numpy(sbj_labels.astype('int64'))).cuda(device_id)
         if obj_labels is not None:
             obj_labels = Variable(torch.from_numpy(obj_labels.astype('int64'))).cuda(device_id)
+   	if prd_labels is not None:
+            prd_labels = Variable(torch.from_numpy(prd_labels.astype('int64'))).cuda(device_id)
             
         if cfg.MODEL.RUN_BASELINE:
             assert sbj_labels is not None and obj_labels is not None
@@ -87,13 +143,59 @@ class reldn_head(nn.Module):
 
         prd_vis_embeddings = F.normalize(prd_vis_embeddings, p=2, dim=1)  # (#bs, 1024)
         prd_cls_scores = self.classifier_prd(prd_vis_embeddings)
+        
+        mixed_sbj_cls_scores = None
+        mixed_obj_cls_scores = None
+        mixed_prd_cls_scores = None
+        mixed_sbj_labels = None
+        mixed_obj_labels = None
+        mixed_prd_labels = None
+        
+        if cfg.cumix and self.training:
+            bs = sbj_vis_embeddings.shape[0]
+            probs = prd_weights[prd_labels]
+            indices = np.argsort(-probs, kind='quicksort')     ### in decreasing order, means tail classes are ahead
+
+            if cfg.aug_percent == 50:
+                partition_num = bs // 2
+                indices_1 = indices[0:partition_num]
+                indices_2 = np.random.permutation(indices_1)
+                indices_3 = indices[partition_num: partition_num*2]
+            elif cfg.aug_percent == 70:
+                partition_num = int(bs * 0.7)
+                indices_1 = indices[0:partition_num]
+                indices_2 = np.random.permutation(indices_1)
+                indices_3 = np.random.permutation(indices_1)
+            elif cfg.aug_percent == 60:
+                partition_num = int(bs * 0.6)
+                indices_1 = indices[0:partition_num]
+                indices_2 = np.random.permutation(indices_1)
+                indices_3 = np.random.permutation(indices_1)
+            else:
+                partition_num = bs // 3
+                indices_1 = indices[0:partition_num]
+                indices_2 = indices[partition_num : partition_num*2]
+                indices_3 = indices[partition_num*2 : partition_num*3]
+
+            mixed_sbj_embeddings, mixed_sbj_labels, mixed_obj_embeddings, mixed_obj_labels, mixed_prd_embeddings, mixed_prd_labels  = \
+                cumix(sbj_vis_embeddings, sbj_labels, obj_vis_embeddings, obj_labels, prd_vis_embeddings, prd_labels, indices_1, indices_2, indices_3, device_id)
+            
+            mixed_sbj_vis_embeddings = F.normalize(mixed_sbj_embeddings, p=2, dim=1)  # (#bs, 1024)
+            mixed_sbj_cls_scores = self.classifier_sbj_obj(mixed_sbj_vis_embeddings)
+
+            mixed_obj_vis_embeddings = F.normalize(mixed_obj_embeddings, p=2, dim=1)  # (#bs, 1024)
+            mixed_obj_cls_scores = self.classifier_sbj_obj(mixed_obj_vis_embeddings)
+
+            mixed_prd_vis_embeddings = F.normalize(mixed_prd_embeddings, p=2, dim=1)  # (#bs, 1024)
+            mixed_prd_cls_scores = self.classifier_prd(mixed_prd_vis_embeddings)
 
         if not self.training:
             sbj_cls_scores = F.softmax(sbj_cls_scores, dim=1)
             obj_cls_scores = F.softmax(obj_cls_scores, dim=1)
             prd_cls_scores = F.softmax(prd_cls_scores, dim=1)
         
-        return prd_cls_scores, sbj_cls_scores, obj_cls_scores
+        return prd_cls_scores, sbj_cls_scores, obj_cls_scores, mixed_sbj_cls_scores, mixed_obj_cls_scores, mixed_prd_cls_scores, \
+        	mixed_sbj_labels, mixed_obj_labels, mixed_prd_labels
 
 
 def add_cls_loss(cls_scores, labels, weight=None):
