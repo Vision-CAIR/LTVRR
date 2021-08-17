@@ -1,4 +1,4 @@
-# Long Tail Visual Relationship Recognition with Hubless Regularized Relmix
+# Exploring Long Tail Visual Relationship Recognition with Large Vocabulary
 Watch our video below:
 
 [<img src="./examples/preview.png" width="50%">](https://youtu.be/ceEuCXr8Ow8)
@@ -8,7 +8,7 @@ Watch our video below:
 
 <p align="center">Example results from the GQA dataset.</p>
 
-This is a PyTorch implementation for [Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss](https://arxiv.org/abs/2004.00436).
+This is a PyTorch implementation for [Exploring Long Tail Visual Relationship Recognition with Large Vocabulary](https://arxiv.org/abs/2004.00436).
 
 This code is for the GQA-LT and VG8K-LT datasets.
 
@@ -220,8 +220,8 @@ as well as code from the [Detectron.pytorch](https://github.com/roytseng-tw/Dete
 If you use this code in your research, please use the following BibTeX entry.
 ```
 @misc{abdelkarim2020longtail,
-    title={Long-tail Visual Relationship Recognition with a Visiolinguistic Hubless Loss},
-    author={Sherif Abdelkarim and Panos Achlioptas and Jiaji Huang and Boyang Li and Kenneth Church and Mohamed Elhoseiny},
+    title={Exploring Long Tail Visual Relationship Recognition with Large Vocabulary},
+    author={Sherif Abdelkarim and Aniket Agarwal and Panos Achlioptas and Jun Chen and Jiaji Huang and Boyang Li and Kenneth Church and Mohamed Elhoseiny},
     year={2020},
     eprint={2004.00436},
     archivePrefix={arXiv},
