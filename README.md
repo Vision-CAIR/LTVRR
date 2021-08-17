@@ -1,4 +1,8 @@
 # Exploring Long Tail Visual Relationship Recognition with Large Vocabulary
+
+## Abstract
+Several approaches have been proposed in recent literature to alleviate the long-tail problem, mainly in object classification tasks. In this paper, we make the first large-scale study concerning the task of Long-Tail Visual Relationship Recognition (LTVRR). LTVRR aims at improving the learning of structured visual relationships that come from the long-tail (e.g., “\textit{rabbit grazing on grass}”). In this setup, the subject, relation, and object classes each follow a long-tail distribution. To begin our study and make a future benchmark for the community, we introduce two LTVRR-related benchmarks, dubbed VG8K-LT and GQA-LT, built upon the widely used Visual Genome and GQA datasets. We use these benchmarks to study the performance of several state-of-the-art long-tail models on the LTVRR setup. Lastly, we propose a visiolinguistic hubless (VilHub) loss and a Mixup augmentation technique adapted to LTVRR setup, dubbed as RelMix. Both VilHub and RelMix can be easily integrated on top of existing models and despite being simple, our results show that they can remarkably improve the performance, especially on tail classes.
+
 Watch our video below:
 
 [<img src="./examples/preview.png" width="50%">](https://youtu.be/ceEuCXr8Ow8)
@@ -8,7 +12,7 @@ Watch our video below:
 
 <p align="center">Example results from the GQA dataset.</p>
 
-This is a PyTorch implementation for [Exploring Long Tail Visual Relationship Recognition with Large Vocabulary](https://arxiv.org/abs/2004.00436).
+This is a PyTorch implementation for [Exploring Long Tail Visual Relationship Recognition with Large Vocabulary](https://arxiv.org/abs/2004.00436). Paper is accepted for ICCV 2021.
 
 This code is for the GQA-LT and VG8K-LT datasets.
 
