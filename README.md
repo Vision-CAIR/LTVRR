@@ -1,37 +1,8 @@
-# Exploring Long Tail Visual Relationship Recognition with Large Vocabulary
+# LTVRR Challenge
 
-## Abstract
-Several approaches have been proposed in recent literature to alleviate the long-tail problem, mainly in object classification tasks. In this paper, we make the first large-scale study concerning the task of Long-Tail Visual Relationship Recognition (LTVRR). LTVRR aims at improving the learning of structured visual relationships that come from the long-tail (e.g., “\textit{rabbit grazing on grass}”). In this setup, the subject, relation, and object classes each follow a long-tail distribution. To begin our study and make a future benchmark for the community, we introduce two LTVRR-related benchmarks, dubbed VG8K-LT and GQA-LT, built upon the widely used Visual Genome and GQA datasets. We use these benchmarks to study the performance of several state-of-the-art long-tail models on the LTVRR setup. Lastly, we propose a visiolinguistic hubless (VilHub) loss and a Mixup augmentation technique adapted to LTVRR setup, dubbed as RelMix. Both VilHub and RelMix can be easily integrated on top of existing models and despite being simple, our results show that they can remarkably improve the performance, especially on tail classes.
+This is a starter code for the [LTVRR challenge](https://ltvrr.github.io/challenge/) associated with the ICCV 2021 paper [Exploring Long Tail Visual Relationship Recognition with Large Vocabulary](https://arxiv.org/abs/2004.00436).
 
-Watch our video below:
-
-[<img src="./examples/preview.png" width="50%">](https://youtu.be/ceEuCXr8Ow8)
-
-![alt text](./examples/example2.png)
-![alt text](./examples/example1.png)
-
-<p align="center">Example results from the GQA dataset.</p>
-
-This is a PyTorch implementation for [Exploring Long Tail Visual Relationship Recognition with Large Vocabulary](https://arxiv.org/abs/2004.00436). Paper is accepted for ICCV 2021.
-
-This code is for the GQA-LT and VG8K-LT datasets.
-
-We borrowed the framework from [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) and [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) for this project, so there are a lot overlaps between these two and ours.
-
-## Benchmarking on GQA
-| Method                         |  Backbone         | many     | medium   | few       | all       |
-| :---                           |       :----:      |  :----:  |  :----:  |  :----:   |  :----:   |
-| Baseline \[1\]                 |  VGG16            | **70.5** | 36.2     | 3.5       | 51.9      |
-| Baseline \[1\] + ViLHub        |  VGG16            | 69.8     | **42.1** | **9.5**   | **53.9**  |
-| Focal Loss \[2\]               |  VGG16            | 69.6     | 38.0     | 4.7       | 52.1      |
-| Focal Loss \[2\] + ViLHub      |  VGG16            | **69.8**	| **41.7** | **8.1**   | **53.7**  |
-| WCE \[2\]                      |  VGG16            | **39.3**	| 36.5     | 16.2      | **35.5**  |
-| WCE + ViLHub \[2\]             |  VGG16            | 35.2	    | **39.5** | **18.8**  | 34.2      |
-
-
-\[1\] [Zhang et al. "Large-scale visual relationship understanding." Proceedings of the AAAI Conference on Artificial Intelligence. 2019.](https://wvvw.aaai.org/ojs/index.php/AAAI/article/view/4953)
-
-\[2\] [Lin et al. "Focal loss for dense object detection." Proceedings of the IEEE international conference on computer vision. 2017.](http://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf)
+This code is for the GQA-LT and VG8K-LT datasets. Below you can find instructions to run the code to train your own models and produce an output in the format that is required for the submission.
 
 ## Requirements
 * Python 3
@@ -143,26 +114,12 @@ DO NOT CHANGE anything in the provided config files(configs/xx/xxxx.yaml) even i
 ### GQA
 **NOTE:** May require at least 64GB RAM to evaluate on the GQA test set
 
-We use three evaluation metrics:
-1. Per-class accuracy (sbj, obj, rel)
-1. Overall accuracy (sbj, obj, rel)
-1. Overall triplet accuracy
-1. Accuracy over frequency bands (many, medium, few, and all) using exact matching
-1. Accuracy over frequency bands (many, medium, few, and all) using synset matching
-1. Average word similarity between GT and detection for \[word2vec_gn, word2vec_vg, lch, wup, lin, path, res, jcn] similarities
-
 ```
 python tools/test_net_rel.py --dataset gvqa --cfg configs/gvqa/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness.yaml --do_val --load_ckpt Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness/gvqa/Mar11-07-01-07_gpu210-18_step_with_prd_cls_v3/ckpt/best.pth  --use_gt_boxes --use_gt_labels --seed 0
 ```
 
 ### Visual Genome
 **NOTE:** May require at least 64GB RAM to evaluate on the Visual Genome test set
-
-We use three evaluation metrics:
-1. Per-class accuracy (sbj, obj, rel)
-1. Overall accuracy (sbj, obj, rel)
-1. Overall triplet accuracy
-1. Accuracy over frequency bands (many, medium, few, and all) using exact matching
 
 ```
 python tools/test_net_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_hubness.yaml --do_val --load_ckpt Outputs/e2e_relcnn_VGG16_8_epochs_gvqa_y_loss_only_hubness/vg8k/Mar11-07-01-07_gpu210-18_step_with_prd_cls_v3/ckpt/best.pth  --use_gt_boxes --use_gt_labels --seed 0
@@ -175,6 +132,8 @@ The section provides the command-line arguments to train our relationship detect
 DO NOT CHANGE variable `NUM_GPUS` in the provided config files(configs/xx/xxxx.yaml) even if you want to train with less or more than 8 GPUs. Use the environment variable `CUDA_VISIBLE_DEVICES` to control how many and which GPUs to use.
 
 With the following command lines, the training results (models and logs) should be in `$ROOT/Outputs/xxx/` where `xxx` is the .yaml file name used in the command without the ".yaml" extension. If you want to test with your trained models, simply run the test commands described above by setting `--load_ckpt` as the path of your trained models.
+
+<b> These are the Base case config files that you can use to kickstart your submissions </b>
 
 
 ### GQA
@@ -214,21 +173,3 @@ python tools/train_net_step_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_
 
 To run models with different ViL-Hubless scales create a new config file under `configs/vg8k/` (by copying the file `configs/vg8k/e2e_relcnn_VGG16_8_epochs_vg8k_y_loss_only_hubness.yaml`) and change the variable `TRAIN.HUBNESS_SCALE` to the desired value.
 Also confirm the ViL-Hubless loss is activated by making sure the variable `TRAIN.HUBNESS` is set to `True`
-
-
-## Acknowledgements
-This repository uses code based on the [Large-scale Visual Relationship Understanding](https://github.com/jz462/Large-Scale-VRD.pytorch) source code by Zhang Ji, 
-as well as code from the [Detectron.pytorch](https://github.com/roytseng-tw/Detectron.pytorch) repository by Roy Tseng.
-
-## Citing
-If you use this code in your research, please use the following BibTeX entry.
-```
-@misc{abdelkarim2020longtail,
-    title={Exploring Long Tail Visual Relationship Recognition with Large Vocabulary},
-    author={Sherif Abdelkarim and Aniket Agarwal and Panos Achlioptas and Jun Chen and Jiaji Huang and Boyang Li and Kenneth Church and Mohamed Elhoseiny},
-    year={2020},
-    eprint={2004.00436},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV}
-}
-```
