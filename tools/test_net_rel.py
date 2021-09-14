@@ -16,7 +16,7 @@ from core.config import cfg, merge_cfg_from_file, merge_cfg_from_list, assert_an
 
 import utils.logging
 from datasets import task_evaluation_rel as task_evaluation
-from evaluation.generate_detections_csv import generate_csv_file_from_det_obj, generate_topk_csv_from_det_obj, generate_boxes_csv_from_det_obj
+from evaluation.generate_detections_csv import generate_csv_file_from_det_obj, generate_topk_csv_from_det_obj, generate_boxes_csv_from_det_obj, generate_csv_file_for_submission
 from evaluation.frequency_based_analysis_of_methods import get_metrics_from_csv, get_many_medium_few_scores, get_wordsim_metrics_from_csv
 
 import numpy as np
@@ -243,24 +243,24 @@ if __name__ == '__main__':
     #all_results = all_results[0]
     freq_prd = (np.zeros(cfg.MODEL.NUM_PRD_CLASSES))
     freq_obj = (np.zeros(cfg.MODEL.NUM_CLASSES))
-    generate_csv_file_from_det_obj(all_results, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
+    generate_csv_file_for_submission(all_results, csv_file, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
     logger.info('Saved CSV to: ' + csv_file)
-    get_metrics_from_csv(csv_file, get_mr=True)
+    # get_metrics_from_csv(csv_file, get_mr=True)
 
-    cutoffs = [args.cutoff_medium, args.cutoff_many]
-    get_many_medium_few_scores(csv_file, cutoffs, cfg.DATASET, data_dir, ann_dir, syn=True)
+    # cutoffs = [args.cutoff_medium, args.cutoff_many]
+    # get_many_medium_few_scores(csv_file, cutoffs, cfg.DATASET, data_dir, ann_dir, syn=True)
 
-    csv_file_topk = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_topk.csv')
-    generate_topk_csv_from_det_obj(all_results, csv_file_topk, obj_categories, prd_categories, 250)
-    logger.info('Saved topk CSV to: ' + csv_file_topk)
+    # csv_file_topk = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_topk.csv')
+    # generate_topk_csv_from_det_obj(all_results, csv_file_topk, obj_categories, prd_categories, 250)
+    # logger.info('Saved topk CSV to: ' + csv_file_topk)
 
-    csv_file_boxes = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_boxes.csv')
-    generate_boxes_csv_from_det_obj(all_results, csv_file_boxes, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
-    logger.info('Saved boxes CSV to: ' + csv_file_boxes)
+    # csv_file_boxes = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_boxes.csv')
+    # generate_boxes_csv_from_det_obj(all_results, csv_file_boxes, obj_categories, prd_categories, obj_freq_dict, prd_freq_dict)
+    # logger.info('Saved boxes CSV to: ' + csv_file_boxes)
 
-    if cfg.DATASET.find('gvqa') >= 0:
-        from evaluation.add_word_similarity_to_csv import add_similarity_to_detections
-        logger.info('Adding word similarity to CSV')
-        add_similarity_to_detections(csv_file)
-        csv_file_w = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_wrd_sim.csv')
-        get_wordsim_metrics_from_csv(csv_file_w)
+    # if cfg.DATASET.find('gvqa') >= 0:
+    #     from evaluation.add_word_similarity_to_csv import add_similarity_to_detections
+    #     logger.info('Adding word similarity to CSV')
+    #     add_similarity_to_detections(csv_file)
+    #     csv_file_w = os.path.join(os.path.dirname(csv_file), 'rel_detections_gt_boxes_prdcls_wrd_sim.csv')
+    #     get_wordsim_metrics_from_csv(csv_file_w)
