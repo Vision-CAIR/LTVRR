@@ -14,7 +14,7 @@
 ##############################################################################
 
 """Evaluation interface for supported tasks (box detection, instance
-segmentation, ...).
+segmentation, keypoint detection, ...).
 
 
 Results are stored in an OrderedDict with the following nested structure:
@@ -24,7 +24,7 @@ Results are stored in an OrderedDict with the following nested structure:
     <metric>: <val>
 
 <dataset> is any valid dataset (e.g., 'coco_2014_minival')
-<task> is in ['box', 'mask', 'box_proposal']
+<task> is in ['box', 'mask', 'keypoint', 'box_proposal']
 <metric> can be ['AP', 'AP50', 'AP75', 'APs', 'APm', 'APl', 'AR@1000',
                  'ARs@1000', 'ARm@1000', 'ARl@1000', ...]
 <val> is a floating point number
@@ -42,7 +42,9 @@ import pprint
 
 from core.config import cfg
 from utils.logging import send_email
+import datasets.cityscapes_json_dataset_evaluator as cs_json_dataset_evaluator
 import datasets.json_dataset_evaluator as json_dataset_evaluator
+import datasets.voc_dataset_evaluator as voc_dataset_evaluator
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,7 @@ def evaluate_all(
     dataset, all_boxes, all_segms, all_keyps, output_dir, use_matlab=False
 ):
     """Evaluate "all" tasks, where "all" includes box detection, instance
-    segmentation.
+    segmentation, and keypoint detection.
     """
     all_results = evaluate_boxes(
         dataset, all_boxes, output_dir, use_matlab=use_matlab
@@ -61,7 +63,10 @@ def evaluate_all(
         results = evaluate_masks(dataset, all_boxes, all_segms, output_dir)
         all_results[dataset.name].update(results[dataset.name])
         logger.info('Evaluating segmentations is done!')
-    
+    if cfg.MODEL.KEYPOINTS_ON:
+        results = evaluate_keypoints(dataset, all_boxes, all_keyps, output_dir)
+        all_results[dataset.name].update(results[dataset.name])
+        logger.info('Evaluating keypoints is done!')
     return all_results
 
 
@@ -74,6 +79,19 @@ def evaluate_boxes(dataset, all_boxes, output_dir, use_matlab=False):
             dataset, all_boxes, output_dir, use_salt=not_comp, cleanup=not_comp
         )
         box_results = _coco_eval_to_box_results(coco_eval)
+    elif _use_cityscapes_evaluator(dataset):
+        logger.warn('Cityscapes bbox evaluated using COCO metrics/conversions')
+        coco_eval = json_dataset_evaluator.evaluate_boxes(
+            dataset, all_boxes, output_dir, use_salt=not_comp, cleanup=not_comp
+        )
+        box_results = _coco_eval_to_box_results(coco_eval)
+    elif _use_voc_evaluator(dataset):
+        # For VOC, always use salt and always cleanup because results are
+        # written to the shared VOCdevkit results directory
+        voc_eval = voc_dataset_evaluator.evaluate_boxes(
+            dataset, all_boxes, output_dir, use_matlab=use_matlab
+        )
+        box_results = _voc_eval_to_box_results(voc_eval)
     else:
         raise NotImplementedError(
             'No evaluator for dataset: {}'.format(dataset.name)
@@ -95,11 +113,39 @@ def evaluate_masks(dataset, all_boxes, all_segms, output_dir):
             cleanup=not_comp
         )
         mask_results = _coco_eval_to_mask_results(coco_eval)
+    elif _use_cityscapes_evaluator(dataset):
+        cs_eval = cs_json_dataset_evaluator.evaluate_masks(
+            dataset,
+            all_boxes,
+            all_segms,
+            output_dir,
+            use_salt=not_comp,
+            cleanup=not_comp
+        )
+        mask_results = _cs_eval_to_mask_results(cs_eval)
     else:
         raise NotImplementedError(
             'No evaluator for dataset: {}'.format(dataset.name)
         )
     return OrderedDict([(dataset.name, mask_results)])
+
+
+def evaluate_keypoints(dataset, all_boxes, all_keyps, output_dir):
+    """Evaluate human keypoint detection (i.e., 2D pose estimation)."""
+    logger.info('Evaluating detections')
+    not_comp = not cfg.TEST.COMPETITION_MODE
+    assert dataset.name.startswith('keypoints_coco_'), \
+        'Only COCO keypoints are currently supported'
+    coco_eval = json_dataset_evaluator.evaluate_keypoints(
+        dataset,
+        all_boxes,
+        all_keyps,
+        output_dir,
+        use_salt=not_comp,
+        cleanup=not_comp
+    )
+    keypoint_results = _coco_eval_to_keypoint_results(coco_eval)
+    return OrderedDict([(dataset.name, keypoint_results)])
 
 
 def evaluate_box_proposals(dataset, roidb):
@@ -201,6 +247,16 @@ def _use_json_dataset_evaluator(dataset):
     return dataset.name.find('coco_') > -1 or cfg.TEST.FORCE_JSON_DATASET_EVAL
 
 
+def _use_cityscapes_evaluator(dataset):
+    """Check if the dataset uses the Cityscapes dataset evaluator."""
+    return dataset.name.find('cityscapes_') > -1
+
+
+def _use_voc_evaluator(dataset):
+    """Check if the dataset uses the PASCAL VOC dataset evaluator."""
+    return dataset.name[:4] == 'voc_'
+
+
 # Indices in the stats array for COCO boxes and masks
 COCO_AP = 0
 COCO_AP50 = 1
@@ -208,6 +264,9 @@ COCO_AP75 = 2
 COCO_APS = 3
 COCO_APM = 4
 COCO_APL = 5
+# Slight difference for keypoints
+COCO_KPS_APM = 3
+COCO_KPS_APL = 4
 
 
 # ---------------------------------------------------------------------------- #
@@ -237,6 +296,18 @@ def _coco_eval_to_mask_results(coco_eval):
         res['mask']['APs'] = s[COCO_APS]
         res['mask']['APm'] = s[COCO_APM]
         res['mask']['APl'] = s[COCO_APL]
+    return res
+
+
+def _coco_eval_to_keypoint_results(coco_eval):
+    res = _empty_keypoint_results()
+    if coco_eval is not None:
+        s = coco_eval.stats
+        res['keypoint']['AP'] = s[COCO_AP]
+        res['keypoint']['AP50'] = s[COCO_AP50]
+        res['keypoint']['AP75'] = s[COCO_AP75]
+        res['keypoint']['APm'] = s[COCO_KPS_APM]
+        res['keypoint']['APl'] = s[COCO_KPS_APL]
     return res
 
 
@@ -280,6 +351,22 @@ def _empty_mask_results():
             ]
         )
     })
+
+
+def _empty_keypoint_results():
+    return OrderedDict({
+        'keypoint':
+        OrderedDict(
+            [
+                ('AP', -1),
+                ('AP50', -1),
+                ('AP75', -1),
+                ('APm', -1),
+                ('APl', -1),
+            ]
+        )
+    })
+
 
 def _empty_box_proposal_results():
     return OrderedDict({

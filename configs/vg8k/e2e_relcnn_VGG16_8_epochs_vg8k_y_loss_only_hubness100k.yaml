@@ -11,7 +11,7 @@ MODEL:
   NORM_SCALE: 10.0
   # LOSS: focal
   USE_SEM_CONCAT: False
-NUM_GPUS: 8
+NUM_GPUS: 4
 SOLVER:
   WEIGHT_DECAY: 0.0001
   LR_POLICY: steps_with_decay

@@ -216,11 +216,11 @@ class JsonDataset(object):
         height = entry['height']
         for obj in objs:
             # crowd regions are RLE encoded and stored as dicts
-            # if isinstance(obj['segmentation'], list):
-            #     # Valid polygons have >= 3 points, so require >= 6 coordinates
-            #     obj['segmentation'] = [
-            #         p for p in obj['segmentation'] if len(p) >= 6
-            #     ]
+            if isinstance(obj['segmentation'], list):
+                # Valid polygons have >= 3 points, so require >= 6 coordinates
+                obj['segmentation'] = [
+                    p for p in obj['segmentation'] if len(p) >= 6
+                ]
             if obj['area'] < cfg.TRAIN.GT_MIN_AREA:
                 continue
             if 'ignore' in obj and obj['ignore'] == 1:
@@ -234,7 +234,7 @@ class JsonDataset(object):
             if obj['area'] > 0 and x2 > x1 and y2 > y1:
                 obj['clean_bbox'] = [x1, y1, x2, y2]
                 valid_objs.append(obj)
-                # valid_segms.append(obj['segmentation'])
+                valid_segms.append(obj['segmentation'])
         num_valid_objs = len(valid_objs)
 
         boxes = np.zeros((num_valid_objs, 4), dtype=entry['boxes'].dtype)

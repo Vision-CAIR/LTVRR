@@ -26,7 +26,11 @@ class RoIAlignFunction(Function):
                                              self.spatial_scale, features,
                                              rois, output)
         else:
-            raise NotImplementedError
+            roi_align.roi_align_forward(self.aligned_height,
+                                        self.aligned_width,
+                                        self.spatial_scale, features,
+                                        rois, output)
+#            raise NotImplementedError
 
         return output
 
@@ -36,7 +40,7 @@ class RoIAlignFunction(Function):
         batch_size, num_channels, data_height, data_width = self.feature_size
 
         grad_input = self.rois.new(batch_size, num_channels, data_height,
-                                   data_width).zero_()
+                                  data_width).zero_()
         roi_align.roi_align_backward_cuda(self.aligned_height,
                                           self.aligned_width,
                                           self.spatial_scale, grad_output,

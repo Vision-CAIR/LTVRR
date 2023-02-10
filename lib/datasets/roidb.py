@@ -25,6 +25,8 @@ import logging
 import numpy as np
 
 import utils.boxes as box_utils
+import utils.keypoints as keypoint_utils
+import utils.segms as segm_utils
 import utils.blob as blob_utils
 from core.config import cfg
 from .json_dataset import JsonDataset
@@ -96,11 +98,19 @@ def extend_with_flipped_entries(roidb, dataset):
         boxes[:, 2] = width - oldx1 - 1
         assert (boxes[:, 2] >= boxes[:, 0]).all()
         flipped_entry = {}
-        dont_copy = ('boxes', 'flipped')
+        dont_copy = ('boxes', 'segms', 'gt_keypoints', 'flipped')
         for k, v in entry.items():
             if k not in dont_copy:
                 flipped_entry[k] = v
         flipped_entry['boxes'] = boxes
+        flipped_entry['segms'] = segm_utils.flip_segms(
+            entry['segms'], entry['height'], entry['width']
+        )
+        if dataset.keypoints is not None:
+            flipped_entry['gt_keypoints'] = keypoint_utils.flip_keypoints(
+                dataset.keypoints, dataset.keypoint_flip_map,
+                entry['gt_keypoints'], entry['width']
+            )
         flipped_entry['flipped'] = True
         flipped_roidb.append(flipped_entry)
     roidb.extend(flipped_roidb)
@@ -121,7 +131,9 @@ def filter_for_training(roidb):
                            (overlaps >= cfg.TRAIN.BG_THRESH_LO))[0]
         # image is only valid if such boxes exist
         valid = len(fg_inds) > 0 or len(bg_inds) > 0
-        
+        if cfg.MODEL.KEYPOINTS_ON:
+            # If we're training for keypoints, exclude images with no keypoints
+            valid = valid and entry['has_visible_keypoints']
         return valid
 
     num = len(roidb)

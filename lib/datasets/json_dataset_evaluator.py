@@ -315,3 +315,116 @@ def evaluate_box_proposals(
     ar = recalls.mean()
     return {'ar': ar, 'recalls': recalls, 'thresholds': thresholds,
             'gt_overlaps': gt_overlaps, 'num_pos': num_pos}
+
+
+def evaluate_keypoints(
+    json_dataset,
+    all_boxes,
+    all_keypoints,
+    output_dir,
+    use_salt=True,
+    cleanup=False
+):
+    res_file = os.path.join(
+        output_dir, 'keypoints_' + json_dataset.name + '_results'
+    )
+    if use_salt:
+        res_file += '_{}'.format(str(uuid.uuid4()))
+    res_file += '.json'
+    _write_coco_keypoint_results_file(
+        json_dataset, all_boxes, all_keypoints, res_file)
+    # Only do evaluation on non-test sets (annotations are undisclosed on test)
+    if json_dataset.name.find('test') == -1:
+        coco_eval = _do_keypoint_eval(json_dataset, res_file, output_dir)
+    else:
+        coco_eval = None
+    # Optionally cleanup results json file
+    if cleanup:
+        os.remove(res_file)
+    return coco_eval
+
+
+def _write_coco_keypoint_results_file(
+    json_dataset, all_boxes, all_keypoints, res_file
+):
+    results = []
+    for cls_ind, cls in enumerate(json_dataset.classes):
+        if cls == '__background__':
+            continue
+        if cls_ind >= len(all_keypoints):
+            break
+        logger.info(
+            'Collecting {} results ({:d}/{:d})'.format(
+                cls, cls_ind, len(all_keypoints) - 1))
+        cat_id = json_dataset.category_to_id_map[cls]
+        results.extend(_coco_kp_results_one_category(
+            json_dataset, all_boxes[cls_ind], all_keypoints[cls_ind], cat_id))
+    logger.info(
+        'Writing keypoint results json to: {}'.format(
+            os.path.abspath(res_file)))
+    with open(res_file, 'w') as fid:
+        json.dump(results, fid)
+
+
+def _coco_kp_results_one_category(json_dataset, boxes, kps, cat_id):
+    results = []
+    image_ids = json_dataset.COCO.getImgIds()
+    image_ids.sort()
+    assert len(kps) == len(image_ids)
+    assert len(boxes) == len(image_ids)
+    use_box_score = False
+    if cfg.KRCNN.KEYPOINT_CONFIDENCE == 'logit':
+        # This is ugly; see utils.keypoints.heatmap_to_keypoints for the magic
+        # indexes
+        score_index = 2
+    elif cfg.KRCNN.KEYPOINT_CONFIDENCE == 'prob':
+        score_index = 3
+    elif cfg.KRCNN.KEYPOINT_CONFIDENCE == 'bbox':
+        use_box_score = True
+    else:
+        raise ValueError(
+            'KRCNN.KEYPOINT_CONFIDENCE must be "logit", "prob", or "bbox"')
+    for i, image_id in enumerate(image_ids):
+        if len(boxes[i]) == 0:
+            continue
+        kps_dets = kps[i]
+        scores = boxes[i][:, -1].astype(np.float)
+        if len(kps_dets) == 0:
+            continue
+        for j in range(len(kps_dets)):
+            xy = []
+
+            kps_score = 0
+            for k in range(kps_dets[j].shape[1]):
+                xy.append(float(kps_dets[j][0, k]))
+                xy.append(float(kps_dets[j][1, k]))
+                xy.append(1)
+                if not use_box_score:
+                    kps_score += kps_dets[j][score_index, k]
+
+            if use_box_score:
+                kps_score = scores[j]
+            else:
+                kps_score /= kps_dets[j].shape[1]
+
+            results.extend([{'image_id': image_id,
+                             'category_id': cat_id,
+                             'keypoints': xy,
+                             'score': kps_score}])
+    return results
+
+
+def _do_keypoint_eval(json_dataset, res_file, output_dir):
+    ann_type = 'keypoints'
+    imgIds = json_dataset.COCO.getImgIds()
+    imgIds.sort()
+    coco_dt = json_dataset.COCO.loadRes(res_file)
+    coco_eval = COCOeval(json_dataset.COCO, coco_dt, ann_type)
+    coco_eval.params.imgIds = imgIds
+    coco_eval.evaluate()
+    coco_eval.accumulate()
+    eval_file = os.path.join(output_dir, 'keypoint_results.pkl')
+    save_object(coco_eval, eval_file)
+    logger.info('Wrote json eval results to: {}'.format(eval_file))
+    coco_eval.summarize()
+    return coco_eval

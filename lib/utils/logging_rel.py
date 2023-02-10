@@ -76,6 +76,7 @@ class SmoothedValue(object):
         self.count = 0
 
     def AddValue(self, value):
+        value = value.cpu().detach().numpy()
         self.deque.append(value)
         self.series.append(value)
         self.count += 1

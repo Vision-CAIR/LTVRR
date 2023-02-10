@@ -26,7 +26,6 @@ int BilinearSamplerBHWD_updateOutput(THFloatTensor *inputImages, THFloatTensor *
   int grids_strideHeight = THFloatTensor_stride(grids, 1);
   int grids_strideWidth = THFloatTensor_stride(grids, 2);
 
-
   real *inputImages_data, *output_data, *grids_data;
   inputImages_data = THFloatTensor_data(inputImages);
   output_data = THFloatTensor_data(output);
@@ -114,13 +113,13 @@ int BilinearSamplerBHWD_updateGradInput(THFloatTensor *inputImages, THFloatTenso
   int gradOutput_width = THFloatTensor_size(gradOutput, 2);
   int inputImages_channels = THFloatTensor_size(inputImages, 3);
 
-  int inputImages_strideBatch = THFloatTensor_stride(inputImages, 0);
-  int inputImages_strideHeight = THFloatTensor_stride(inputImages, 1);
-  int inputImages_strideWidth = THFloatTensor_stride(inputImages, 2);
-
   int gradOutput_strideBatch = THFloatTensor_stride(gradOutput, 0);
   int gradOutput_strideHeight = THFloatTensor_stride(gradOutput, 1);
   int gradOutput_strideWidth = THFloatTensor_stride(gradOutput, 2);
+
+  int inputImages_strideBatch = THFloatTensor_stride(inputImages, 0);
+  int inputImages_strideHeight = THFloatTensor_stride(inputImages, 1);
+  int inputImages_strideWidth = THFloatTensor_stride(inputImages, 2);
 
   int gradInputImages_strideBatch = THFloatTensor_stride(gradInputImages, 0);
   int gradInputImages_strideHeight = THFloatTensor_stride(gradInputImages, 1);
@@ -182,12 +181,6 @@ int BilinearSamplerBHWD_updateGradInput(THFloatTensor *inputImages, THFloatTenso
         real topRightDotProduct = 0;
         real bottomLeftDotProduct = 0;
         real bottomRightDotProduct = 0;
-
-        real v=0;
-        real inTopLeft=0;
-        real inTopRight=0;
-        real inBottomLeft=0;
-        real inBottomRight=0;
 
         // we are careful with the boundaries
         bool topLeftIsIn = xInTopLeft >= 0 && xInTopLeft <= inputImages_width-1 && yInTopLeft >= 0 && yInTopLeft <= inputImages_height-1;
@@ -256,10 +249,9 @@ int BilinearSamplerBCHW_updateOutput(THFloatTensor *inputImages, THFloatTensor *
 
   int output_strideBatch = THFloatTensor_stride(output, 0);
   int output_strideHeight = THFloatTensor_stride(output, 2);
-  int output_strideWidth = THFloatTensor_stride(output, 3);
+  int output_strideWidth = THFloatTensor_stride(output, 3);  
   int output_strideChannel = THFloatTensor_stride(output, 1);
     
-
   int inputImages_strideBatch = THFloatTensor_stride(inputImages, 0);
   int inputImages_strideHeight = THFloatTensor_stride(inputImages, 2);
   int inputImages_strideWidth = THFloatTensor_stride(inputImages, 3);
@@ -355,9 +347,9 @@ int BilinearSamplerBCHW_updateGradInput(THFloatTensor *inputImages, THFloatTenso
   int batchsize = THFloatTensor_size(inputImages, 0);
   int inputImages_height = THFloatTensor_size(inputImages, 2);
   int inputImages_width = THFloatTensor_size(inputImages, 3);
-  int inputImages_channels = THFloatTensor_size(inputImages, 1);
   int gradOutput_height = THFloatTensor_size(gradOutput, 2);
   int gradOutput_width = THFloatTensor_size(gradOutput, 3);
+  int inputImages_channels = THFloatTensor_size(inputImages, 1);
 
   int gradOutput_strideBatch = THFloatTensor_stride(gradOutput, 0);
   int gradOutput_strideHeight = THFloatTensor_stride(gradOutput, 2);
@@ -368,7 +360,7 @@ int BilinearSamplerBCHW_updateGradInput(THFloatTensor *inputImages, THFloatTenso
   int inputImages_strideHeight = THFloatTensor_stride(inputImages, 2);
   int inputImages_strideWidth = THFloatTensor_stride(inputImages, 3);
   int inputImages_strideChannel = THFloatTensor_stride(inputImages, 1);
-
+    
   int gradInputImages_strideBatch = THFloatTensor_stride(gradInputImages, 0);
   int gradInputImages_strideHeight = THFloatTensor_stride(gradInputImages, 2);
   int gradInputImages_strideWidth = THFloatTensor_stride(gradInputImages, 3);
@@ -433,12 +425,6 @@ int BilinearSamplerBCHW_updateGradInput(THFloatTensor *inputImages, THFloatTenso
         real bottomLeftDotProduct = 0;
         real bottomRightDotProduct = 0;
 
-        real v=0;
-        real inTopLeft=0;
-        real inTopRight=0;
-        real inBottomLeft=0;
-        real inBottomRight=0;
-
         // we are careful with the boundaries
         bool topLeftIsIn = xInTopLeft >= 0 && xInTopLeft <= inputImages_width-1 && yInTopLeft >= 0 && yInTopLeft <= inputImages_height-1;
         bool topRightIsIn = xInTopLeft+1 >= 0 && xInTopLeft+1 <= inputImages_width-1 && yInTopLeft >= 0 && yInTopLeft <= inputImages_height-1;
@@ -495,3 +481,5 @@ int BilinearSamplerBCHW_updateGradInput(THFloatTensor *inputImages, THFloatTenso
 
   return 1;
 }
+
+

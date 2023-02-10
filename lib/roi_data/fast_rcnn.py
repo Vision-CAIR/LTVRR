@@ -26,6 +26,8 @@ import numpy as np
 import numpy.random as npr
 
 from core.config import cfg
+import roi_data.keypoint_rcnn
+import roi_data.mask_rcnn
 import utils.boxes as box_utils
 import utils.blob as blob_utils
 import utils.fpn as fpn_utils
@@ -41,8 +43,6 @@ def get_fast_rcnn_blob_names(is_training=True):
         # labels_int32 blob: R categorical labels in [0, ..., K] for K
         # foreground classes plus background
         blob_names += ['labels_int32']
-        # if cfg.MODEL.USE_SE_LOSS:
-        #     blob_names += ['bce_labels']
     if is_training:
         # bbox_targets blob: R bounding-box regression targets with 4
         # targets per class

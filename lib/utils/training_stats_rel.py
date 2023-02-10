@@ -195,6 +195,7 @@ class TrainingStats(object):
         eta_seconds = self.iter_timer.average_time * (
             cfg.SOLVER.MAX_ITER - cur_iter
         )
+        print(self.smoothed_total_loss)
         eta = str(datetime.timedelta(seconds=int(eta_seconds)))
         stats = OrderedDict(
             iter=cur_iter + 1,  # 1-indexed

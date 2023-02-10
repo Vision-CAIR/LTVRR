@@ -11,6 +11,7 @@ from torch._six import int_classes as _int_classes
 from core.config import cfg
 from roi_data.minibatch import get_minibatch
 import utils.blob as blob_utils
+# from model.rpn.bbox_transform import bbox_transform_inv, clip_boxes
 
 
 class RoiDataLoader(data.Dataset):

@@ -17,9 +17,11 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 from core.config import cfg
-from model.roi_pooling.functions.roi_pool import RoIPoolFunction
-from model.roi_crop.functions.roi_crop import RoICropFunction
-from modeling.roi_xfrom.roi_align.functions.roi_align import RoIAlignFunction
+from model.roi_layers.roi_pool import ROIPool
+from model.roi_layers.roi_align import ROIAlign
+#from model.roi_pooling.functions.roi_pool import RoIPoolFunction
+#from model.roi_crop.functions.roi_crop import RoICropFunction
+#from modeling.roi_xfrom.roi_align.functions.roi_align import RoIAlignFunction
 import modeling.rpn_heads as rpn_heads
 import modeling.fast_rcnn_heads as fast_rcnn_heads
 import modeling.relpn_heads as relpn_heads
@@ -917,7 +919,7 @@ class Generalized_RCNN(nn.Module):
           - Use of FPN or not
           - Specifics of the transform method
         """
-        assert method in {'RoIPoolF', 'RoICrop', 'RoIAlign'}, \
+        assert method in {'RoIPoolF',  'RoIAlign'}, \
             'Unknown pooling method: {}'.format(method)
 
         if isinstance(blobs_in, list):
@@ -935,19 +937,10 @@ class Generalized_RCNN(nn.Module):
                     rois = Variable(torch.from_numpy(rpn_ret[bl_rois])).cuda(device_id)
                     if method == 'RoIPoolF':
                         # Warning!: Not check if implementation matches Detectron
-                        xform_out = RoIPoolFunction(resolution, resolution, sc)(bl_in, rois)
-                    elif method == 'RoICrop':
-                        # Warning!: Not check if implementation matches Detectron
-                        grid_xy = net_utils.affine_grid_gen(
-                            rois, bl_in.size()[2:], self.grid_size)
-                        grid_yx = torch.stack(
-                            [grid_xy.data[:, :, :, 1], grid_xy.data[:, :, :, 0]], 3).contiguous()
-                        xform_out = RoICropFunction()(bl_in, Variable(grid_yx).detach())
-                        if cfg.CROP_RESIZE_WITH_MAX_POOL:
-                            xform_out = F.max_pool2d(xform_out, 2, 2)
+                        xform_out = ROIPool((resolution, resolution), sc)(bl_in, rois)
                     elif method == 'RoIAlign':
-                        xform_out = RoIAlignFunction(
-                            resolution, resolution, sc, sampling_ratio)(bl_in, rois)
+                        xform_out = ROIAlign(
+                            (resolution, resolution), sc, sampling_ratio)(bl_in, rois)
                     bl_out_list.append(xform_out)
 
             # The pooled features from all levels are concatenated along the
@@ -968,17 +961,10 @@ class Generalized_RCNN(nn.Module):
             device_id = blobs_in.get_device()
             rois = Variable(torch.from_numpy(rpn_ret[blob_rois])).cuda(device_id)
             if method == 'RoIPoolF':
-                xform_out = RoIPoolFunction(resolution, resolution, spatial_scale)(blobs_in, rois)
-            elif method == 'RoICrop':
-                grid_xy = net_utils.affine_grid_gen(rois, blobs_in.size()[2:], self.grid_size)
-                grid_yx = torch.stack(
-                    [grid_xy.data[:, :, :, 1], grid_xy.data[:, :, :, 0]], 3).contiguous()
-                xform_out = RoICropFunction()(blobs_in, Variable(grid_yx).detach())
-                if cfg.CROP_RESIZE_WITH_MAX_POOL:
-                    xform_out = F.max_pool2d(xform_out, 2, 2)
+                xform_out = ROIPool((resolution, resolution), spatial_scale)(blobs_in, rois)
             elif method == 'RoIAlign':
-                xform_out = RoIAlignFunction(
-                    resolution, resolution, spatial_scale, sampling_ratio)(blobs_in, rois)
+                xform_out = ROIAlign(
+                    (resolution, resolution), spatial_scale, sampling_ratio)(blobs_in, rois)
 
         return xform_out
 

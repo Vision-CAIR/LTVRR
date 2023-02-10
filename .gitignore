@@ -19,3 +19,6 @@ lib/utils/*.c
 
 # idea files
 .idea/
+
+# Jupyter Notebook
+.ipynb_checkpoints

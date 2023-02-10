@@ -1,0 +1,14 @@
+matplotlib
+numpy
+scipy
+pandas
+opencv-python
+scikit-learn
+pyyaml
+packaging
+pycocotools
+tensorboardX
+tqdm
+pillow
+scikit-image
+gensim==3.8.0

@@ -6,8 +6,7 @@ import re
 import torch
 
 
-# add skip layers
-def load_detectron_weight(net, detectron_weight_file, skip_layers=None):
+def load_detectron_weight(net, detectron_weight_file):
     name_mapping, orphan_in_detectron = net.detectron_weight_mapping
 
     with open(detectron_weight_file, 'rb') as fp:
@@ -19,14 +18,11 @@ def load_detectron_weight(net, detectron_weight_file, skip_layers=None):
     for p_name, p_tensor in params.items():
         d_name = name_mapping[p_name]
         if isinstance(d_name, str):  # maybe str, None or True
-            if skip_layers is not None and \
-                any([d_name.find(s) >= 0 for s in skip_layers]):
-                continue
             p_tensor.copy_(torch.Tensor(src_blobs[d_name]))
 
 
 def resnet_weights_name_pattern():
-    pattern = re.compile(r"conv1_w|conv1_gn_[sb]|res_conv1_.+|res\d_\d_.+")
+    pattern = re.compile(r"conv1_w|conv1_gn_[sb]|res_conv1_.+|res\d+_\d+_.+")
     return pattern
 
 

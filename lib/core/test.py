@@ -44,6 +44,7 @@ import utils.boxes as box_utils
 import utils.blob as blob_utils
 import utils.fpn as fpn_utils
 import utils.image as image_utils
+import utils.keypoints as keypoint_utils
 
 
 def im_detect_all(model, im, box_proposals=None, timers=None):
@@ -78,8 +79,33 @@ def im_detect_all(model, im, box_proposals=None, timers=None):
     scores, boxes, cls_boxes = box_results_with_nms_and_limit(scores, boxes)
     timers['misc_bbox'].toc()
 
-    cls_segms = None
-    cls_keyps = None
+    if cfg.MODEL.MASK_ON and boxes.shape[0] > 0:
+        timers['im_detect_mask'].tic()
+        if cfg.TEST.MASK_AUG.ENABLED:
+            masks = im_detect_mask_aug(model, im, boxes, im_scale, blob_conv)
+        else:
+            masks = im_detect_mask(model, im_scale, boxes, blob_conv)
+        timers['im_detect_mask'].toc()
+
+        timers['misc_mask'].tic()
+        cls_segms = segm_results(cls_boxes, masks, boxes, im.shape[0], im.shape[1])
+        timers['misc_mask'].toc()
+    else:
+        cls_segms = None
+
+    if cfg.MODEL.KEYPOINTS_ON and boxes.shape[0] > 0:
+        timers['im_detect_keypoints'].tic()
+        if cfg.TEST.KPS_AUG.ENABLED:
+            heatmaps = im_detect_keypoints_aug(model, im, boxes, im_scale, blob_conv)
+        else:
+            heatmaps = im_detect_keypoints(model, im_scale, boxes, blob_conv)
+        timers['im_detect_keypoints'].toc()
+
+        timers['misc_keypoints'].tic()
+        cls_keyps = keypoint_results(cls_boxes, heatmaps, boxes)
+        timers['misc_keypoints'].toc()
+    else:
+        cls_keyps = None
 
     return cls_boxes, cls_segms, cls_keyps
 
@@ -499,6 +525,182 @@ def im_detect_mask_aspect_ratio(model, im, aspect_ratio, boxes, hflip=False):
     return masks_ar
 
 
+def im_detect_keypoints(model, im_scale, boxes, blob_conv):
+    """Infer instance keypoint poses. This function must be called after
+    im_detect_bbox as it assumes that the Caffe2 workspace is already populated
+    with the necessary blobs.
+
+    Arguments:
+        model (DetectionModelHelper): the detection model to use
+        im_scale (list): image blob scales as returned by im_detect_bbox
+        boxes (ndarray): R x 4 array of bounding box detections (e.g., as
+            returned by im_detect_bbox)
+
+    Returns:
+        pred_heatmaps (ndarray): R x J x M x M array of keypoint location
+            logits (softmax inputs) for each of the J keypoint types output
+            by the network (must be processed by keypoint_results to convert
+            into point predictions in the original image coordinate space)
+    """
+    M = cfg.KRCNN.HEATMAP_SIZE
+    if boxes.shape[0] == 0:
+        pred_heatmaps = np.zeros((0, cfg.KRCNN.NUM_KEYPOINTS, M, M), np.float32)
+        return pred_heatmaps
+
+    inputs = {'keypoint_rois': _get_rois_blob(boxes, im_scale)}
+
+    # Add multi-level rois for FPN
+    if cfg.FPN.MULTILEVEL_ROIS:
+        _add_multilevel_rois_for_test(inputs, 'keypoint_rois')
+
+    pred_heatmaps = model.module.keypoint_net(blob_conv, inputs)
+    pred_heatmaps = pred_heatmaps.data.cpu().numpy().squeeze()
+
+    # In case of 1
+    if pred_heatmaps.ndim == 3:
+        pred_heatmaps = np.expand_dims(pred_heatmaps, axis=0)
+
+    return pred_heatmaps
+
+
+def im_detect_keypoints_aug(model, im, boxes, im_scale, blob_conv):
+    """Computes keypoint predictions with test-time augmentations.
+
+    Arguments:
+        model (DetectionModelHelper): the detection model to use
+        im (ndarray): BGR image to test
+        boxes (ndarray): R x 4 array of bounding boxes
+        im_scale (list): image blob scales as returned by im_detect_bbox
+        blob_conv (Tensor): base features from the backbone network.
+
+    Returns:
+        heatmaps (ndarray): R x J x M x M array of keypoint location logits
+    """
+    # Collect heatmaps predicted under different transformations
+    heatmaps_ts = []
+    # Tag predictions computed under downscaling and upscaling transformations
+    ds_ts = []
+    us_ts = []
+
+    def add_heatmaps_t(heatmaps_t, ds_t=False, us_t=False):
+        heatmaps_ts.append(heatmaps_t)
+        ds_ts.append(ds_t)
+        us_ts.append(us_t)
+
+    # Compute the heatmaps for the original image (identity transform)
+    heatmaps_i = im_detect_keypoints(model, im_scale, boxes, blob_conv)
+    add_heatmaps_t(heatmaps_i)
+
+    # Perform keypoints detection on the horizontally flipped image
+    if cfg.TEST.KPS_AUG.H_FLIP:
+        heatmaps_hf = im_detect_keypoints_hflip(
+            model, im, cfg.TEST.SCALE, cfg.TEST.MAX_SIZE, boxes
+        )
+        add_heatmaps_t(heatmaps_hf)
+
+    # Compute detections at different scales
+    for scale in cfg.TEST.KPS_AUG.SCALES:
+        ds_scl = scale < cfg.TEST.SCALE
+        us_scl = scale > cfg.TEST.SCALE
+        heatmaps_scl = im_detect_keypoints_scale(
+            model, im, scale, cfg.TEST.KPS_AUG.MAX_SIZE, boxes
+        )
+        add_heatmaps_t(heatmaps_scl, ds_scl, us_scl)
+
+        if cfg.TEST.KPS_AUG.SCALE_H_FLIP:
+            heatmaps_scl_hf = im_detect_keypoints_scale(
+                model, im, scale, cfg.TEST.KPS_AUG.MAX_SIZE, boxes, hflip=True
+            )
+            add_heatmaps_t(heatmaps_scl_hf, ds_scl, us_scl)
+
+    # Compute keypoints at different aspect ratios
+    for aspect_ratio in cfg.TEST.KPS_AUG.ASPECT_RATIOS:
+        heatmaps_ar = im_detect_keypoints_aspect_ratio(
+            model, im, aspect_ratio, boxes
+        )
+        add_heatmaps_t(heatmaps_ar)
+
+        if cfg.TEST.KPS_AUG.ASPECT_RATIO_H_FLIP:
+            heatmaps_ar_hf = im_detect_keypoints_aspect_ratio(
+                model, im, aspect_ratio, boxes, hflip=True
+            )
+            add_heatmaps_t(heatmaps_ar_hf)
+
+    # Select the heuristic function for combining the heatmaps
+    if cfg.TEST.KPS_AUG.HEUR == 'HM_AVG':
+        np_f = np.mean
+    elif cfg.TEST.KPS_AUG.HEUR == 'HM_MAX':
+        np_f = np.amax
+    else:
+        raise NotImplementedError(
+            'Heuristic {} not supported'.format(cfg.TEST.KPS_AUG.HEUR)
+        )
+
+    def heur_f(hms_ts):
+        return np_f(hms_ts, axis=0)
+
+    # Combine the heatmaps
+    if cfg.TEST.KPS_AUG.SCALE_SIZE_DEP:
+        heatmaps_c = combine_heatmaps_size_dep(
+            heatmaps_ts, ds_ts, us_ts, boxes, heur_f
+        )
+    else:
+        heatmaps_c = heur_f(heatmaps_ts)
+
+    return heatmaps_c
+
+
+def im_detect_keypoints_hflip(model, im, target_scale, target_max_size, boxes):
+    """Computes keypoint predictions on the horizontally flipped image.
+    Function signature is the same as for im_detect_keypoints_aug.
+    """
+    # Compute keypoints for the flipped image
+    im_hf = im[:, ::-1, :]
+    boxes_hf = box_utils.flip_boxes(boxes, im.shape[1])
+
+    blob_conv, im_scale = im_conv_body_only(model, im_hf, target_scale, target_max_size)
+    heatmaps_hf = im_detect_keypoints(model, im_scale, boxes_hf, blob_conv)
+
+    # Invert the predicted keypoints
+    heatmaps_inv = keypoint_utils.flip_heatmaps(heatmaps_hf)
+
+    return heatmaps_inv
+
+
+def im_detect_keypoints_scale(
+    model, im, target_scale, target_max_size, boxes, hflip=False):
+    """Computes keypoint predictions at the given scale."""
+    if hflip:
+        heatmaps_scl = im_detect_keypoints_hflip(
+            model, im, target_scale, target_max_size, boxes
+        )
+    else:
+        blob_conv, im_scale = im_conv_body_only(model, im, target_scale, target_max_size)
+        heatmaps_scl = im_detect_keypoints(model, im_scale, boxes, blob_conv)
+    return heatmaps_scl
+
+
+def im_detect_keypoints_aspect_ratio(
+    model, im, aspect_ratio, boxes, hflip=False):
+    """Detects keypoints at the given width-relative aspect ratio."""
+
+    # Perform keypoint detectionon the transformed image
+    im_ar = image_utils.aspect_ratio_rel(im, aspect_ratio)
+    boxes_ar = box_utils.aspect_ratio(boxes, aspect_ratio)
+
+    if hflip:
+        heatmaps_ar = im_detect_keypoints_hflip(
+            model, im_ar, cfg.TEST.SCALE, cfg.TEST.MAX_SIZE, boxes_ar
+        )
+    else:
+        blob_conv, im_scale = im_conv_body_only(
+            model, im_ar, cfg.TEST.SCALE, cfg.TEST.MAX_SIZE
+        )
+        heatmaps_ar = im_detect_keypoints(model, im_scale, boxes_ar, blob_conv)
+
+    return heatmaps_ar
+
+
 def combine_heatmaps_size_dep(hms_ts, ds_ts, us_ts, boxes, heur_f):
     """Combines heatmaps while taking object sizes into account."""
     assert len(hms_ts) == len(ds_ts) and len(ds_ts) == len(us_ts), \
@@ -643,6 +845,25 @@ def segm_results(cls_boxes, masks, ref_boxes, im_h, im_w):
 
     assert mask_ind == masks.shape[0]
     return cls_segms
+
+
+def keypoint_results(cls_boxes, pred_heatmaps, ref_boxes):
+    num_classes = cfg.MODEL.NUM_CLASSES
+    cls_keyps = [[] for _ in range(num_classes)]
+    person_idx = keypoint_utils.get_person_class_index()
+    xy_preds = keypoint_utils.heatmaps_to_keypoints(pred_heatmaps, ref_boxes)
+
+    # NMS OKS
+    if cfg.KRCNN.NMS_OKS:
+        keep = keypoint_utils.nms_oks(xy_preds, ref_boxes, 0.3)
+        xy_preds = xy_preds[keep, :, :]
+        ref_boxes = ref_boxes[keep, :]
+        pred_heatmaps = pred_heatmaps[keep, :, :, :]
+        cls_boxes[person_idx] = cls_boxes[person_idx][keep, :]
+
+    kps = [xy_preds[i] for i in range(xy_preds.shape[0])]
+    cls_keyps[person_idx] = kps
+    return cls_keyps
 
 
 def _get_rois_blob(im_rois, im_scale):

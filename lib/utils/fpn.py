@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 
 import utils.boxes as box_utils
@@ -43,24 +42,20 @@ def add_multilevel_roi_blobs(
     lvl_min: the finest (highest resolution) FPN level (e.g., 2)
     lvl_max: the coarest (lowest resolution) FPN level (e.g., 6)
     """
-    if target_lvls is None:  # when cfg.MODEL.USE_ALL_LEVELS is True
-        for lvl in range(lvl_min, lvl_max + 1):
-            blobs[blob_prefix + '_fpn' + str(lvl)] = rois
-    else:
-        rois_idx_order = np.empty((0, ))
-        rois_stacked = np.zeros((0, 5), dtype=np.float32)  # for assert
-        # target_lvls = remove_negative_area_roi_blobs(blobs, blob_prefix, rois, target_lvls)
-        for lvl in range(lvl_min, lvl_max + 1):
-            idx_lvl = np.where(target_lvls == lvl)[0]
-            blobs[blob_prefix + '_fpn' + str(lvl)] = rois[idx_lvl, :]
-            rois_idx_order = np.concatenate((rois_idx_order, idx_lvl))
-            rois_stacked = np.vstack(
-                [rois_stacked, blobs[blob_prefix + '_fpn' + str(lvl)]]
-            )
-        rois_idx_restore = np.argsort(rois_idx_order).astype(np.int32, copy=False)
-        blobs[blob_prefix + '_idx_restore_int32'] = rois_idx_restore
-        # Sanity check that restore order is correct
-        assert (rois_stacked[rois_idx_restore] == rois).all()
+    rois_idx_order = np.empty((0, ))
+    rois_stacked = np.zeros((0, 5), dtype=np.float32)  # for assert
+    # target_lvls = remove_negative_area_roi_blobs(blobs, blob_prefix, rois, target_lvls)
+    for lvl in range(lvl_min, lvl_max + 1):
+        idx_lvl = np.where(target_lvls == lvl)[0]
+        blobs[blob_prefix + '_fpn' + str(lvl)] = rois[idx_lvl, :]
+        rois_idx_order = np.concatenate((rois_idx_order, idx_lvl))
+        rois_stacked = np.vstack(
+            [rois_stacked, blobs[blob_prefix + '_fpn' + str(lvl)]]
+        )
+    rois_idx_restore = np.argsort(rois_idx_order).astype(np.int32, copy=False)
+    blobs[blob_prefix + '_idx_restore_int32'] = rois_idx_restore
+    # Sanity check that restore order is correct
+    assert (rois_stacked[rois_idx_restore] == rois).all()
 
 
 def remove_negative_area_roi_blobs(blobs, blob_prefix, rois, target_lvls):

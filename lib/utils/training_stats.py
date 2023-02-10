@@ -36,7 +36,7 @@ import utils.net as nu
 class TrainingStats(object):
     """Track vital training statistics."""
 
-    def __init__(self, misc_args, log_period=10, tensorboard_logger=None):
+    def __init__(self, misc_args, log_period=20, tensorboard_logger=None):
         # Output logging period in SGD iterations
         self.misc_args = misc_args
         self.LOG_PERIOD = log_period
@@ -83,7 +83,7 @@ class TrainingStats(object):
             assert loss.shape[0] == cfg.NUM_GPUS
             loss = loss.mean(dim=0, keepdim=True)
             total_loss += loss
-            loss_data = loss.data[0]
+            loss_data = loss.item()
             model_out['losses'][k] = loss
             if cfg.FPN.FPN_ON:
                 if k.startswith('loss_rpn_cls_'):
@@ -93,14 +93,14 @@ class TrainingStats(object):
             self.smoothed_losses[k].AddValue(loss_data)
 
         model_out['total_loss'] = total_loss  # Add the total loss for back propagation
-        self.smoothed_total_loss.AddValue(total_loss.data[0])
+        self.smoothed_total_loss.AddValue(total_loss.item())
         if cfg.FPN.FPN_ON:
             self.smoothed_losses['loss_rpn_cls'].AddValue(loss_rpn_cls_data)
             self.smoothed_losses['loss_rpn_bbox'].AddValue(loss_rpn_bbox_data)
 
         for k, metric in model_out['metrics'].items():
             metric = metric.mean(dim=0, keepdim=True)
-            self.smoothed_metrics[k].AddValue(metric.data[0])
+            self.smoothed_metrics[k].AddValue(metric.item())
 
     def _UpdateIterStats_inner(self, model_out, inner_iter):
         """Update tracked iteration statistics for the case of iter_size > 1"""
@@ -125,7 +125,7 @@ class TrainingStats(object):
             assert loss.shape[0] == cfg.NUM_GPUS
             loss = loss.mean(dim=0, keepdim=True)
             total_loss += loss
-            loss_data = loss.data[0]
+            loss_data = loss.item()
 
             model_out['losses'][k] = loss
             if cfg.FPN.FPN_ON:

@@ -24,15 +24,24 @@ This code is for the GQA-LT and VG8K-LT datasets. Below you can find instruction
   * gensim
 * An NVIDIA GPU and CUDA 8.0 or higher. Some operations only have gpu implementation.
 
-To make things easier we provided the environment file `environment.yml` created by running the command `conda env export -f environment.yml`.
-To clone the environmentt you can simply run `conda env create -f environment.yml` from the project root directory.
+### Installation
 
+```
+conda create -n ltvrd python=3.8
+conda activate ltvrd
+conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+```
+
+## Install the dependencies:
+```
+pip install -r requirements.txt
+```
 
 ## Compilation
 Compile the CUDA code in the Detectron submodule and in the repo:
 ```
 cd $ROOT/lib
-sh make.sh
+python setup.py build develop
 ```
 
 ## Annotations
