@@ -7,8 +7,7 @@ This code is for the GQA-LT and VG8K-LT datasets. Below you can find instruction
 ## Requirements
 * Python 3
 * Python packages
-  * pytorch 0.4.0 or 0.4.1.post2 (not guaranteed to work on newer versions)
-  * torchvision 0.1.8
+  * pytorch 1.7.1
   * cython
   * matplotlib
   * numpy
@@ -22,14 +21,14 @@ This code is for the GQA-LT and VG8K-LT datasets. Below you can find instruction
   * pillow
   * scikit-image
   * gensim
-* An NVIDIA GPU and CUDA 8.0 or higher. Some operations only have gpu implementation.
+* An NVIDIA GPU and CUDA 10.2. Make sure you install the pytorch version compatible with your CUDA version. We only give instructions here to install pytorch 1.7 with CUDA 10.2. 
 
 ### Installation
 
 ```
 conda create -n ltvrd python=3.8
 conda activate ltvrd
-conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=10.2 -c pytorch
 ```
 
 ## Install the dependencies:
@@ -138,7 +137,7 @@ python tools/test_net_rel.py --dataset vg8k --cfg configs/vg8k/e2e_relcnn_VGG16_
 
 The section provides the command-line arguments to train our relationship detection models given the pre-trained object detection models described above.
 
-DO NOT CHANGE variable `NUM_GPUS` in the provided config files(configs/xx/xxxx.yaml) even if you want to train with less or more than 8 GPUs. Use the environment variable `CUDA_VISIBLE_DEVICES` to control how many and which GPUs to use.
+CHANGE variable `NUM_GPUS` to control the number of GPUs you want to train with (4 or 8) in the provided config files(configs/xx/xxxx.yaml).You can also use the environment variable `CUDA_VISIBLE_DEVICES` to control which GPUs to use.
 
 With the following command lines, the training results (models and logs) should be in `$ROOT/Outputs/xxx/` where `xxx` is the .yaml file name used in the command without the ".yaml" extension. If you want to test with your trained models, simply run the test commands described above by setting `--load_ckpt` as the path of your trained models.
 

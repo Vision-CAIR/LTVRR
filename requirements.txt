@@ -1,10 +1,11 @@
 matplotlib
 numpy
 scipy
+cython
 pandas
 opencv-python
 scikit-learn
-pyyaml
+pyyaml==6.0
 packaging
 pycocotools
 tensorboardX

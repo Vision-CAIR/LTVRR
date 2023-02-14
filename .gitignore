@@ -22,3 +22,13 @@ lib/utils/*.c
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+
+# Data files
+Outputs/
+data/
+detection_models/
+lib/data/
+lib/build/
+lib/mask_rcnn.egg-info/
+#
