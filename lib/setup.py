@@ -7,9 +7,12 @@ import os
 import torch
 from setuptools import find_packages
 from setuptools import setup
+from distutils.core import Extension
+from Cython.Build import cythonize
 from torch.utils.cpp_extension import CUDA_HOME
 from torch.utils.cpp_extension import CppExtension
 from torch.utils.cpp_extension import CUDAExtension
+import numpy
 
 requirements = ["torch", "torchvision"]
 
@@ -50,8 +53,19 @@ def get_extensions():
             include_dirs=include_dirs,
             define_macros=define_macros,
             extra_compile_args=extra_compile_args,
-        )
-    ]
+        ),
+    ] + cythonize([
+        Extension(
+            name="utils.cython_bbox",
+            sources=[os.path.join(this_dir, "utils", "cython_bbox.pyx")],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            name="utils.cython_nms",
+            sources=[os.path.join(this_dir, "utils", "cython_nms.pyx")],
+            include_dirs=[numpy.get_include()],
+        ),
+    ])
 
     return ext_modules
 
