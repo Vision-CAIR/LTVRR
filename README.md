@@ -107,7 +107,7 @@ Download Visual Genome images from the [official page](https://visualgenome.org/
 Download pre-trained object detection models [here](https://drive.google.com/open?id=16JVQkkKGfiGt7AUt789pUPX3o84Cl2hL). Unzip it under the root directory and you should see a `detection_models` folder there.
 
 ## Our Trained Relationship Detection Models
-Download our trained models [here](https://drive.google.com/open?id=12zvgkUjgxAGEE99o0l6rcCCeE4QP4cYZ). Unzip it under the root folder and you should see a `trained_models` folder there.
+Download our trained models [here](https://drive.google.com/file/d/1S8WNnK0zt8SDAGntkCiRDfJ8rZOR3Pgx/view?usp=share_link). Unzip it under the root folder and you should see a `trained_models` folder there.
 
 ## Directory Structure
 The final directories for data and detection models should look like:
